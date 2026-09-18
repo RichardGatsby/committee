@@ -14,10 +14,28 @@ from gibhub.api import Client  # noqa: E402
 FIXTURES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "tests", "fixtures")
 
 
+# Gather servers hand out an address and password in the match payload. They are
+# not ours to republish, and no test needs them.
+SENSITIVE = ("ip", "pw")
+
+
+def scrub(node):
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if key in SENSITIVE and value:
+                node[key] = "REDACTED"
+            else:
+                scrub(value)
+    elif isinstance(node, list):
+        for item in node:
+            scrub(item)
+    return node
+
+
 def write(name, payload):
     path = os.path.join(FIXTURES, name + ".json")
     with open(path, "w", encoding="utf-8") as handle:
-        json.dump(payload, handle, indent=1, sort_keys=True)
+        json.dump(scrub(payload), handle, indent=1, sort_keys=True)
     print("wrote", os.path.normpath(path))
 
 
