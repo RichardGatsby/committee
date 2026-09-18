@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Sequence
 from .categories import allowed, categorise, split
 from .dataset import TEAM_SIZE, roster_ids, winner_of
 from .model import feature_vector, points_delta, predict
+from .model import TIER_POINTS
 from .tiers import CROSS_CHANNEL, EXACT, IMPUTED, OVERRIDE, TierIndex
 
 # Verdict thresholds on the probability that a gap this big is luck. Chosen so
@@ -108,6 +109,9 @@ class PlayerReport:
     luck: float
     per_100: float
     decided: int
+    # The tier this verdict is about, and what to do with it.
+    current_tier: Optional[str]
+    recommendation: str
     upset_wins: int
     upset_losses: int
     # The other half of the 2x2: results that went the way the tiers predicted.
@@ -143,6 +147,39 @@ def luck_probability(probabilities: Sequence[float], actual: int) -> float:
     if actual >= expected:
         return sum(distribution[actual:])
     return sum(distribution[:actual + 1])
+
+
+def stronger_and_weaker(tier: Optional[str]):
+    """The tiers either side of `tier` by strength, not by letter.
+
+    The letters are not an ordered ladder — E sits between S and A — so the
+    neighbours come off the points scale.
+    """
+    if tier not in TIER_POINTS:
+        return None, None
+    ladder = sorted(TIER_POINTS, key=lambda t: -TIER_POINTS[t])
+    index = ladder.index(tier)
+    return (ladder[index - 1] if index > 0 else None,
+            ladder[index + 1] if index < len(ladder) - 1 else None)
+
+
+def recommend(label: str, tier: Optional[str]) -> str:
+    """Say plainly what to do about the tier, not just how the results read."""
+    if label == "ON TIER":
+        return "KEEP at %s" % tier if tier else "KEEP current tier"
+
+    up, down = stronger_and_weaker(tier)
+    # OVER means they win more than the tier predicts, so the tier is too low.
+    target = up if label.endswith("OVER") else down
+    direction = "UP" if label.endswith("OVER") else "DOWN"
+    strength = "MOVE" if label.startswith("CLEARLY") else "CONSIDER MOVING"
+
+    if tier and target:
+        return "%s %s: %s → %s" % (strength, direction, tier, target)
+    if tier:
+        return "%s %s from %s (no tier %s of it)" % (
+            strength, direction, tier, "above" if direction == "UP" else "below")
+    return "%s %s" % (strength, direction)
 
 
 def classify(delta: float, probability: float) -> str:
@@ -201,6 +238,16 @@ def build_report(
     even_matches = 0
     draws = 0
     skipped = 0
+
+    # The tier the verdict is about: a committee override first, since the API
+    # does not carry those, then whatever the profile lists for the scored channel.
+    profile_tiers = [
+        t for t in (profile.get("tiers") or [])
+        if t.get("size") == 6
+        and (not tier_channel_ids or t.get("channel_id") in tier_channel_ids)
+    ]
+    current_tier = index.overrides.get(player_id) or (
+        profile_tiers[0]["tier"] if profile_tiers else None)
 
     counted = allowed(only)
     for match in details:
@@ -316,13 +363,7 @@ def build_report(
         player_id=player_id,
         nick=profile.get("nick") or "",
         discord_nick=profile.get("discord_nick") or "",
-        tiers=[
-            t for t in (profile.get("tiers") or [])
-            # 3v3 only, and only the channels this model actually scores with:
-            # another channel's tier is not what the verdict is about.
-            if t.get("size") == 6
-            and (not tier_channel_ids or t.get("channel_id") in tier_channel_ids)
-        ],
+        tiers=profile_tiers,
         lifetime=_lifetime_summary(profile),
         percentiles=[(m["key"], m["percentile"]) for m in spider_metrics],
         rows=rows,
@@ -331,6 +372,8 @@ def build_report(
         delta=delta,
         label=classify(delta, luck),
         luck=luck,
+        current_tier=current_tier,
+        recommendation=recommend(classify(delta, luck), current_tier),
         per_100=(100.0 * delta / decided) if decided else 0.0,
         decided=decided,
         upset_wins=upset_wins,

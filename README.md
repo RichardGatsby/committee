@@ -59,6 +59,17 @@ compares that to actual wins, then says how likely that gap is to be luck:
 - **OVER / UNDER** — less than 1 time in 20. Reasonable evidence.
 - **ON TIER** — within what luck produces. No evidence either way.
 
+Each report then states the decision outright, naming the tier to move to. OVER
+means winning *more* than the tier predicts, so the tier is too low and the player
+moves **up**; UNDER means the tier is too high and they move **down**:
+
+    ### → MOVE DOWN: A → B
+    ### → CONSIDER MOVING UP: B → A
+    ### → KEEP at E
+
+The target tier comes off the points scale, not the alphabet, so "up" from A is E
+rather than S.
+
 The label reads off that probability rather than a raw win count, because the same
 gap means different things at different sample sizes: +5 wins is real over 20
 matches and noise over 400. An earlier version used a fixed +-1.5 win threshold and

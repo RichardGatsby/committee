@@ -412,3 +412,46 @@ def test_the_header_shows_only_tiers_from_the_channel_being_scored():
 
     unscoped = build_report(profile, SPIDER, [], _index(), COEFFICIENTS, {})
     assert [t["tier"] for t in unscoped.tiers] == ["E", "B"]
+
+
+def test_tier_neighbours_come_off_the_points_scale_not_the_letters():
+    from gibhub.report import stronger_and_weaker
+
+    # Strength order is S > E > A > B > C > D.
+    assert stronger_and_weaker("A") == ("E", "B")
+    assert stronger_and_weaker("E") == ("S", "A")
+    assert stronger_and_weaker("S") == (None, "E")
+    assert stronger_and_weaker("D") == ("C", None)
+    assert stronger_and_weaker(None) == (None, None)
+
+
+def test_the_recommendation_says_which_way_to_move():
+    from gibhub.report import recommend
+
+    # OVER means winning more than the tier predicts, so the tier is too low.
+    assert recommend("CLEARLY OVER", "A") == "MOVE UP: A → E"
+    assert recommend("OVER", "A") == "CONSIDER MOVING UP: A → E"
+    assert recommend("CLEARLY UNDER", "A") == "MOVE DOWN: A → B"
+    assert recommend("UNDER", "A") == "CONSIDER MOVING DOWN: A → B"
+    assert recommend("ON TIER", "A") == "KEEP at A"
+
+
+def test_the_recommendation_handles_the_ends_of_the_ladder():
+    from gibhub.report import recommend
+
+    assert recommend("CLEARLY OVER", "S") == "MOVE UP from S (no tier above of it)"
+    assert recommend("CLEARLY UNDER", "D") == "MOVE DOWN from D (no tier below of it)"
+
+
+def test_the_recommendation_without_a_known_tier():
+    from gibhub.report import recommend
+
+    assert recommend("ON TIER", None) == "KEEP current tier"
+    assert recommend("CLEARLY UNDER", None) == "MOVE DOWN"
+
+
+def test_a_committee_override_is_the_tier_the_verdict_is_about():
+    index = TierIndex(holdings={}, bands=BANDS, utro={}, overrides={"me": "A"})
+    report = build_report(dict(PROFILE, tiers=[]), SPIDER, [], index, COEFFICIENTS, {})
+    assert report.current_tier == "A"
+    assert report.recommendation == "KEEP at A"

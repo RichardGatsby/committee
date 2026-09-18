@@ -32,6 +32,8 @@ REPORT = PlayerReport(
     luck=0.34,
     per_100=7.1,
     decided=3,
+    current_tier="A",
+    recommendation="KEEP at A",
     upset_wins=1,
     upset_losses=1,
     stack_wins=1,
@@ -137,15 +139,17 @@ def test_markdown_handles_an_empty_report():
     assert "no 3v3 matches in this window" in to_markdown(empty)
 
 
-def test_markdown_flags_an_untiered_player():
-    assert "no 3v3 tier held" in to_markdown(dataclasses.replace(REPORT, tiers=[]))
+def test_markdown_flags_a_genuinely_untiered_player():
+    assert "no 3v3 tier held" in to_markdown(
+        dataclasses.replace(REPORT, tiers=[], current_tier=None))
 
 
 def test_csv_header_matches_the_spec():
     assert CSV_COLUMNS == [
         "player_id", "nick", "discord_nick", "tier", "tier_channel", "tier_updated_at",
         "matches", "wins", "losses", "draws", "win_rate", "expected_wins", "actual_wins",
-        "delta", "per_100", "luck_1_in", "label", "decided", "stack_wins",
+        "delta", "per_100", "luck_1_in", "label", "recommendation", "decided",
+        "stack_wins",
         "stack_losses", "underdog_wins", "underdog_losses",
         "upset_wins", "upset_losses", "utro", "utro_percentile", "kdr",
         "exact_tiers", "crosschannel_tiers", "imputed_tiers", "override_tiers",
@@ -181,10 +185,23 @@ def test_csv_reads_the_utro_percentile_from_the_spider_metrics():
     assert rows[0]["utro_percentile"] == "87.5"
 
 
-def test_csv_leaves_tier_columns_blank_for_an_untiered_player():
-    rows = list(csv.DictReader(io.StringIO(to_csv([dataclasses.replace(REPORT, tiers=[])]))))
+def test_csv_falls_back_to_the_committee_tier_when_the_api_has_none():
+    rows = list(csv.DictReader(io.StringIO(
+        to_csv([dataclasses.replace(REPORT, tiers=[], current_tier="A")]))))
+    assert rows[0]["tier"] == "A"
+    assert rows[0]["tier_channel"] == ""
+
+
+def test_csv_leaves_tier_columns_blank_for_a_genuinely_untiered_player():
+    rows = list(csv.DictReader(io.StringIO(
+        to_csv([dataclasses.replace(REPORT, tiers=[], current_tier=None)]))))
     assert rows[0]["tier"] == ""
     assert rows[0]["tier_channel"] == ""
+
+
+def test_csv_carries_the_recommendation():
+    rows = list(csv.DictReader(io.StringIO(to_csv([REPORT]))))
+    assert rows[0]["recommendation"] == "KEEP at A"
 
 
 def test_csv_joins_multiple_tiers():
@@ -243,3 +260,21 @@ def test_the_by_type_table_shows_a_verdict_without_odds():
     assert any("180" in r and "96.0" in r and "-2.0" in r and "ON TIER" in r for r in rows)
     assert any("10.5" in r and "-4.5" in r and "UNDER" in r for r in rows)
     assert "1 in " not in text
+
+
+def test_the_recommendation_is_its_own_heading():
+    text = to_markdown(REPORT)
+    assert "### → KEEP at A" in text
+
+
+def test_a_committee_tier_shows_in_the_header_when_the_api_has_none():
+    """Overrides live only in the tier list, so the API reports no tier at all."""
+    only_override = dataclasses.replace(REPORT, tiers=[], current_tier="A")
+    text = to_markdown(only_override)
+    assert "current tier: **A**  _(committee list)_" in text
+    assert "no 3v3 tier held" not in text
+
+
+def test_no_tier_anywhere_still_says_so():
+    assert "no 3v3 tier held" in to_markdown(
+        dataclasses.replace(REPORT, tiers=[], current_tier=None))

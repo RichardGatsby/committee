@@ -16,7 +16,7 @@ _COLOR = re.compile(r"\^.")
 CSV_COLUMNS = [
     "player_id", "nick", "discord_nick", "tier", "tier_channel", "tier_updated_at",
     "matches", "wins", "losses", "draws", "win_rate", "expected_wins", "actual_wins",
-    "delta", "per_100", "luck_1_in", "label", "decided", "stack_wins", "stack_losses", "underdog_wins", "underdog_losses",
+    "delta", "per_100", "luck_1_in", "label", "recommendation", "decided", "stack_wins", "stack_losses", "underdog_wins", "underdog_losses",
     "upset_wins", "upset_losses", "utro", "utro_percentile", "kdr",
     "exact_tiers", "crosschannel_tiers", "imputed_tiers", "override_tiers",
 ]
@@ -106,6 +106,9 @@ def to_markdown(report: PlayerReport, extremes: int = 0) -> str:
                 % (tier.get("channel_name", tier.get("channel_id", "?")),
                    tier["tier"], (tier.get("updated_at") or "")[:10])
             )
+    elif report.current_tier:
+        # Held via the committee tier list, which the API does not carry.
+        lines.append("- current tier: **%s**  _(committee list)_" % report.current_tier)
     else:
         lines.append("- no 3v3 tier held")
 
@@ -136,6 +139,9 @@ def to_markdown(report: PlayerReport, extremes: int = 0) -> str:
         lines.append(
             "**Expected %.2f wins, actual %d — %+.2f → %s**"
             % (report.expected_wins, report.actual_wins, report.delta, report.label)
+        )
+        lines.append("")
+        lines.append("### → %s" % report.recommendation
         )
         lines.append("")
         favoured = report.stack_wins + report.upset_losses
@@ -232,7 +238,7 @@ def _csv_row(report: PlayerReport):
         "player_id": report.player_id,
         "nick": strip_colors(report.nick),
         "discord_nick": report.discord_nick,
-        "tier": "|".join(tier["tier"] for tier in report.tiers),
+        "tier": "|".join(tier["tier"] for tier in report.tiers) or (report.current_tier or ""),
         "tier_channel": "|".join(
             tier.get("channel_name", tier.get("channel_id", "")) for tier in report.tiers
         ),
@@ -250,6 +256,7 @@ def _csv_row(report: PlayerReport):
         "per_100": "%.1f" % report.per_100,
         "luck_1_in": int(round(1.0 / report.luck)) if report.luck > 0 else "",
         "label": report.label,
+        "recommendation": report.recommendation,
         "decided": report.decided,
         "stack_wins": report.stack_wins,
         "stack_losses": report.upset_losses,
