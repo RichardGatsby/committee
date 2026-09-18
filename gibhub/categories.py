@@ -22,9 +22,18 @@ ORDER = (LEGACY, POLAND, CUP, OTHER_GATHER)
 
 # The gather channels the committee tiers for. The small one-off channels
 # (subAk, eV!L, Frag Center, PRAWDZIWY) are not part of that and are dropped
-# from reports and from the fit unless asked for by name.
+# everywhere unless asked for by name.
 GATHERS = (LEGACY, POLAND)
-EXCLUDED_BY_DEFAULT = (OTHER_GATHER,)
+
+# What a report counts unless told otherwise. Poland is left out: the committee
+# reads ET:Legacy gathers and team play, and Poland is over half the match volume,
+# so including it quietly dominates every verdict.
+REPORT_DEFAULT = (LEGACY, CUP)
+
+# What the model trains on. Broader than a report on purpose — Poland is two
+# thirds of the sample and dropping it would weaken the fit for no gain, since
+# the tiers being fitted are the same ones either way.
+TRAINING_DEFAULT = (LEGACY, POLAND, CUP)
 
 # Tournament channels carry a synthetic zero-padded id rather than a Discord
 # snowflake. It is the only reliable marker for cups that carry no `cup` tag,
@@ -81,12 +90,11 @@ def parse_selection(values) -> List[str]:
     return chosen
 
 
-def allowed(selection) -> Tuple[str, ...]:
-    """Which categories a report counts: an explicit selection, else everything
-    the committee cares about."""
+def allowed(selection, default: Tuple[str, ...] = REPORT_DEFAULT) -> Tuple[str, ...]:
+    """Which categories to count: an explicit selection, else `default`."""
     if selection:
         return tuple(selection)
-    return tuple(key for key in ORDER if key not in EXCLUDED_BY_DEFAULT)
+    return default
 
 
 def split(rows) -> List[Tuple[str, List[Any]]]:

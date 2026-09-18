@@ -323,3 +323,30 @@ def test_window_label_describes_the_slice_covered():
 
 def test_extremes_can_be_switched_off():
     assert build_parser().parse_args(["player", "x", "--extremes", "0"]).extremes == 0
+
+
+def test_with_poland_adds_poland_to_the_default_categories():
+    from gibhub.categories import CUP, LEGACY, POLAND
+    from gibhub.cli import categories_for
+
+    p = build_parser()
+    assert categories_for(p.parse_args(["player", "x"])) == []
+    assert categories_for(p.parse_args(["player", "x", "--with-poland"])) == [
+        LEGACY, CUP, POLAND]
+
+
+def test_with_poland_adds_to_an_explicit_selection_too():
+    from gibhub.categories import LEGACY, POLAND
+    from gibhub.cli import categories_for
+
+    args = build_parser().parse_args(
+        ["scan", "--only", "legacy", "--with-poland"])
+    assert categories_for(args) == [LEGACY, POLAND]
+
+
+def test_asking_for_poland_twice_does_not_duplicate_it():
+    from gibhub.categories import POLAND
+    from gibhub.cli import categories_for
+
+    args = build_parser().parse_args(["scan", "--only", "poland", "--with-poland"])
+    assert categories_for(args) == [POLAND]

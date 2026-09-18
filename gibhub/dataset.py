@@ -3,7 +3,7 @@
 import dataclasses
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 
-from .categories import allowed, categorise
+from .categories import TRAINING_DEFAULT, allowed, categorise
 from .model import feature_vector
 from .tiers import TierIndex
 
@@ -79,7 +79,7 @@ def match_to_sample(
 ) -> Optional[Sample]:
     """None when the match cannot train the model: a draw, an odd roster, or a
     channel the committee does not tier for."""
-    if categorise(match) not in allowed(categories):
+    if categorise(match) not in allowed(categories, TRAINING_DEFAULT):
         return None
 
     winner = winner_of(match)

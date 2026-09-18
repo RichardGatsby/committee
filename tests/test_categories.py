@@ -71,9 +71,30 @@ def test_parse_selection_rejects_nonsense():
         parse_selection(["banana"])
 
 
-def test_by_default_the_small_gather_channels_are_left_out():
-    assert allowed(None) == (LEGACY, POLAND, CUP)
-    assert OTHER_GATHER not in allowed([])
+def test_a_report_leaves_out_poland_and_the_small_channels_by_default():
+    """Poland is over half the volume; counted by default it dominates every
+    verdict, so it is opt-in via --with-poland."""
+    from gibhub.categories import REPORT_DEFAULT, TRAINING_DEFAULT
+
+    assert allowed(None) == (LEGACY, CUP)
+    assert allowed([]) == REPORT_DEFAULT
+    assert POLAND not in allowed(None)
+    assert OTHER_GATHER not in allowed(None)
+
+
+def test_the_model_still_trains_on_poland():
+    """Dropping two thirds of the sample would weaken the fit for no gain."""
+    from gibhub.categories import TRAINING_DEFAULT
+
+    assert allowed(None, TRAINING_DEFAULT) == (LEGACY, POLAND, CUP)
+    assert OTHER_GATHER not in TRAINING_DEFAULT
+
+
+def test_an_explicit_selection_overrides_the_default_either_way():
+    from gibhub.categories import TRAINING_DEFAULT
+
+    assert allowed([POLAND]) == (POLAND,)
+    assert allowed([POLAND], TRAINING_DEFAULT) == (POLAND,)
 
 
 def test_they_can_still_be_asked_for_by_name():

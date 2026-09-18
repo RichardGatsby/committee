@@ -18,7 +18,7 @@ Report on one player:
 
 Scan every tiered player at once and rank the mis-tiered:
 
-    python3 -m gibhub.cli scan                       # last 1y, 50+ games
+    python3 -m gibhub.cli scan                       # last 1y, 50+ games, no PL
     python3 -m gibhub.cli scan --only gathers --min-games 100
     python3 -m gibhub.cli scan --all --out scan.csv  # every player, as CSV
 
@@ -61,6 +61,7 @@ Inspect or refit the model:
 | `--from 2026-01-01` | fixed start date instead of a rolling window |
 | `--to 2026-06-01` | exclusive end date |
 | `--only legacy` | restrict to one kind of game; repeatable. See below |
+| `--with-poland` | also count Poland gathers, which are left out by default |
 | `--extremes 5` | rows in the surprising-results tables (default 3, `0` hides) |
 | `--matches N` | cap matches read. Default `0` = every match in the window |
 
@@ -121,11 +122,19 @@ real Discord one or a synthetic tournament one:
 | `cup` | cups, tournaments, league seasons, and games between named teams | yes |
 | `other` | the small gather channels: subAk, eV!L, Frag Center, PRAWDZIWY | **no** |
 
-`--only gathers` means legacy + poland, the two channels the committee tiers for.
-The small one-off channels are dropped from reports *and* from the fit, since
-nobody is tiered on them; `--only other` or `--only all` brings them back.
-`--only team` is a synonym for `cup`: both are played by fixed teams rather than
-picked sides, which is the distinction that matters when reading a result.
+**Reports count `legacy` + `cup` by default.** Poland is over half the match
+volume, so counting it by default lets it dominate every verdict; `--with-poland`
+adds it back, and `--only poland` isolates it. The small one-off channels are
+dropped everywhere unless named.
+
+**The model still trains on Poland.** Dropping two thirds of the sample would
+weaken the fit for no gain, since the tiers being fitted are the same either way.
+So the training set is legacy + poland + cup while a report defaults to
+legacy + cup.
+
+`--only gathers` means legacy + poland. `--only team` is a synonym for `cup`:
+both are played by fixed teams rather than picked sides, which is the distinction
+that matters when reading a result.
 
 Tournaments carrying no `cup` tag — Nations Cup and subak's cups among them — are
 caught by their zero-padded channel id, which is how the API marks a tournament

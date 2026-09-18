@@ -355,11 +355,16 @@ def test_the_report_splits_results_by_type_of_game():
         _categorised("m2", "beta", "Poland ET:Legacy: #3v3", ["gather"]),
         _categorised("m3", "alpha", "unsorted", None, ""),
     ]
+    # Poland is opt-in, so by default only legacy and cup are counted.
     report = build_report(PROFILE, SPIDER, details, _index(), COEFFICIENTS, {})
-    keys = [c[0] for c in report.categories]
+    assert [c[0] for c in report.categories] == ["legacy", "cup"]
+
+    with_poland = build_report(PROFILE, SPIDER, details, _index(), COEFFICIENTS, {},
+                               only=["legacy", "poland", "cup"])
+    keys = [c[0] for c in with_poland.categories]
     # Team games sit under cups: both are played by fixed teams, not picked sides.
     assert keys == ["legacy", "poland", "cup"]
-    assert all(c[1] == 1 for c in report.categories)  # one decided match each
+    assert all(c[1] == 1 for c in with_poland.categories)
 
 
 def test_only_restricts_the_report_to_one_type():
