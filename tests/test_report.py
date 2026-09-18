@@ -397,3 +397,18 @@ def test_they_are_included_when_asked_for_by_name():
     report = build_report(PROFILE, SPIDER, details, _index(), COEFFICIENTS, {},
                           only=["other-gather"])
     assert [r.category for r in report.rows] == ["other-gather"]
+
+
+def test_the_header_shows_only_tiers_from_the_channel_being_scored():
+    profile = dict(PROFILE, tiers=[
+        {"channel_id": "events", "channel_name": "Events", "tier": "E", "size": 6,
+         "updated_at": "2026-09-01"},
+        {"channel_id": "poland", "channel_name": "Poland", "tier": "B", "size": 6,
+         "updated_at": "2026-09-01"},
+    ])
+    scoped = build_report(profile, SPIDER, [], _index(), COEFFICIENTS, {},
+                          tier_channel_ids={"events"})
+    assert [t["tier"] for t in scoped.tiers] == ["E"]
+
+    unscoped = build_report(profile, SPIDER, [], _index(), COEFFICIENTS, {})
+    assert [t["tier"] for t in unscoped.tiers] == ["E", "B"]

@@ -43,9 +43,31 @@ def _utro(value: Optional[float], delta: Optional[float]) -> str:
 MARK = {"override": "", "exact": "", "cross_channel": "*", "imputed": "?"}
 
 
+def table(headers, rows, aligns=None) -> list:
+    """An aligned plain-text table.
+
+    Plain monospace rather than a markdown table: this is read in a terminal and
+    screenshotted, where alignment carries the shape and pipes are just noise.
+    """
+    if not rows:
+        return []
+    columns = list(zip(*([headers] + [[str(c) for c in r] for r in rows])))
+    widths = [max(len(str(c)) for c in col) for col in columns]
+    aligns = aligns or ["<"] * len(headers)
+
+    def line(cells):
+        return ("  " + "   ".join(
+            format(str(cell), "%s%d" % (align, width))
+            for cell, width, align in zip(cells, widths, aligns)
+        )).rstrip()
+
+    return [line(headers), "  " + "-" * (sum(widths) + 3 * (len(widths) - 1))] + [
+        line(r) for r in rows]
+
+
 def _lineup(players) -> str:
     return " ".join(
-        "%s(%s%s)" % (strip_colors(nick) or "?", tier, MARK.get(source, "?"))
+        "%s %s%s" % (strip_colors(nick)[:12] or "?", tier, MARK.get(source, "?"))
         for nick, tier, source in players
     )
 
@@ -53,29 +75,22 @@ def _lineup(players) -> str:
 def _extremes_table(title, rows, limit) -> list:
     if not rows:
         return []
-    lines = ["", "**%s**" % title, "",
-             "| date | pts | exp | score | his team | opponents | his utro |",
-             "| --- | ---: | ---: | :---: | --- | --- | ---: |"]
-    for row in rows[:limit]:
-        lines.append("| %s | %s | %s | %s | %s | %s | %s |" % (
-            row.date,
-            "%+g" % row.points if row.points is not None else "-",
-            _pct(row.expected),
-            row.score or "-",
-            _lineup(row.team),
-            _lineup(row.opponents),
-            _utro(row.utro, row.utro_delta),
-        ))
-    return lines
-
-
-def _luck_note(report: PlayerReport) -> str:
-    """How often luck alone produces a gap this big, over this many matches."""
-    if not report.decided:
-        return ""
-    odds = int(round(1.0 / report.luck)) if report.luck > 0 else 10000
-    return "  _(%+.0f per 100 games; luck alone does this 1 time in %d)_" % (
-        report.per_100, max(odds, 2))
+    body = [
+        [row.date,
+         "%+g" % row.points if row.points is not None else "-",
+         _pct(row.expected),
+         row.score or "-",
+         _lineup(row.team),
+         _lineup(row.opponents),
+         _utro(row.utro, row.utro_delta)]
+        for row in rows[:limit]
+    ]
+    return ["", "**%s**" % title] + table(
+        ["Date", "Tier lead", "Win chance", "Score", "His team", "Opponents",
+         "His rating"],
+        body,
+        ["<", ">", ">", ">", "<", "<", ">"],
+    )
 
 
 def to_markdown(report: PlayerReport, extremes: int = 0) -> str:
@@ -119,29 +134,9 @@ def to_markdown(report: PlayerReport, extremes: int = 0) -> str:
         lines.append("")
     else:
         lines.append(
-            "**Expected %.2f wins, actual %d — %+.2f → %s**%s"
-            % (report.expected_wins, report.actual_wins, report.delta, report.label,
-               _luck_note(report))
+            "**Expected %.2f wins, actual %d — %+.2f → %s**"
+            % (report.expected_wins, report.actual_wins, report.delta, report.label)
         )
-        lines.append("")
-        show_points = any(row.points is not None for row in report.rows)
-        lines.append("| date | maps |%s exp | res | utro (vs base) | |"
-                     % (" pts |" if show_points else ""))
-        lines.append("| --- | --- |%s ---: | :---: | ---: | --- |"
-                     % (" ---: |" if show_points else ""))
-        for row in report.rows:
-            lines.append(
-                "| %s | %s |%s %s | %s | %s | %s |"
-                % (
-                    row.date,
-                    "/".join(row.maps) or "-",
-                    (" %+g |" % row.points) if show_points else "",
-                    _pct(row.expected),
-                    row.result,
-                    _utro(row.utro, row.utro_delta),
-                    "upset" if row.upset else "",
-                )
-            )
         lines.append("")
         favoured = report.stack_wins + report.upset_losses
         underdog = report.upset_wins + report.underdog_losses
@@ -181,14 +176,14 @@ def to_markdown(report: PlayerReport, extremes: int = 0) -> str:
 
     if len(report.categories) > 1:
         lines.append("**By type of game**")
-        lines.append("")
-        lines.append("| type | games | expected | actual | | |")
-        lines.append("| --- | ---: | ---: | ---: | --- | --- |")
-        for key, decided, exp, won, luck, verdict in report.categories:
-            odds = int(round(1.0 / luck)) if luck > 0 else 10000
-            lines.append("| %s | %d | %.1f | %d | %+.1f | %s _(1 in %d)_ |" % (
-                LABELS.get(key, key), decided, exp, won, won - exp, verdict,
-                max(odds, 2)))
+        lines += table(
+            ["Type of game", "Games", "Expected wins", "Actual wins",
+             "Difference", "Verdict"],
+            [[LABELS.get(key, key), decided, "%.1f" % exp, won,
+              "%+.1f" % (won - exp), verdict]
+             for key, decided, exp, won, _luck, verdict in report.categories],
+            ["<", ">", ">", ">", ">", "<"],
+        )
         lines.append("")
 
     if extremes and report.rows:

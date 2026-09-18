@@ -67,11 +67,11 @@ def test_the_headline_is_one_compact_line():
     assert "z-score" not in text and "p =" not in text
 
 
-def test_the_headline_carries_effect_size_and_odds():
+def test_the_headline_carries_nothing_but_the_verdict():
+    """The per-100 and odds figures were not understood; the label carries them."""
     headline = [l for l in to_markdown(REPORT).splitlines()
                 if l.startswith("**Expected")][0]
-    assert "+7 per 100 games" in headline
-    assert "luck alone does this 1 time in 3" in headline
+    assert headline == "**Expected 1.73 wins, actual 2 — +0.27 → ON TIER**"
 
 
 def test_a_strong_result_reads_as_clearly_over():
@@ -80,20 +80,45 @@ def test_a_strong_result_reads_as_clearly_over():
         decided=240, actual_wins=143, expected_wins=118.3)
     headline = [l for l in to_markdown(strong).splitlines()
                 if l.startswith("**Expected")][0]
-    assert "→ CLEARLY OVER**" in headline
-    assert "1 time in 1667" in headline
+    assert headline.endswith("→ CLEARLY OVER**")
 
 
-def test_markdown_marks_upsets():
+def test_the_per_match_table_is_not_printed():
+    """336 rows is unpastable; the verdict is still computed from all of them."""
     text = to_markdown(REPORT)
-    lines = [line for line in text.splitlines() if line.startswith("| 2026-09-17")]
-    assert "upset" in lines[0]
+    assert "2026-09-16" not in text
+    assert "Expected 1.73 wins" in text
 
 
-def test_markdown_renders_a_missing_utro_without_crashing():
-    text = to_markdown(REPORT)
-    assert "| 2026-09-16" in text
+def test_the_extremes_tables_still_render_their_rows():
+    text = to_markdown(REPORT, extremes=5)
+    assert "2026-09-16" in text
     assert "n/a" in text
+    assert "Win chance" in text and "His team" in text
+
+
+def test_tables_are_plain_monospace_not_markdown():
+    """Read in a terminal and screenshotted; pipes and backticks are just noise."""
+    text = to_markdown(REPORT, extremes=5)
+    assert "```" not in text
+    assert not any(l.startswith("| ") for l in text.splitlines())
+
+
+def test_table_columns_line_up():
+    from gibhub.render import table
+
+    lines = table(["Name", "N"], [["a", 1], ["bbbb", 22]], ["<", ">"])
+    assert lines[0] == "  Name    N"
+    assert lines[2] == "  a       1"
+    assert lines[3] == "  bbbb   22"
+    # Every row is the same width, so the columns read straight down.
+    assert len({len(l.rstrip()) for l in [lines[0], lines[2], lines[3]]}) <= 2
+
+
+def test_an_empty_table_renders_nothing():
+    from gibhub.render import table
+
+    assert table(["A"], []) == []
 
 
 def test_markdown_footer_reports_provenance_and_sources():
@@ -207,6 +232,14 @@ def test_markdown_does_not_warn_when_the_window_was_fully_read():
     assert "Only the most recent" not in to_markdown(full)
 
 
-def test_the_per_100_figure_is_rounded_in_the_headline():
-    assert "+1 per 100 games" in to_markdown(dataclasses.replace(REPORT, per_100=1.2))
-    assert "-8 per 100 games" in to_markdown(dataclasses.replace(REPORT, per_100=-8.4))
+def test_the_by_type_table_shows_a_verdict_without_odds():
+    two = dataclasses.replace(REPORT, categories=[
+        ("legacy", 180, 96.0, 94, 0.5, "ON TIER"),
+        ("cup", 17, 10.5, 6, 0.018, "UNDER"),
+    ])
+    text = to_markdown(two)
+    assert "Type of game" in text and "Expected wins" in text
+    rows = [l for l in text.splitlines() if "gathers" in l or "team games" in l]
+    assert any("180" in r and "96.0" in r and "-2.0" in r and "ON TIER" in r for r in rows)
+    assert any("10.5" in r and "-4.5" in r and "UNDER" in r for r in rows)
+    assert "1 in " not in text

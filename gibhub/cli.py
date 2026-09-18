@@ -139,6 +139,7 @@ def _report_for(client, bundle, player_id, args, cache):
         profile, spider, details, bundle.index(), bundle.coefficients, provenance,
         tier_points=bundle.tier_points or None,
         only=parse_selection(getattr(args, "only", None)),
+        tier_channel_ids=set(bundle.channel_names) if bundle.tier_channels else None,
     )
 
 

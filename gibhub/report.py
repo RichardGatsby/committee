@@ -185,6 +185,7 @@ def build_report(
     provenance: Dict[str, Any],
     tier_points: Optional[Dict[str, float]] = None,
     only: Optional[Sequence[str]] = None,
+    tier_channel_ids: Optional[Sequence[str]] = None,
 ) -> PlayerReport:
     player_id = profile["player_id"]
     baseline = (profile.get("lifetime") or {}).get("utro")
@@ -315,7 +316,13 @@ def build_report(
         player_id=player_id,
         nick=profile.get("nick") or "",
         discord_nick=profile.get("discord_nick") or "",
-        tiers=[t for t in (profile.get("tiers") or []) if t.get("size") == 6],
+        tiers=[
+            t for t in (profile.get("tiers") or [])
+            # 3v3 only, and only the channels this model actually scores with:
+            # another channel's tier is not what the verdict is about.
+            if t.get("size") == 6
+            and (not tier_channel_ids or t.get("channel_id") in tier_channel_ids)
+        ],
         lifetime=_lifetime_summary(profile),
         percentiles=[(m["key"], m["percentile"]) for m in spider_metrics],
         rows=rows,
