@@ -152,3 +152,25 @@ def test_the_cap_never_touches_a_real_tier_holding():
                       bands=REAL_BANDS, utro={}, impute_max="A")
     assert index.resolve("p", "ch") == ResolvedTier("S", "exact")
     assert index.resolve("p", "other") == ResolvedTier("S", "cross_channel")
+
+
+def test_an_override_beats_every_other_source():
+    index = TierIndex(
+        holdings={"p": (Holding("ch", "D", "2026-01-01"),)},
+        bands=REAL_BANDS, utro={"p": 0.60}, impute_max="A",
+        overrides={"p": "A"},
+    )
+    assert index.resolve("p", "ch") == ResolvedTier("A", "override")
+    assert index.resolve("p", "elsewhere") == ResolvedTier("A", "override")
+
+
+def test_an_override_is_not_subject_to_the_impute_cap():
+    index = TierIndex(holdings={}, bands=REAL_BANDS, utro={}, impute_max="A",
+                      overrides={"p": "S"})
+    assert index.resolve("p", "ch") == ResolvedTier("S", "override")
+
+
+def test_players_without_an_override_are_unaffected():
+    index = TierIndex(holdings={}, bands=REAL_BANDS, utro={"q": 1.40},
+                      impute_max="A", overrides={"p": "S"})
+    assert index.resolve("q", "ch") == ResolvedTier("A", "imputed")

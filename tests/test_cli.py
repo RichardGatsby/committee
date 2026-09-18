@@ -197,7 +197,8 @@ def test_fit_with_refit_writes_a_bundle(monkeypatch, tmp_path, capsys):
     monkeypatch.setattr("gibhub.cli.make_client", lambda args: FAKE_CLIENT)
     monkeypatch.setattr("gibhub.cli.build_bundle",
                         lambda client, to=None, limit=None, tier_channels=None,
-                               points=None, impute_max=None: fake)
+                               points=None, impute_max=None,
+                               overrides=None: fake)
 
     path = tmp_path / "coefficients.json"
     code = main(["--bundle", str(path), "fit", "--refit"])
@@ -271,3 +272,32 @@ def test_impute_max_rejects_an_unknown_tier():
 
     with pytest.raises(ValueError, match="unknown tier 'Q'"):
         parse_impute_max("Q")
+
+
+def test_load_overrides_reads_names_and_tiers(tmp_path):
+    from gibhub.cli import load_overrides
+
+    path = tmp_path / "overrides.txt"
+    path.write_text("# committee knowledge\nJassi = A\n\nroltzz=B  # a comment\n",
+                    encoding="utf-8")
+
+    class C:
+        def get(self, path_, params=None):
+            return {"data": [{"player_id": "id-" + params["q"]}]}
+
+    assert load_overrides(C(), str(path)) == {"id-Jassi": "A", "id-roltzz": "B"}
+
+
+def test_load_overrides_rejects_a_malformed_line(tmp_path):
+    from gibhub.cli import load_overrides
+
+    path = tmp_path / "bad.txt"
+    path.write_text("Jassi = Z\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="line 1"):
+        load_overrides(object(), str(path))
+
+
+def test_no_overrides_file_means_no_overrides():
+    from gibhub.cli import load_overrides
+
+    assert load_overrides(object(), None) == {}

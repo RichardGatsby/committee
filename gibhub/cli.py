@@ -55,6 +55,13 @@ def build_parser() -> argparse.ArgumentParser:
     fit.add_argument("--to")
     fit.add_argument("--limit", type=int)
     fit.add_argument(
+        "--overrides", metavar="FILE",
+        help="committee-supplied tiers the API does not have, one 'name = TIER' "
+             "per line (# comments allowed). Names are resolved through player "
+             "search; UUIDs are used as-is. Overrides beat every other source and "
+             "are never capped.",
+    )
+    fit.add_argument(
         "--impute-max", dest="impute_max", default="A", metavar="TIER",
         help="strongest tier an untiered player may be imputed as (default: A). "
              "Applied by measured strength, so capping at A also excludes E. "
@@ -159,6 +166,26 @@ def cmd_bulk(args) -> int:
     return 0
 
 
+def load_overrides(client, path):
+    """Read a 'name = TIER' file into {player_id: tier}, resolving names."""
+    if not path:
+        return {}
+    overrides = {}
+    with open(path, "r", encoding="utf-8") as handle:
+        for number, line in enumerate(handle, 1):
+            line = line.split("#", 1)[0].strip()
+            if not line:
+                continue
+            term, sep, tier = line.partition("=")
+            tier = tier.strip().upper()
+            if not sep or tier not in TIERS:
+                raise ValueError(
+                    "%s line %d: expected 'name = TIER' with TIER one of %s, got %r"
+                    % (path, number, ", ".join(TIERS), line))
+            overrides[resolve_player(client, term.strip(), exact=True)] = tier
+    return overrides
+
+
 def parse_impute_max(spec):
     """A tier name, or None when uncapped."""
     if not spec or spec.lower() == "none":
@@ -196,6 +223,7 @@ def cmd_fit(args) -> int:
             make_client(args), to=args.to, limit=args.limit,
             tier_channels=args.tier_channel, points=parse_points(args.points),
             impute_max=parse_impute_max(args.impute_max),
+            overrides=load_overrides(make_client(args), args.overrides),
         )
         save(bundle, args.bundle)
         print("wrote %s" % args.bundle)
@@ -208,6 +236,8 @@ def cmd_fit(args) -> int:
     print("tier source: %s" % (", ".join(sorted(bundle.channel_names.values()))
                                if bundle.tier_channels else "all channels"))
     print("impute cap:  %s" % (bundle.impute_max or "none"))
+    if bundle.overrides:
+        print("overrides:   %d committee-supplied tier(s)" % len(bundle.overrides))
     print("metrics:     " + "  ".join(
         "%s=%.4f" % (key, value)
         for key, value in sorted(bundle.fit_metrics.items())

@@ -35,10 +35,12 @@ class Bundle:
     scale: Optional[float] = None
     # Strongest tier imputation may assign; None means uncapped.
     impute_max: Optional[str] = None
+    # player_id -> tier, supplied by the committee rather than the API.
+    overrides: Dict[str, str] = dataclasses.field(default_factory=dict)
 
     def index(self) -> TierIndex:
         return TierIndex(holdings=self.holdings, bands=self.bands, utro=self.utro,
-                         impute_max=self.impute_max)
+                         impute_max=self.impute_max, overrides=self.overrides)
 
 
 def save(bundle: Bundle, path=DEFAULT_PATH) -> None:
@@ -61,6 +63,7 @@ def save(bundle: Bundle, path=DEFAULT_PATH) -> None:
         "tier_points": bundle.tier_points,
         "scale": bundle.scale,
         "impute_max": bundle.impute_max,
+        "overrides": bundle.overrides,
     }
     temporary = str(path) + ".tmp"
     with open(temporary, "w", encoding="utf-8") as handle:
@@ -93,4 +96,5 @@ def load(path=DEFAULT_PATH) -> Bundle:
         tier_points=payload.get("tier_points", {}),
         scale=payload.get("scale"),
         impute_max=payload.get("impute_max"),
+        overrides=payload.get("overrides", {}),
     )

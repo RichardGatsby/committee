@@ -5,6 +5,7 @@ from typing import Dict, Iterable, List, Mapping, Optional, Sequence
 
 from .model import TIERS
 
+OVERRIDE = "override"
 EXACT = "exact"
 CROSS_CHANNEL = "cross_channel"
 IMPUTED = "imputed"
@@ -90,8 +91,15 @@ class TierIndex:
     utro: Mapping[str, float]
     # Strongest tier imputation may assign to an untiered player. None = no cap.
     impute_max: Optional[str] = None
+    # Committee-supplied tiers for players the API does not have, or has wrong.
+    # Checked before everything else, and never capped.
+    overrides: Mapping[str, str] = dataclasses.field(default_factory=dict)
 
     def resolve(self, player_id: str, channel_id: Optional[str]) -> ResolvedTier:
+        override = self.overrides.get(player_id)
+        if override:
+            return ResolvedTier(override, OVERRIDE)
+
         held = self.holdings.get(player_id) or ()
 
         for holding in held:

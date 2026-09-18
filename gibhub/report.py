@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Sequence
 
 from .dataset import TEAM_SIZE, roster_ids, winner_of
 from .model import feature_vector, points_delta, predict
-from .tiers import CROSS_CHANNEL, EXACT, IMPUTED, TierIndex
+from .tiers import CROSS_CHANNEL, EXACT, IMPUTED, OVERRIDE, TierIndex
 
 OVER_UNDER_THRESHOLD = 1.5
 
@@ -126,7 +126,7 @@ def build_report(
     baseline = (profile.get("lifetime") or {}).get("utro")
 
     rows: List[MatchRow] = []
-    counts = {EXACT: 0, CROSS_CHANNEL: 0, IMPUTED: 0}
+    counts = {OVERRIDE: 0, EXACT: 0, CROSS_CHANNEL: 0, IMPUTED: 0}
     expected_wins = 0.0
     actual_wins = 0
     upset_wins = 0

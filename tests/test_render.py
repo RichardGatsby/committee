@@ -36,7 +36,7 @@ REPORT = PlayerReport(
     even_matches=0,
     draws=1,
     skipped=0,
-    source_counts={"exact": 23, "cross_channel": 0, "imputed": 1},
+    source_counts={"exact": 23, "cross_channel": 0, "imputed": 1, "override": 0},
     provenance={"fitted_at": "2026-09-18T10:00:00+00:00", "data_cutoff": "2026-09-18",
                 "sample_size": 4200, "window": "6m"},
 )
@@ -100,7 +100,7 @@ def test_csv_header_matches_the_spec():
         "matches", "wins", "losses", "draws", "win_rate", "expected_wins", "actual_wins",
         "delta", "label", "stack_wins", "stack_losses", "underdog_wins", "underdog_losses",
         "upset_wins", "upset_losses", "utro", "utro_percentile", "kdr",
-        "exact_tiers", "crosschannel_tiers", "imputed_tiers",
+        "exact_tiers", "crosschannel_tiers", "imputed_tiers", "override_tiers",
     ]
 
 

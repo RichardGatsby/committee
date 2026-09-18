@@ -1,0 +1,9 @@
+# Committee-supplied tiers for players the API has no tier for, or has wrong.
+# One "name = TIER" per line. Names go through player search; UUIDs are used
+# as-is, which is safer for ambiguous nicks. Overrides beat every other source
+# and are never subject to --impute-max.
+#
+#   python3 -m gibhub.cli fit --refit --tier-channel Events --points \
+#       --impute-max A --overrides overrides.txt
+
+Jassi = A

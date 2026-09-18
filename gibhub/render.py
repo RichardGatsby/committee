@@ -17,7 +17,7 @@ CSV_COLUMNS = [
     "matches", "wins", "losses", "draws", "win_rate", "expected_wins", "actual_wins",
     "delta", "label", "stack_wins", "stack_losses", "underdog_wins", "underdog_losses",
     "upset_wins", "upset_losses", "utro", "utro_percentile", "kdr",
-    "exact_tiers", "crosschannel_tiers", "imputed_tiers",
+    "exact_tiers", "crosschannel_tiers", "imputed_tiers", "override_tiers",
 ]
 
 
@@ -132,14 +132,15 @@ def to_markdown(report: PlayerReport) -> str:
         lines.append("%d match(es) skipped: incomplete roster or player absent." % report.skipped)
 
     counts = report.source_counts
-    total = counts["exact"] + counts["cross_channel"] + counts["imputed"]
+    total = sum(counts.values())
     lines.append("")
     lines.append(
-        "_%d of %d tier inputs imputed (capped at %s), %d cross-channel. Tiers from: %s. "
+        "_%d of %d tier inputs imputed (capped at %s), %d cross-channel, "
+        "%d committee override(s). Tiers from: %s. "
         "Model fitted %s on %s matches, cutoff %s, window %s._"
         % (
             counts["imputed"], total, report.provenance.get("impute_max") or "none",
-            counts["cross_channel"],
+            counts["cross_channel"], counts.get("override", 0),
             report.provenance.get("tier_source", "all channels"),
             report.provenance.get("fitted_at"), report.provenance.get("sample_size"),
             report.provenance.get("data_cutoff"), report.provenance.get("window"),
@@ -189,6 +190,7 @@ def _csv_row(report: PlayerReport):
         "exact_tiers": report.source_counts["exact"],
         "crosschannel_tiers": report.source_counts["cross_channel"],
         "imputed_tiers": report.source_counts["imputed"],
+        "override_tiers": report.source_counts.get("override", 0),
     }
 
 
