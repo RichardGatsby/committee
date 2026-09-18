@@ -48,12 +48,20 @@ fitting six free ones; `--points "S=5,E=4,A=3,B=2,C=1,D=0"` sets your own scale.
 
 `exp` is the probability the player's side wins, given the six players' tiers.
 `res` is what happened. A win at `exp` below 50% or a loss above it is marked
-`upset`. The headline line sums the per-match probabilities into expected wins and
-compares that to actual wins:
+`upset`. The headline sums the per-match probabilities into expected wins and
+compares that to actual wins, then says how likely that gap is to be luck:
 
-- **OVER** — won at least 1.5 more than their tier predicted
-- **UNDER** — won at least 1.5 fewer
-- **ON TIER** — within that band
+- **CLEARLY ABOVE / BELOW TIER** — a gap this big happens by luck less than 1 time
+  in 100. Strong evidence the tier is wrong.
+- **ABOVE / BELOW TIER** — less than 1 time in 20. Reasonable evidence.
+- **ON TIER** — the gap is within what luck produces. No evidence either way.
+
+The verdict reads off that probability rather than a raw win count, because the
+same gap means different things at different sample sizes: +5 wins is real over 20
+matches and noise over 400. An earlier version used a fixed +-1.5 win threshold and
+labelled a player "OVER" on a +4 gap across 324 matches — a 1.2% edge that is pure
+noise. The report also gives the effect as wins per 100 games, which is comparable
+between players however many matches each has played.
 
 `pts` is the team's tier-points margin, `utro` the player's own performance rating
 for the match, playtime-weighted, with the change from their baseline in brackets.

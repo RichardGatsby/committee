@@ -7,7 +7,10 @@ from .dataset import TEAM_SIZE, roster_ids, winner_of
 from .model import feature_vector, points_delta, predict
 from .tiers import CROSS_CHANNEL, EXACT, IMPUTED, OVERRIDE, TierIndex
 
-OVER_UNDER_THRESHOLD = 1.5
+# Verdict thresholds on the probability that a gap this big is luck. Chosen so
+# the wording means the same thing whether a window holds 20 matches or 400.
+CLEAR_P = 0.01
+LIKELY_P = 0.05
 
 
 def nicks_of(match: Dict[str, Any]) -> Dict[str, str]:
@@ -99,6 +102,10 @@ class PlayerReport:
     actual_wins: int
     delta: float
     label: str
+    # Chance a gap this big is luck, and the gap as wins per 100 games.
+    luck: float
+    per_100: float
+    decided: int
     upset_wins: int
     upset_losses: int
     # The other half of the 2x2: results that went the way the tiers predicted.
@@ -111,12 +118,40 @@ class PlayerReport:
     provenance: Dict[str, Any]
 
 
-def classify(delta: float) -> str:
-    """OVER / UNDER / ON TIER, at the +-1.5 win threshold from the spec."""
-    if delta >= OVER_UNDER_THRESHOLD:
-        return "OVER"
-    if delta <= -OVER_UNDER_THRESHOLD:
-        return "UNDER"
+def luck_probability(probabilities: Sequence[float], actual: int) -> float:
+    """Chance of a gap at least this large, in this direction, by luck alone.
+
+    Exact Poisson-binomial tail: each match has its own win probability, so the
+    usual binomial formula does not apply. Returns 1.0 with nothing to judge.
+    """
+    if not probabilities:
+        return 1.0
+
+    distribution = [1.0]
+    for p in probabilities:
+        nxt = [0.0] * (len(distribution) + 1)
+        for wins, mass in enumerate(distribution):
+            nxt[wins] += mass * (1.0 - p)
+            nxt[wins + 1] += mass * p
+        distribution = nxt
+
+    expected = sum(probabilities)
+    if actual >= expected:
+        return sum(distribution[actual:])
+    return sum(distribution[:actual + 1])
+
+
+def classify(delta: float, probability: float) -> str:
+    """The committee-facing verdict.
+
+    Reads off how likely the gap is to be luck, not off a raw win count: a
+    +4 win gap is decisive over 20 matches and meaningless over 400.
+    """
+    direction = "ABOVE" if delta > 0 else "BELOW"
+    if probability < CLEAR_P:
+        return "CLEARLY %s TIER" % direction
+    if probability < LIKELY_P:
+        return "%s TIER" % direction
     return "ON TIER"
 
 
@@ -251,6 +286,9 @@ def build_report(
         )
 
     delta = actual_wins - expected_wins
+    decided = sum(1 for row in rows if row.result in ("W", "L"))
+    luck = luck_probability([row.expected for row in rows if row.result in ("W", "L")],
+                            actual_wins)
     spider_metrics = spider.get("metrics") or []
 
     return PlayerReport(
@@ -264,7 +302,10 @@ def build_report(
         expected_wins=expected_wins,
         actual_wins=actual_wins,
         delta=delta,
-        label=classify(delta),
+        label=classify(delta, luck),
+        luck=luck,
+        per_100=(100.0 * delta / decided) if decided else 0.0,
+        decided=decided,
         upset_wins=upset_wins,
         upset_losses=upset_losses,
         stack_wins=stack_wins,

@@ -15,7 +15,7 @@ _COLOR = re.compile(r"\^.")
 CSV_COLUMNS = [
     "player_id", "nick", "discord_nick", "tier", "tier_channel", "tier_updated_at",
     "matches", "wins", "losses", "draws", "win_rate", "expected_wins", "actual_wins",
-    "delta", "label", "stack_wins", "stack_losses", "underdog_wins", "underdog_losses",
+    "delta", "per_100", "luck_1_in", "label", "decided", "stack_wins", "stack_losses", "underdog_wins", "underdog_losses",
     "upset_wins", "upset_losses", "utro", "utro_percentile", "kdr",
     "exact_tiers", "crosschannel_tiers", "imputed_tiers", "override_tiers",
 ]
@@ -68,6 +68,25 @@ def _extremes_table(title, rows, limit) -> list:
     return lines
 
 
+def _luck_sentence(report: PlayerReport) -> str:
+    """Plain-English strength of evidence, for readers who do not want a z-score."""
+    if not report.decided:
+        return "_No decided matches in this window._"
+
+    odds = int(round(1.0 / report.luck)) if report.luck > 0 else 10000
+    direction = "better" if report.delta > 0 else "worse"
+    if report.label == "ON TIER":
+        return (
+            "A gap this size happens by luck roughly **1 time in %d**, so it is not "
+            "evidence either way — this player looks correctly tiered." % max(odds, 2)
+        )
+    strength = "strong" if report.label.startswith("CLEARLY") else "reasonable"
+    return (
+        "Doing this much %s than predicted happens by luck only about **1 time in "
+        "%d**, which is %s evidence the tier is wrong." % (direction, odds, strength)
+    )
+
+
 def to_markdown(report: PlayerReport, extremes: int = 0) -> str:
     lines = []
     name = strip_colors(report.nick) or report.discord_nick
@@ -108,10 +127,16 @@ def to_markdown(report: PlayerReport, extremes: int = 0) -> str:
         lines.append("_no 3v3 matches in this window_")
         lines.append("")
     else:
+        lines.append("**Verdict: %s**" % report.label)
+        lines.append("")
         lines.append(
-            "**Expected %.2f wins, actual %d — %+.2f → %s**"
-            % (report.expected_wins, report.actual_wins, report.delta, report.label)
+            "Won **%d of %d**; their tier predicted about **%d**. That is **%+.0f "
+            "%s per 100 games**."
+            % (report.actual_wins, report.decided, round(report.expected_wins),
+               report.per_100,
+               "win" if abs(round(report.per_100)) == 1 else "wins")
         )
+        lines.append(_luck_sentence(report))
         lines.append("")
         show_points = any(row.points is not None for row in report.rows)
         lines.append("| date | maps |%s exp | res | utro (vs base) | |"
@@ -229,7 +254,10 @@ def _csv_row(report: PlayerReport):
         "expected_wins": "%.2f" % report.expected_wins,
         "actual_wins": report.actual_wins,
         "delta": "%.2f" % report.delta,
+        "per_100": "%.1f" % report.per_100,
+        "luck_1_in": int(round(1.0 / report.luck)) if report.luck > 0 else "",
         "label": report.label,
+        "decided": report.decided,
         "stack_wins": report.stack_wins,
         "stack_losses": report.upset_losses,
         "underdog_wins": report.upset_wins,

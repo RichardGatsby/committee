@@ -29,6 +29,9 @@ REPORT = PlayerReport(
     actual_wins=2,
     delta=0.27,
     label="ON TIER",
+    luck=0.34,
+    per_100=7.1,
+    decided=3,
     upset_wins=1,
     upset_losses=1,
     stack_wins=1,
@@ -55,11 +58,38 @@ def test_markdown_leads_with_the_nick_and_tier():
     assert "Poland ET:Legacy: #3v3: **A**" in text
 
 
-def test_markdown_shows_the_headline_comparison():
+def test_markdown_shows_the_verdict_in_plain_language():
     text = to_markdown(REPORT)
-    assert "expected 1.73" in text.lower()
-    assert "actual 2" in text
-    assert "ON TIER" in text
+    assert "**Verdict: ON TIER**" in text
+    assert "Won **2 of 3**" in text
+    assert "their tier predicted about **2**" in text
+    assert "per 100 games" in text
+    # No z-scores or p-values in the committee-facing text.
+    assert "z-score" not in text and "p =" not in text
+
+
+def test_markdown_explains_the_strength_of_evidence_as_odds():
+    text = to_markdown(REPORT)
+    assert "1 time in 3" in text
+    assert "correctly tiered" in text
+
+
+def test_a_significant_verdict_says_the_tier_is_wrong():
+    strong = dataclasses.replace(
+        REPORT, label="CLEARLY ABOVE TIER", luck=0.0006, delta=24.7, per_100=10.3,
+        decided=240, actual_wins=143, expected_wins=118.3)
+    text = to_markdown(strong)
+    assert "**Verdict: CLEARLY ABOVE TIER**" in text
+    assert "1 time in 1667" in text
+    assert "strong evidence the tier is wrong" in text
+
+
+def test_a_below_tier_verdict_reads_as_worse_than_predicted():
+    weak = dataclasses.replace(
+        REPORT, label="BELOW TIER", luck=0.03, delta=-6.0, per_100=-8.0)
+    text = to_markdown(weak)
+    assert "worse than predicted" in text
+    assert "reasonable evidence" in text
 
 
 def test_markdown_marks_upsets():
@@ -86,7 +116,7 @@ def test_markdown_notes_draws_are_excluded():
 
 
 def test_markdown_handles_an_empty_report():
-    empty = dataclasses.replace(REPORT, rows=[], draws=0)
+    empty = dataclasses.replace(REPORT, rows=[], draws=0, decided=0)
     assert "no 3v3 matches in this window" in to_markdown(empty)
 
 
@@ -98,7 +128,8 @@ def test_csv_header_matches_the_spec():
     assert CSV_COLUMNS == [
         "player_id", "nick", "discord_nick", "tier", "tier_channel", "tier_updated_at",
         "matches", "wins", "losses", "draws", "win_rate", "expected_wins", "actual_wins",
-        "delta", "label", "stack_wins", "stack_losses", "underdog_wins", "underdog_losses",
+        "delta", "per_100", "luck_1_in", "label", "decided", "stack_wins",
+        "stack_losses", "underdog_wins", "underdog_losses",
         "upset_wins", "upset_losses", "utro", "utro_percentile", "kdr",
         "exact_tiers", "crosschannel_tiers", "imputed_tiers", "override_tiers",
     ]
@@ -182,3 +213,12 @@ def test_markdown_does_not_warn_when_the_window_was_fully_read():
     full = dataclasses.replace(
         REPORT, provenance=dict(REPORT.provenance, available=4, fetched=4))
     assert "Only the most recent" not in to_markdown(full)
+
+
+def test_the_per_100_figure_agrees_with_its_own_plural():
+    one = dataclasses.replace(REPORT, per_100=1.2)
+    assert "+1 win per 100 games" in to_markdown(one)
+    many = dataclasses.replace(REPORT, per_100=7.1)
+    assert "+7 wins per 100 games" in to_markdown(many)
+    none = dataclasses.replace(REPORT, per_100=0.2)
+    assert "+0 wins per 100 games" in to_markdown(none)

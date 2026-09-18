@@ -2,7 +2,8 @@ import json
 
 import pytest
 
-from gibhub.report import MatchRow, build_report, classify, side_of, weighted_utro
+from gibhub.report import (MatchRow, build_report, classify, luck_probability,
+                           side_of, weighted_utro)
 from gibhub.tiers import Holding, TierIndex
 
 MATCH = {
@@ -65,12 +66,43 @@ BANDS = {"S": 1.30, "A": 1.15, "B": 1.00, "C": 0.90, "D": 0.80, "E": 0.70}
 COEFFICIENTS = [0.9, 0.6, 0.3, 0.0, -0.4, -0.8]
 
 
-def test_classify_labels_the_delta():
-    assert classify(2.6) == "OVER"
-    assert classify(1.5) == "OVER"
-    assert classify(0.4) == "ON TIER"
-    assert classify(-1.5) == "UNDER"
-    assert classify(-3.0) == "UNDER"
+def test_classify_reads_off_the_luck_probability_not_the_raw_gap():
+    assert classify(2.6, 0.005) == "CLEARLY ABOVE TIER"
+    assert classify(2.6, 0.03) == "ABOVE TIER"
+    assert classify(2.6, 0.30) == "ON TIER"
+    assert classify(-6.0, 0.005) == "CLEARLY BELOW TIER"
+    assert classify(-6.0, 0.03) == "BELOW TIER"
+    assert classify(-6.0, 0.30) == "ON TIER"
+
+
+def test_the_same_gap_means_different_things_at_different_sample_sizes():
+    """+5 wins is real over 20 matches and noise over 400 — the old fixed
+    +-1.5 win threshold could not tell those apart."""
+    small = luck_probability([0.5] * 20, 15)
+    large = luck_probability([0.5] * 400, 205)
+    assert classify(5.0, small) == "ABOVE TIER"
+    assert classify(5.0, large) == "ON TIER"
+    assert small < large
+
+
+def test_luck_probability_of_exactly_average_is_near_a_half():
+    assert luck_probability([0.5] * 100, 50) == pytest.approx(0.54, abs=0.02)
+
+
+def test_luck_probability_falls_as_the_result_gets_more_extreme():
+    ps = [0.5] * 100
+    assert luck_probability(ps, 60) < luck_probability(ps, 55) < luck_probability(ps, 51)
+
+
+def test_luck_probability_handles_a_certain_outcome():
+    assert luck_probability([1.0, 1.0], 2) == pytest.approx(1.0)
+    assert luck_probability([], 0) == 1.0
+
+
+def test_luck_probability_is_two_directional():
+    ps = [0.5] * 100
+    # Equally unlikely either side of the mean.
+    assert luck_probability(ps, 65) == pytest.approx(luck_probability(ps, 35), abs=1e-9)
 
 
 def _detail(match_id, winner, rounds_utro):
@@ -195,6 +227,7 @@ def test_lifetime_and_percentiles_are_carried_through():
     assert report.percentiles == [("utro", 87.5)]
     assert report.provenance["fitted_at"] == "2026-09-18T00:00:00+00:00"
     assert report.label == "ON TIER"
+    assert report.decided == 0
 
 
 def test_an_unsettled_match_is_scored_from_its_scoreline_not_called_a_draw():
@@ -298,3 +331,11 @@ def test_a_level_match_reports_positive_zero_points_not_negative_zero():
                           tier_points=TIER_POINTS)
     assert report.rows[0].points == 0.0
     assert "%+g" % report.rows[0].points == "+0"
+
+
+def test_a_report_carries_the_effect_size_per_hundred_games():
+    details = [_detail("m%d" % i, "alpha", 1.2) for i in range(4)]
+    report = build_report(PROFILE, SPIDER, details, _index(), COEFFICIENTS, {})
+    assert report.decided == 4
+    assert report.per_100 == pytest.approx(100.0 * report.delta / 4)
+    assert 0.0 <= report.luck <= 1.0
