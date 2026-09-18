@@ -1,0 +1,239 @@
+{
+ "$schema": "https://gibhub.gg/PagePlayerListItem.json",
+ "items": [
+  {
+   "country": "bh",
+   "discord_nick": "ddd331",
+   "first_seen": "2025-02-20T18:06:10+01:00",
+   "last_seen": "2026-09-18T12:50:53+02:00",
+   "matches_played": 730,
+   "nick": "ddd331",
+   "player_id": "55e2623b-eccc-5f23-9126-2eee84a70cb2",
+   "rounds_played": 3366
+  },
+  {
+   "country": "fi",
+   "discord_nick": "mayan",
+   "first_seen": "2024-10-10T19:37:39+02:00",
+   "last_seen": "2026-09-18T12:47:11+02:00",
+   "matches_played": 1405,
+   "nick": "^pmayan",
+   "player_id": "104ab2de-0e4f-5176-b2f3-3a2116e193db",
+   "rounds_played": 6944
+  },
+  {
+   "country": "de",
+   "discord_nick": "Valar",
+   "first_seen": "2025-04-16T21:32:59+02:00",
+   "last_seen": "2026-09-18T00:13:00+02:00",
+   "matches_played": 675,
+   "nick": "Valar",
+   "player_id": "4e73f78e-2696-58de-b5db-d5dd01756c4c",
+   "rounds_played": 3567
+  },
+  {
+   "country": "de",
+   "discord_nick": "Bl4d3",
+   "first_seen": "2024-10-20T23:00:00+02:00",
+   "last_seen": "2026-09-17T21:13:15+02:00",
+   "matches_played": 748,
+   "nick": "blade",
+   "player_id": "6d34830a-6e96-58ef-a69d-c33202a01ee1",
+   "rounds_played": 3925
+  },
+  {
+   "country": "nl",
+   "discord_nick": "Cupra",
+   "first_seen": "2024-12-23T23:54:29+01:00",
+   "last_seen": "2026-09-17T20:42:32+02:00",
+   "matches_played": 803,
+   "nick": "^>Bonjwa",
+   "player_id": "f9022eb3-7030-566f-9535-fdc94a8fd590",
+   "rounds_played": 4270
+  },
+  {
+   "country": "cz",
+   "discord_nick": "semik",
+   "first_seen": "2024-10-26T21:35:13+02:00",
+   "last_seen": "2026-09-17T00:29:36+02:00",
+   "matches_played": 1173,
+   "nick": "semik",
+   "player_id": "ab210a6f-9666-52bc-a032-cb23368af94f",
+   "rounds_played": 5539
+  },
+  {
+   "country": "de",
+   "discord_nick": "mental",
+   "first_seen": "2024-12-15T18:43:04+01:00",
+   "last_seen": "2026-09-17T00:23:37+02:00",
+   "matches_played": 1862,
+   "nick": "mental",
+   "player_id": "d7401853-4d9e-58ac-bebd-286adc564c92",
+   "rounds_played": 8918
+  },
+  {
+   "country": "pl",
+   "discord_nick": "czkk_",
+   "first_seen": "2024-12-15T18:47:12+01:00",
+   "last_seen": "2026-09-16T19:56:16+02:00",
+   "matches_played": 896,
+   "nick": "czkk_",
+   "player_id": "fb8bda08-bace-5c27-b9d7-efbab9694933",
+   "rounds_played": 4433
+  },
+  {
+   "country": "fi",
+   "discord_nick": "late",
+   "first_seen": "2025-02-24T20:27:58+01:00",
+   "last_seen": "2026-09-15T14:33:36+02:00",
+   "matches_played": 609,
+   "nick": "^woperaattori",
+   "player_id": "467be8ad-2f65-59bc-b65f-eab681c05782",
+   "rounds_played": 2827
+  },
+  {
+   "country": "de",
+   "discord_nick": "Oksii",
+   "first_seen": "2025-01-12T20:26:39+01:00",
+   "last_seen": "2026-09-13T20:35:53+02:00",
+   "matches_played": 458,
+   "nick": "Oksi^~i",
+   "player_id": "b04c4850-29c9-52a9-babe-f1feadbeb206",
+   "rounds_played": 2404
+  },
+  {
+   "country": "be",
+   "discord_nick": "carnage",
+   "first_seen": "2024-11-29T21:23:20+01:00",
+   "last_seen": "2026-09-13T18:54:46+02:00",
+   "matches_played": 610,
+   "nick": "^0carnage",
+   "player_id": "c901ff98-5308-5356-b036-98937d6fb54c",
+   "rounds_played": 2873
+  },
+  {
+   "country": "ma",
+   "discord_nick": "snjh",
+   "first_seen": "2024-12-30T15:33:14+01:00",
+   "last_seen": "2026-09-13T15:13:54+02:00",
+   "matches_played": 382,
+   "nick": "snjh",
+   "player_id": "c7d554d2-edfc-5b1b-96b3-c14e1ec0b4b5",
+   "rounds_played": 1825
+  },
+  {
+   "country": "si",
+   "discord_nick": "squAze",
+   "first_seen": "2024-12-15T18:57:50+01:00",
+   "last_seen": "2026-09-09T21:13:36+02:00",
+   "matches_played": 339,
+   "nick": "squAze",
+   "player_id": "9e4589e9-4306-5c19-a95e-c16ac933edbc",
+   "rounds_played": 1661
+  },
+  {
+   "country": "de",
+   "discord_nick": "FiREBALL",
+   "first_seen": "2024-10-20T23:00:00+02:00",
+   "last_seen": "2026-09-08T22:18:37+02:00",
+   "matches_played": 457,
+   "nick": "FiREBALL",
+   "player_id": "553dd54c-4b18-50a3-a387-10adbce6ed80",
+   "rounds_played": 2446
+  },
+  {
+   "country": "nl",
+   "discord_nick": "kREPOX",
+   "first_seen": "2024-10-17T20:31:09+02:00",
+   "last_seen": "2026-09-08T20:15:09+02:00",
+   "matches_played": 268,
+   "nick": "kREPOX",
+   "player_id": "ff480fc7-fbce-5158-9ea0-37bef4c6be28",
+   "rounds_played": 1506
+  },
+  {
+   "country": "pl",
+   "discord_nick": "hunter",
+   "first_seen": "2024-11-13T20:49:41+01:00",
+   "last_seen": "2026-09-03T20:44:32+02:00",
+   "matches_played": 210,
+   "nick": "hunter",
+   "player_id": "f0cab955-7db8-50ac-93e8-7a28a465b140",
+   "rounds_played": 1078
+  },
+  {
+   "country": "cz",
+   "discord_nick": "tezaXo",
+   "first_seen": "2024-12-15T23:30:36+01:00",
+   "last_seen": "2026-09-03T20:29:53+02:00",
+   "matches_played": 764,
+   "nick": "^7t^jZ^7x^j...",
+   "player_id": "fa4219b9-b84c-5b91-97d5-9eeb14116b59",
+   "rounds_played": 3637
+  },
+  {
+   "country": "fi",
+   "discord_nick": "lEku",
+   "first_seen": "2024-11-09T17:14:43+01:00",
+   "last_seen": "2026-08-05T15:39:14+02:00",
+   "matches_played": 222,
+   "nick": "lEku",
+   "player_id": "7f1ecd4d-f6b1-5677-bbff-9d56eac9ce3a",
+   "rounds_played": 1047
+  },
+  {
+   "country": "mt",
+   "discord_nick": "steve",
+   "first_seen": "2024-12-13T23:16:32+01:00",
+   "last_seen": "2026-06-21T22:14:01+02:00",
+   "matches_played": 189,
+   "nick": "steve",
+   "player_id": "187d1f48-98f1-5149-8b25-45da095784cd",
+   "rounds_played": 1067
+  },
+  {
+   "country": "be",
+   "discord_nick": "sappig",
+   "first_seen": "2024-10-17T20:31:09+02:00",
+   "last_seen": "2026-06-18T21:21:05+02:00",
+   "matches_played": 110,
+   "nick": "sappig",
+   "player_id": "fe41204f-3ca3-5730-8e72-de674404286f",
+   "rounds_played": 517
+  },
+  {
+   "country": "fi",
+   "discord_nick": "Swanidius",
+   "first_seen": "2024-10-20T23:00:00+02:00",
+   "last_seen": "2026-06-12T20:54:15+02:00",
+   "matches_played": 338,
+   "nick": "Swanidius",
+   "player_id": "3ce25841-5878-532f-ae24-6d4cdc372690",
+   "rounds_played": 1676
+  },
+  {
+   "country": "us",
+   "discord_nick": "vein",
+   "first_seen": "2024-11-22T20:10:41+01:00",
+   "last_seen": "2026-06-07T01:47:34+02:00",
+   "matches_played": 389,
+   "nick": "^0DEMON MODE",
+   "player_id": "74bf6201-6238-5c0d-89b2-3449d318d153",
+   "rounds_played": 1819
+  },
+  {
+   "country": "pl",
+   "discord_nick": "hAkim",
+   "first_seen": "2024-12-15T18:42:25+01:00",
+   "last_seen": "2026-03-15T21:43:14+01:00",
+   "matches_played": 176,
+   "nick": "hAkim",
+   "player_id": "b875a377-2397-5b5c-b64c-1e53abbaf6f3",
+   "rounds_played": 898
+  }
+ ],
+ "page": 1,
+ "per_page": 100,
+ "total": 23,
+ "total_pages": 1
+}

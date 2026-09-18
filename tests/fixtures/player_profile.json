@@ -1,0 +1,2109 @@
+{
+ "$schema": "https://gibhub.gg/PlayerProfile.json",
+ "aliases": [
+  "Kexy",
+  "^i^0[^J^4Kexy^0]",
+  "^i+/- 5^p '^4Kexy",
+  "^36^13^3:)^4^4Kexy",
+  "^0=^1A^7O^4D^0=^J^4Kexy",
+  "^xPLUG+FORK^4Kexy",
+  "^ddktrp^7'^4Kexy",
+  "^0lb^F-^7^4Kexy",
+  "^7eyjafjala '^x *^4Kexy",
+  "^7x^eD^6|^4Kexy"
+ ],
+ "ban_history": [
+  {
+   "ban_duration": 0,
+   "channel_id": "1302336327487848529",
+   "date": "2026-03-31T18:28:47.769418+02:00"
+  },
+  {
+   "ban_duration": 0,
+   "channel_id": "1302336327487848529",
+   "date": "2026-03-17T11:39:59.801342+01:00"
+  },
+  {
+   "ban_duration": 0,
+   "channel_id": "1302336327487848529",
+   "date": "2026-02-22T14:08:06.120472+01:00"
+  },
+  {
+   "ban_duration": 3,
+   "channel_id": "1302336327487848529",
+   "date": "2026-02-01T17:31:00.905131+01:00"
+  },
+  {
+   "ban_duration": 0,
+   "channel_id": "1302336327487848529",
+   "date": "2026-01-31T13:53:37.100313+01:00"
+  },
+  {
+   "ban_duration": 3,
+   "channel_id": "1302336327487848529",
+   "date": "2026-01-16T13:18:19.361455+01:00"
+  },
+  {
+   "ban_duration": 0,
+   "channel_id": "1302336327487848529",
+   "date": "2026-01-15T09:52:12.989559+01:00"
+  }
+ ],
+ "best_teammates": [
+  {
+   "discord_nick": "devix",
+   "match_draws": 2,
+   "match_losses": 9,
+   "match_wins": 27,
+   "matches_with": 38,
+   "nick": "devix",
+   "player_id": "f1ecbdb6-18cc-51eb-bf46-aaf5fcad132e",
+   "win_rate": 0.75
+  },
+  {
+   "discord_nick": "Arturas",
+   "match_draws": 1,
+   "match_losses": 3,
+   "match_wins": 8,
+   "matches_with": 12,
+   "nick": "^zma7zz",
+   "player_id": "1d48734c-a54b-56d0-90d3-b5ac5670dae8",
+   "win_rate": 0.7272727272727273
+  },
+  {
+   "discord_nick": "Lepari",
+   "match_draws": 1,
+   "match_losses": 4,
+   "match_wins": 9,
+   "matches_with": 14,
+   "nick": "Lepari",
+   "player_id": "0f2b958e-a29c-5189-86dd-5a16db10834f",
+   "win_rate": 0.6923076923076923
+  },
+  {
+   "discord_nick": "Damon",
+   "match_draws": 0,
+   "match_losses": 4,
+   "match_wins": 8,
+   "matches_with": 12,
+   "nick": "^pinsurgent",
+   "player_id": "20ebd36e-c3e0-5b98-805b-70f88b6c9b90",
+   "win_rate": 0.6666666666666666
+  },
+  {
+   "discord_nick": "lEku",
+   "match_draws": 0,
+   "match_losses": 6,
+   "match_wins": 11,
+   "matches_with": 17,
+   "nick": "lEku",
+   "player_id": "7f1ecd4d-f6b1-5677-bbff-9d56eac9ce3a",
+   "win_rate": 0.6470588235294118
+  }
+ ],
+ "betting": {
+  "balance": "3590000",
+  "net_profit": "47651.74",
+  "recent_bets": [
+   {
+    "amount": "2000000",
+    "maps": [
+     "mp_beach",
+     "erdenberg_t2",
+     "te_escape2"
+    ],
+    "match_id": "340f5b33-0cde-5995-869a-3a8885c07394",
+    "placed_at": "2026-07-12T13:42:03+02:00",
+    "season": 4,
+    "team": "beta",
+    "winner": "beta",
+    "winnings": "2000000"
+   },
+   {
+    "amount": "1480000",
+    "match_id": "d7aaa1ae-62b6-5981-a939-1ae8f9d5634b",
+    "placed_at": "2026-03-18T18:53:39+01:00",
+    "season": 4,
+    "team": "beta",
+    "winnings": "1480000"
+   },
+   {
+    "amount": "385000",
+    "maps": [
+     "te_escape2",
+     "etl_adlernest",
+     "etl_frostbite"
+    ],
+    "match_id": "b7451718-d44b-5214-8912-2fe09abc3af2",
+    "placed_at": "2026-01-19T16:16:17+01:00",
+    "season": 4,
+    "team": "beta",
+    "winner": "alpha",
+    "winnings": "385000"
+   },
+   {
+    "amount": "100000",
+    "maps": [
+     "te_escape2",
+     "etl_frostbite",
+     "sw_goldrush_te"
+    ],
+    "match_id": "60db405c-ba4e-5ee9-b8de-da2fe493b6c8",
+    "placed_at": "2026-01-11T18:43:29+01:00",
+    "season": 4,
+    "team": "beta",
+    "winner": "alpha",
+    "winnings": "100000"
+   },
+   {
+    "amount": "55000",
+    "maps": [
+     "supply",
+     "et_brewdog",
+     "etl_ice"
+    ],
+    "match_id": "d4449fcf-4688-599d-9d51-5836c364fcc0",
+    "placed_at": "2026-01-06T16:03:46+01:00",
+    "season": 4,
+    "team": "beta",
+    "winner": "beta",
+    "winnings": "55000"
+   },
+   {
+    "amount": "1000",
+    "maps": [
+     "erdenberg_t2",
+     "te_escape2",
+     "etl_adlernest"
+    ],
+    "match_id": "d9c84e4a-d3aa-5b64-bdeb-086ecf7fae20",
+    "placed_at": "2025-08-24T15:34:39+02:00",
+    "season": 1,
+    "team": "beta",
+    "winner": "beta",
+    "winnings": "1000"
+   },
+   {
+    "amount": "20000",
+    "maps": [
+     "etl_adlernest",
+     "erdenberg_t2",
+     "etl_ice"
+    ],
+    "match_id": "2fbc7f89-63bd-52f5-8358-57660498ee7c",
+    "placed_at": "2025-08-24T13:53:27+02:00",
+    "season": 1,
+    "team": "alpha",
+    "winner": "beta",
+    "winnings": "20000"
+   },
+   {
+    "amount": "10000",
+    "maps": [
+     "etl_adlernest",
+     "te_escape2",
+     "etl_sp_delivery"
+    ],
+    "match_id": "2207632e-b8f9-50d6-8729-b19d99fbf5bd",
+    "placed_at": "2025-08-24T13:14:33+02:00",
+    "season": 1,
+    "team": "alpha",
+    "winner": "beta",
+    "winnings": "10000"
+   },
+   {
+    "amount": "10000",
+    "maps": [
+     "braundorf_b4",
+     "et_brewdog",
+     "etl_sp_delivery"
+    ],
+    "match_id": "fb1090de-2523-5b9a-b32c-4af5defe2f3d",
+    "placed_at": "2025-08-24T12:26:54+02:00",
+    "season": 1,
+    "team": "alpha",
+    "winner": "beta",
+    "winnings": "20000"
+   },
+   {
+    "amount": "200000",
+    "maps": [
+     "te_escape2",
+     "et_brewdog",
+     "sw_goldrush_te"
+    ],
+    "match_id": "c3283c5a-673a-51a3-91c6-c46b9756031e",
+    "placed_at": "2025-08-18T20:21:08+02:00",
+    "season": 1,
+    "team": "alpha",
+    "winner": "alpha",
+    "winnings": "200000"
+   }
+  ],
+  "total_bets": 50,
+  "total_losses": "113700",
+  "total_wagered": "4674674.24",
+  "win_rate": 0.5
+ },
+ "channel_trends": [
+  {
+   "channel_id": "1194582311182807142",
+   "channel_name": "ET:Legacy Events: #3vs3",
+   "points": [
+    {
+     "played_at": "2025-08-19T10:34:11+02:00",
+     "rank_end": 1350,
+     "result": "win"
+    },
+    {
+     "played_at": "2025-08-19T15:47:15+02:00",
+     "rank_end": 1368,
+     "result": "win"
+    },
+    {
+     "played_at": "2025-08-24T11:32:11+02:00",
+     "rank_end": 1384,
+     "result": "win"
+    },
+    {
+     "pick_pos": 4,
+     "played_at": "2026-01-09T10:36:42+01:00",
+     "rank_end": 1400,
+     "result": "win"
+    },
+    {
+     "played_at": "2026-01-09T17:21:33+01:00",
+     "rank_end": 1416,
+     "result": "loss",
+     "was_captain": true
+    },
+    {
+     "pick_pos": 3,
+     "played_at": "2026-01-12T10:40:06+01:00",
+     "rank_end": 1399,
+     "result": "loss"
+    },
+    {
+     "pick_pos": 3,
+     "played_at": "2026-01-14T09:39:19+01:00",
+     "rank_end": 1382,
+     "result": "win"
+    },
+    {
+     "pick_pos": 3,
+     "played_at": "2026-01-14T11:04:38+01:00",
+     "rank_end": 1398,
+     "result": "win"
+    },
+    {
+     "pick_pos": 1,
+     "played_at": "2026-01-14T16:48:52+01:00",
+     "rank_end": 1411,
+     "result": "loss"
+    },
+    {
+     "pick_pos": 1,
+     "played_at": "2026-01-14T17:38:37+01:00",
+     "rank_end": 1396,
+     "result": "loss"
+    },
+    {
+     "pick_pos": 2,
+     "played_at": "2026-01-21T10:32:21+01:00",
+     "rank_end": 1380,
+     "result": "win"
+    },
+    {
+     "pick_pos": 3,
+     "played_at": "2026-01-21T16:13:31+01:00",
+     "rank_end": 1394,
+     "result": "win"
+    },
+    {
+     "pick_pos": 4,
+     "played_at": "2026-01-24T10:29:33+01:00",
+     "rank_end": 1404,
+     "result": "loss"
+    },
+    {
+     "pick_pos": 4,
+     "played_at": "2026-01-29T14:30:13+01:00",
+     "rank_end": 1388,
+     "result": "win"
+    },
+    {
+     "pick_pos": 4,
+     "played_at": "2026-02-02T11:36:47+01:00",
+     "rank_end": 1402,
+     "result": "win"
+    }
+   ]
+  },
+  {
+   "channel_id": "1194582341327265822",
+   "channel_name": "ET:Legacy Events: #6vs6",
+   "points": [
+    {
+     "pick_pos": 9,
+     "played_at": "2026-02-01T12:25:12+01:00",
+     "rank_end": 1400,
+     "result": "win"
+    }
+   ]
+  },
+  {
+   "channel_id": "1302336327487848529",
+   "channel_name": "Poland ET:Legacy: #3v3",
+   "points": [
+    {
+     "pick_pos": 3,
+     "played_at": "2026-09-06T16:22:00+02:00",
+     "rank_end": 1404,
+     "result": "win"
+    },
+    {
+     "pick_pos": 4,
+     "played_at": "2026-09-08T12:07:56+02:00",
+     "rank_end": 1419,
+     "result": "win"
+    },
+    {
+     "pick_pos": 3,
+     "played_at": "2026-09-08T17:06:04+02:00",
+     "rank_end": 1400,
+     "result": "loss"
+    },
+    {
+     "pick_pos": 3,
+     "played_at": "2026-09-08T17:34:59+02:00",
+     "rank_end": 1413,
+     "result": "win"
+    },
+    {
+     "pick_pos": 3,
+     "played_at": "2026-09-09T13:24:08+02:00",
+     "rank_end": 1398,
+     "result": "loss"
+    },
+    {
+     "pick_pos": 2,
+     "played_at": "2026-09-14T16:56:49+02:00",
+     "rank_end": 1378,
+     "result": "loss"
+    },
+    {
+     "pick_pos": 4,
+     "played_at": "2026-09-15T12:12:19+02:00",
+     "rank_end": 1396,
+     "result": "win"
+    },
+    {
+     "pick_pos": 4,
+     "played_at": "2026-09-15T12:57:28+02:00",
+     "rank_end": 1382,
+     "result": "loss"
+    },
+    {
+     "pick_pos": 2,
+     "played_at": "2026-09-15T14:33:36+02:00",
+     "rank_end": 1384,
+     "result": "draw"
+    },
+    {
+     "played_at": "2026-09-15T15:14:14+02:00",
+     "rank_end": 1399,
+     "result": "win",
+     "was_captain": true
+    },
+    {
+     "played_at": "2026-09-16T18:27:19+02:00",
+     "rank_end": 1382,
+     "result": "loss",
+     "was_captain": true
+    },
+    {
+     "played_at": "2026-09-16T18:56:06+02:00",
+     "rank_end": 1367,
+     "result": "loss",
+     "was_captain": true
+    },
+    {
+     "pick_pos": 3,
+     "played_at": "2026-09-17T11:23:09+02:00",
+     "rank_end": 1383,
+     "result": "win"
+    },
+    {
+     "played_at": "2026-09-18T11:19:09+02:00",
+     "rank_end": 1399,
+     "result": "win",
+     "was_captain": true
+    },
+    {
+     "pick_pos": 2,
+     "played_at": "2026-09-18T12:06:44+02:00",
+     "rank_end": 1386,
+     "result": "loss"
+    }
+   ]
+  },
+  {
+   "channel_id": "1302336401421107200",
+   "channel_name": "Poland ET:Legacy: #6v6",
+   "points": [
+    {
+     "pick_pos": 9,
+     "played_at": "2026-02-06T19:14:12+01:00",
+     "rank_end": 1362,
+     "result": "win"
+    },
+    {
+     "pick_pos": 11,
+     "played_at": "2026-02-11T19:15:53+01:00",
+     "rank_end": 1376,
+     "result": "win"
+    },
+    {
+     "pick_pos": 9,
+     "played_at": "2026-02-13T09:29:09+01:00",
+     "rank_end": 1390,
+     "result": "loss"
+    },
+    {
+     "pick_pos": 14,
+     "played_at": "2026-02-13T13:06:12+01:00",
+     "rank_end": 1374,
+     "result": "win"
+    },
+    {
+     "pick_pos": 10,
+     "played_at": "2026-02-15T15:35:38+01:00",
+     "rank_end": 1387,
+     "result": "loss"
+    },
+    {
+     "pick_pos": 9,
+     "played_at": "2026-02-16T19:29:28+01:00",
+     "rank_end": 1370,
+     "result": "win"
+    },
+    {
+     "pick_pos": 7,
+     "played_at": "2026-02-24T12:39:35+01:00",
+     "rank_end": 1390,
+     "result": "loss"
+    },
+    {
+     "pick_pos": 10,
+     "played_at": "2026-03-01T20:23:55+01:00",
+     "rank_end": 1400,
+     "result": "win"
+    },
+    {
+     "pick_pos": 10,
+     "played_at": "2026-03-02T19:40:08+01:00",
+     "rank_end": 1416,
+     "result": "loss"
+    },
+    {
+     "pick_pos": 10,
+     "played_at": "2026-03-10T18:34:14+01:00",
+     "rank_end": 1400,
+     "result": "win"
+    },
+    {
+     "pick_pos": 9,
+     "played_at": "2026-03-12T17:01:46+01:00",
+     "rank_end": 1416,
+     "result": "win"
+    },
+    {
+     "pick_pos": 9,
+     "played_at": "2026-03-16T19:14:49+01:00",
+     "rank_end": 1431,
+     "result": "loss"
+    },
+    {
+     "pick_pos": 8,
+     "played_at": "2026-06-26T18:56:30+02:00",
+     "rank_end": 1400,
+     "result": "loss"
+    },
+    {
+     "pick_pos": 4,
+     "played_at": "2026-06-26T19:44:51+02:00",
+     "rank_end": 1386,
+     "result": "loss"
+    },
+    {
+     "pick_pos": 9,
+     "played_at": "2026-08-29T19:04:43+02:00",
+     "rank_end": 1385,
+     "result": "loss"
+    }
+   ]
+  },
+  {
+   "channel_id": "1476158882354298970",
+   "channel_name": "subAk: #3on3",
+   "points": [
+    {
+     "played_at": "2026-04-08T10:51:16+02:00",
+     "rank_end": 1400,
+     "result": "loss",
+     "was_captain": true
+    },
+    {
+     "pick_pos": 3,
+     "played_at": "2026-04-08T11:38:00+02:00",
+     "rank_end": 1384,
+     "result": "win"
+    }
+   ]
+  }
+ ],
+ "channels": [
+  {
+   "id": "1194582311182807142",
+   "name": "ET:Legacy Events: #3vs3"
+  },
+  {
+   "id": "1302336327487848529",
+   "name": "Poland ET:Legacy: #3v3"
+  },
+  {
+   "id": "1476158882354298970",
+   "name": "subAk: #3on3"
+  },
+  {
+   "id": "0000000000000000999",
+   "name": "unsorted"
+  }
+ ],
+ "country": "de",
+ "discord_nick": "Kexy",
+ "easiest_opponents": [
+  {
+   "discord_nick": "bRAH1",
+   "match_draws": 0,
+   "match_losses": 3,
+   "match_wins": 20,
+   "matches_against": 23,
+   "nick": "bRAH1",
+   "player_id": "a937b030-8055-52fa-9fdb-05d57f9fae76",
+   "win_rate": 0.8695652173913043
+  },
+  {
+   "discord_nick": "sAimon",
+   "match_draws": 0,
+   "match_losses": 7,
+   "match_wins": 21,
+   "matches_against": 28,
+   "nick": "sAimon",
+   "player_id": "336b2a2d-34ca-5ec4-8db8-5cd78a7c890d",
+   "win_rate": 0.75
+  },
+  {
+   "discord_nick": "Stino",
+   "match_draws": 3,
+   "match_losses": 9,
+   "match_wins": 22,
+   "matches_against": 34,
+   "nick": "Stino",
+   "player_id": "b18252d4-50b5-581b-987b-6c64795a60cf",
+   "win_rate": 0.7096774193548387
+  },
+  {
+   "discord_nick": "juissi",
+   "match_draws": 1,
+   "match_losses": 12,
+   "match_wins": 28,
+   "matches_against": 41,
+   "nick": "potat",
+   "player_id": "60114ded-bc7b-50cb-9df3-59f644546adf",
+   "win_rate": 0.7
+  },
+  {
+   "discord_nick": "stownage",
+   "match_draws": 0,
+   "match_losses": 3,
+   "match_wins": 7,
+   "matches_against": 10,
+   "nick": "stownage",
+   "player_id": "0e2b21b8-9310-5d8e-96f2-8c0c1438d2e6",
+   "win_rate": 0.7
+  }
+ ],
+ "excluded": false,
+ "files": {
+  "configs": [],
+  "hud_files": [],
+  "screenshots": []
+ },
+ "first_seen": "2025-04-16T17:14:28+02:00",
+ "gather_summary": [
+  {
+   "channel_id": "1194582311182807142",
+   "channel_name": "ET:Legacy Events: #3vs3",
+   "current_streak": {
+    "count": 2,
+    "type": "win"
+   },
+   "draws": 14,
+   "losses": 178,
+   "max_loss_streak": 9,
+   "max_win_streak": 7,
+   "recent_rank_ends": [
+    1402,
+    1388,
+    1404,
+    1394,
+    1380,
+    1396,
+    1411,
+    1398,
+    1382,
+    1399,
+    1416,
+    1400,
+    1384,
+    1368,
+    1350
+   ],
+   "win_percentage": 0.4780058651026393,
+   "wins": 163
+  },
+  {
+   "channel_id": "1194582341327265822",
+   "channel_name": "ET:Legacy Events: #6vs6",
+   "current_streak": {
+    "count": 1,
+    "type": "win"
+   },
+   "draws": 0,
+   "losses": 0,
+   "max_loss_streak": 0,
+   "max_win_streak": 1,
+   "recent_rank_ends": [
+    1400
+   ],
+   "win_percentage": 1,
+   "wins": 1
+  },
+  {
+   "channel_id": "1302336327487848529",
+   "channel_name": "Poland ET:Legacy: #3v3",
+   "current_streak": {
+    "count": 1,
+    "type": "loss"
+   },
+   "draws": 26,
+   "losses": 440,
+   "max_loss_streak": 8,
+   "max_win_streak": 7,
+   "recent_rank_ends": [
+    1386,
+    1399,
+    1383,
+    1367,
+    1382,
+    1399,
+    1384,
+    1382,
+    1396,
+    1378,
+    1398,
+    1413,
+    1400,
+    1419,
+    1404
+   ],
+   "win_percentage": 0.45,
+   "wins": 360
+  },
+  {
+   "channel_id": "1302336401421107200",
+   "channel_name": "Poland ET:Legacy: #6v6",
+   "current_streak": {
+    "count": 1,
+    "type": "win"
+   },
+   "draws": 0,
+   "losses": 13,
+   "max_loss_streak": 4,
+   "max_win_streak": 3,
+   "recent_rank_ends": [
+    1385,
+    1386,
+    1400,
+    1431,
+    1416,
+    1400,
+    1416,
+    1400,
+    1390,
+    1370,
+    1387,
+    1374,
+    1390,
+    1376,
+    1362
+   ],
+   "win_percentage": 0.4583333333333333,
+   "wins": 11
+  },
+  {
+   "channel_id": "1476158882354298970",
+   "channel_name": "subAk: #3on3",
+   "current_streak": {
+    "count": 1,
+    "type": "win"
+   },
+   "draws": 0,
+   "losses": 1,
+   "max_loss_streak": 1,
+   "max_win_streak": 1,
+   "recent_rank_ends": [
+    1384,
+    1400
+   ],
+   "win_percentage": 0.5,
+   "wins": 1
+  }
+ ],
+ "gear": [],
+ "hardest_opponents": [
+  {
+   "discord_nick": "devix",
+   "match_draws": 0,
+   "match_losses": 9,
+   "match_wins": 2,
+   "matches_against": 11,
+   "nick": "devix",
+   "player_id": "f1ecbdb6-18cc-51eb-bf46-aaf5fcad132e",
+   "win_rate": 0.18181818181818182
+  },
+  {
+   "discord_nick": "takerjay",
+   "match_draws": 1,
+   "match_losses": 7,
+   "match_wins": 2,
+   "matches_against": 10,
+   "nick": "takerjay",
+   "player_id": "9dc03c9f-16e8-53b0-bdcc-283da8ccea99",
+   "win_rate": 0.2222222222222222
+  },
+  {
+   "discord_nick": "viperzx",
+   "match_draws": 0,
+   "match_losses": 8,
+   "match_wins": 3,
+   "matches_against": 11,
+   "nick": "viperzx",
+   "player_id": "317c48e1-b917-5536-988c-f374d757b386",
+   "win_rate": 0.2727272727272727
+  },
+  {
+   "discord_nick": "dAFF",
+   "match_draws": 2,
+   "match_losses": 7,
+   "match_wins": 3,
+   "matches_against": 12,
+   "nick": "dAFF",
+   "player_id": "930a9589-d8a4-5b37-92b6-7b8bb1c0a0d2",
+   "win_rate": 0.3
+  },
+  {
+   "discord_nick": "craken",
+   "match_draws": 0,
+   "match_losses": 7,
+   "match_wins": 3,
+   "matches_against": 10,
+   "nick": "^0Jurek Kiler",
+   "player_id": "599c5bdb-c652-5b36-a507-75715405a2fb",
+   "win_rate": 0.3
+  }
+ ],
+ "last_seen": "2026-09-18T12:50:53+02:00",
+ "lifetime": {
+  "accuracy": 0.2615206412357634,
+  "bait_score": 18.349669,
+  "classes_played_seconds": {
+   "covertops": 315,
+   "engineer": 89165,
+   "fieldop": 1794,
+   "medic": 595335
+  },
+  "damage_given": 5005775,
+  "damage_received": 7883761,
+  "deaths": 45305,
+  "distance_spawn_avg": 55.77096085327974,
+  "distance_total": 10091988,
+  "eng": 0.35835891710856826,
+  "eng_alive": 0.47527893818412564,
+  "gibs": 7035,
+  "headshots": 20615,
+  "hits": 250837,
+  "hours_played": 531.5,
+  "kdr": 0.5804436596402163,
+  "kills": 26297,
+  "map_draws": 127,
+  "map_losses": 1466,
+  "map_wins": 1222,
+  "match_draws": 53,
+  "match_losses": 625,
+  "match_time_hours": 742.2,
+  "match_wins": 520,
+  "matches": 1200,
+  "objective_breakdown": [
+   {
+    "count": 2150,
+    "type": "obj_planted"
+   },
+   {
+    "count": 169,
+    "type": "obj_defused"
+   },
+   {
+    "count": 1933,
+    "type": "obj_destroyed"
+   },
+   {
+    "count": 1017,
+    "type": "obj_repaired"
+   },
+   {
+    "count": 1740,
+    "type": "obj_taken"
+   },
+   {
+    "count": 170,
+    "type": "obj_repickup"
+   },
+   {
+    "count": 269,
+    "type": "obj_secured"
+   },
+   {
+    "count": 28,
+    "type": "obj_returned"
+   },
+   {
+    "count": 1159,
+    "type": "obj_carrierkilled"
+   },
+   {
+    "count": 1106,
+    "type": "obj_flag_captured"
+   },
+   {
+    "count": 212,
+    "type": "obj_dropped"
+   }
+  ],
+  "objective_damage": 60866,
+  "revives": 13769,
+  "rounds": 5473,
+  "self_kills": 15896,
+  "shots": 959148,
+  "shoves_given": 911,
+  "shoves_received": 3112,
+  "spawn_count": 55168,
+  "speed_kph_avg": 14.878527258816005,
+  "stance_crouch_sec": 110421,
+  "stance_disguise_sec": 54,
+  "stance_downed_sec": 345509,
+  "stance_lean_sec": 11880,
+  "stance_mg_sec": 3221,
+  "stance_obj_carrier_sec": 33198,
+  "stance_prone_sec": 6667,
+  "stance_sprint_sec": 229313,
+  "team_damage_given": 201248,
+  "team_damage_received": 178924,
+  "team_gibs": 206,
+  "team_kills": 1191,
+  "tmp_total_sec": 146709625.469,
+  "tmp_weighted_avg": 76.66974412642205,
+  "utro": 0.5109321,
+  "xp": 241092
+ },
+ "maps": [
+  {
+   "last_played": "2026-09-18T12:06:44+02:00",
+   "map_name": "te_escape2",
+   "plays": 833
+  },
+  {
+   "last_played": "2026-09-18T12:06:44+02:00",
+   "map_name": "etl_adlernest",
+   "plays": 445
+  },
+  {
+   "last_played": "2026-09-17T11:23:09+02:00",
+   "map_name": "etl_sp_delivery",
+   "plays": 424
+  },
+  {
+   "last_played": "2026-09-16T18:27:19+02:00",
+   "map_name": "et_brewdog",
+   "plays": 383
+  },
+  {
+   "last_played": "2026-09-18T11:19:09+02:00",
+   "map_name": "etl_frostbite",
+   "plays": 258
+  },
+  {
+   "last_played": "2026-09-18T12:50:53+02:00",
+   "map_name": "erdenberg_t2",
+   "plays": 156
+  },
+  {
+   "last_played": "2026-09-16T18:56:06+02:00",
+   "map_name": "etl_ice",
+   "plays": 91
+  },
+  {
+   "last_played": "2026-09-16T18:56:06+02:00",
+   "map_name": "supply",
+   "plays": 88
+  },
+  {
+   "last_played": "2026-09-18T12:06:44+02:00",
+   "map_name": "braundorf_b4",
+   "plays": 86
+  },
+  {
+   "last_played": "2026-06-21T11:14:19+02:00",
+   "map_name": "sw_goldrush_te",
+   "plays": 41
+  },
+  {
+   "last_played": "2026-08-05T11:26:46+02:00",
+   "map_name": "mp_beach",
+   "plays": 14
+  },
+  {
+   "last_played": "2026-01-08T18:10:25+01:00",
+   "map_name": "tc_base",
+   "plays": 1
+  }
+ ],
+ "name_tags": [
+  {
+   "tag": "^36^13^3:)^4",
+   "type": "no_separator"
+  }
+ ],
+ "nick": "^4Kexy",
+ "nick_history": [
+  {
+   "change_type": "full_change",
+   "changed_at": "2025-07-09T15:17:55+02:00",
+   "new_name": "^4Kexy",
+   "old_name": "FoXblue41"
+  }
+ ],
+ "pick_summary": [
+  {
+   "avg_pick_pos": 2.91,
+   "best_pick_pos": 1,
+   "captain_count": 1,
+   "channel_id": "1194582311182807142",
+   "channel_name": "ET:Legacy Events: #3vs3",
+   "match_size": 6,
+   "peer_rank": 92,
+   "peer_total": 157,
+   "recent_pick_positions": [
+    4,
+    4,
+    4,
+    3,
+    2,
+    1,
+    1,
+    3,
+    3,
+    3,
+    4
+   ],
+   "total_picks": 11,
+   "worst_pick_pos": 4
+  },
+  {
+   "avg_pick_pos": 9,
+   "best_pick_pos": 9,
+   "captain_count": 0,
+   "channel_id": "1194582341327265822",
+   "channel_name": "ET:Legacy Events: #6vs6",
+   "match_size": 12,
+   "peer_rank": 187,
+   "peer_total": 244,
+   "recent_pick_positions": [
+    9
+   ],
+   "total_picks": 1,
+   "worst_pick_pos": 9
+  },
+  {
+   "avg_pick_pos": 3.08,
+   "best_pick_pos": 1,
+   "captain_count": 173,
+   "channel_id": "1302336327487848529",
+   "channel_name": "Poland ET:Legacy: #3v3",
+   "match_size": 6,
+   "peer_rank": 178,
+   "peer_total": 218,
+   "recent_pick_positions": [
+    2,
+    2,
+    3,
+    2,
+    4,
+    4,
+    2,
+    3,
+    3,
+    3,
+    4,
+    3,
+    3,
+    3,
+    2
+   ],
+   "total_picks": 533,
+   "worst_pick_pos": 5
+  },
+  {
+   "avg_pick_pos": 9.22,
+   "best_pick_pos": 4,
+   "captain_count": 1,
+   "channel_id": "1302336401421107200",
+   "channel_name": "Poland ET:Legacy: #6v6",
+   "match_size": 12,
+   "peer_rank": 255,
+   "peer_total": 266,
+   "recent_pick_positions": [
+    9,
+    4,
+    8,
+    9,
+    9,
+    10,
+    10,
+    10,
+    7,
+    9,
+    10,
+    14,
+    9,
+    11,
+    9
+   ],
+   "total_picks": 23,
+   "worst_pick_pos": 14
+  },
+  {
+   "avg_pick_pos": 3,
+   "best_pick_pos": 3,
+   "captain_count": 1,
+   "channel_id": "1476158882354298970",
+   "channel_name": "subAk: #3on3",
+   "match_size": 6,
+   "peer_rank": 32,
+   "peer_total": 49,
+   "recent_pick_positions": [
+    3
+   ],
+   "total_picks": 1,
+   "worst_pick_pos": 3
+  }
+ ],
+ "player_id": "12b497e1-e6d6-5539-bda7-1dd50a836fc6",
+ "recent_matches": [
+  {
+   "channel_id": "1302336327487848529",
+   "channel_name": "Poland ET:Legacy: #3v3",
+   "end_time": "2026-09-18T13:11:13+02:00",
+   "maps": [
+    {
+     "map": "erdenberg_t2",
+     "play_index": 1,
+     "result": {
+      "alpha": 0,
+      "beta": 2
+     }
+    }
+   ],
+   "match_id": "4df577f8-618d-5bac-b3fc-48064268e7cc",
+   "result": "loss",
+   "size": 6,
+   "size_label": "3v3",
+   "start_time": "2026-09-18T12:50:53+02:00",
+   "state": "waiting_report",
+   "team_side": "alpha"
+  },
+  {
+   "channel_id": "1302336327487848529",
+   "channel_name": "Poland ET:Legacy: #3v3",
+   "end_time": "2026-09-18T12:41:12+02:00",
+   "maps": [
+    {
+     "map": "te_escape2",
+     "play_index": 1,
+     "result": {
+      "alpha": 0,
+      "beta": 2
+     }
+    },
+    {
+     "map": "etl_adlernest",
+     "play_index": 1,
+     "result": {
+      "alpha": 2,
+      "beta": 0
+     }
+    },
+    {
+     "map": "braundorf_b4",
+     "play_index": 1,
+     "result": {
+      "alpha": 0,
+      "beta": 2
+     }
+    }
+   ],
+   "match_id": "f25a4877-f99a-58ff-aa20-5d9a6285d1c3",
+   "rank_end": 1386,
+   "rank_start": 1399,
+   "result": "loss",
+   "size": 6,
+   "size_label": "3v3",
+   "start_time": "2026-09-18T12:06:44+02:00",
+   "state": "finished",
+   "team_side": "alpha"
+  },
+  {
+   "channel_id": "1302336327487848529",
+   "channel_name": "Poland ET:Legacy: #3v3",
+   "end_time": "2026-09-18T11:54:38+02:00",
+   "maps": [
+    {
+     "map": "te_escape2",
+     "play_index": 1,
+     "result": {
+      "alpha": 2,
+      "beta": 0
+     }
+    },
+    {
+     "map": "etl_frostbite",
+     "play_index": 1,
+     "result": {
+      "alpha": 2,
+      "beta": 0
+     }
+    }
+   ],
+   "match_id": "7e342c36-3cc6-556c-b49c-9686d9b3c2ac",
+   "rank_end": 1399,
+   "rank_start": 1383,
+   "result": "win",
+   "size": 6,
+   "size_label": "3v3",
+   "start_time": "2026-09-18T11:19:09+02:00",
+   "state": "finished",
+   "team_side": "alpha"
+  },
+  {
+   "channel_id": "1302336327487848529",
+   "channel_name": "Poland ET:Legacy: #3v3",
+   "end_time": "2026-09-17T12:09:10+02:00",
+   "maps": [
+    {
+     "map": "te_escape2",
+     "play_index": 1,
+     "result": {
+      "alpha": 0,
+      "beta": 2
+     }
+    },
+    {
+     "map": "etl_frostbite",
+     "play_index": 1,
+     "result": {
+      "alpha": 2,
+      "beta": 0
+     }
+    },
+    {
+     "map": "etl_sp_delivery",
+     "play_index": 1,
+     "result": {
+      "alpha": 2,
+      "beta": 0
+     }
+    }
+   ],
+   "match_id": "9bc6e305-cc6a-5615-bf16-eb9e3269e67b",
+   "rank_end": 1383,
+   "rank_start": 1367,
+   "result": "win",
+   "size": 6,
+   "size_label": "3v3",
+   "start_time": "2026-09-17T11:23:09+02:00",
+   "state": "finished",
+   "team_side": "alpha"
+  },
+  {
+   "channel_id": "1302336327487848529",
+   "channel_name": "Poland ET:Legacy: #3v3",
+   "end_time": "2026-09-16T19:47:15+02:00",
+   "maps": [
+    {
+     "map": "te_escape2",
+     "play_index": 1,
+     "result": {
+      "alpha": 0,
+      "beta": 2
+     }
+    },
+    {
+     "map": "etl_ice",
+     "play_index": 1,
+     "result": {
+      "alpha": 2,
+      "beta": 0
+     }
+    },
+    {
+     "map": "supply",
+     "play_index": 1,
+     "result": {
+      "alpha": 0,
+      "beta": 2
+     }
+    }
+   ],
+   "match_id": "274b2920-fa1e-5bc1-bd74-797a8b96a640",
+   "rank_end": 1367,
+   "rank_start": 1382,
+   "result": "loss",
+   "size": 6,
+   "size_label": "3v3",
+   "start_time": "2026-09-16T18:56:06+02:00",
+   "state": "finished",
+   "team_side": "alpha"
+  },
+  {
+   "channel_id": "1302336327487848529",
+   "channel_name": "Poland ET:Legacy: #3v3",
+   "end_time": "2026-09-16T18:51:39+02:00",
+   "maps": [
+    {
+     "map": "te_escape2",
+     "play_index": 1,
+     "result": {
+      "alpha": 0,
+      "beta": 2
+     }
+    },
+    {
+     "map": "et_brewdog",
+     "play_index": 1,
+     "result": {
+      "alpha": 0,
+      "beta": 2
+     }
+    }
+   ],
+   "match_id": "0d9094d1-9331-5988-bb8f-c271f3ef4786",
+   "rank_end": 1382,
+   "rank_start": 1399,
+   "result": "loss",
+   "size": 6,
+   "size_label": "3v3",
+   "start_time": "2026-09-16T18:27:19+02:00",
+   "state": "finished",
+   "team_side": "alpha"
+  },
+  {
+   "channel_id": "1302336327487848529",
+   "channel_name": "Poland ET:Legacy: #3v3",
+   "end_time": "2026-09-15T15:43:43+02:00",
+   "maps": [
+    {
+     "map": "te_escape2",
+     "play_index": 1,
+     "result": {
+      "alpha": 0,
+      "beta": 2
+     }
+    },
+    {
+     "map": "etl_frostbite",
+     "play_index": 1,
+     "result": {
+      "alpha": 2,
+      "beta": 0
+     }
+    },
+    {
+     "map": "etl_adlernest",
+     "play_index": 1,
+     "result": {
+      "alpha": 0,
+      "beta": 2
+     }
+    }
+   ],
+   "match_id": "ec5585a3-d44e-560a-a580-5e2a71cd086d",
+   "rank_end": 1399,
+   "rank_start": 1384,
+   "result": "win",
+   "size": 6,
+   "size_label": "3v3",
+   "start_time": "2026-09-15T15:14:14+02:00",
+   "state": "finished",
+   "team_side": "beta"
+  },
+  {
+   "channel_id": "1302336327487848529",
+   "channel_name": "Poland ET:Legacy: #3v3",
+   "end_time": "2026-09-15T15:10:33+02:00",
+   "maps": [
+    {
+     "map": "et_brewdog",
+     "play_index": 1,
+     "result": {
+      "alpha": 2,
+      "beta": 0
+     }
+    },
+    {
+     "map": "etl_ice",
+     "play_index": 1,
+     "result": {
+      "alpha": 0,
+      "beta": 0
+     }
+    }
+   ],
+   "match_id": "2a1dfa9f-1f67-5a3a-bb24-76fea85c98da",
+   "rank_end": 1384,
+   "rank_start": 1382,
+   "result": "draw",
+   "size": 6,
+   "size_label": "3v3",
+   "start_time": "2026-09-15T14:33:36+02:00",
+   "state": "finished",
+   "team_side": "alpha"
+  },
+  {
+   "channel_id": "1302336327487848529",
+   "channel_name": "Poland ET:Legacy: #3v3",
+   "end_time": "2026-09-15T13:33:32+02:00",
+   "maps": [
+    {
+     "map": "et_brewdog",
+     "play_index": 1,
+     "result": {
+      "alpha": 2,
+      "beta": 0
+     }
+    },
+    {
+     "map": "etl_sp_delivery",
+     "play_index": 1,
+     "result": {
+      "alpha": 0,
+      "beta": 0
+     }
+    }
+   ],
+   "match_id": "bca29457-c0cc-5ad7-bc8f-7f606ec41ffe",
+   "rank_end": 1382,
+   "rank_start": 1396,
+   "result": "loss",
+   "size": 6,
+   "size_label": "3v3",
+   "start_time": "2026-09-15T12:57:28+02:00",
+   "state": "finished",
+   "team_side": "beta"
+  },
+  {
+   "channel_id": "1302336327487848529",
+   "channel_name": "Poland ET:Legacy: #3v3",
+   "end_time": "2026-09-15T12:36:41+02:00",
+   "maps": [
+    {
+     "map": "te_escape2",
+     "play_index": 1,
+     "result": {
+      "alpha": 0,
+      "beta": 2
+     }
+    },
+    {
+     "map": "etl_frostbite",
+     "play_index": 1,
+     "result": {
+      "alpha": 0,
+      "beta": 2
+     }
+    }
+   ],
+   "match_id": "1dd530ca-3902-5579-a506-eceeb43c86b9",
+   "rank_end": 1396,
+   "rank_start": 1378,
+   "result": "win",
+   "size": 6,
+   "size_label": "3v3",
+   "start_time": "2026-09-15T12:12:19+02:00",
+   "state": "finished",
+   "team_side": "beta"
+  }
+ ],
+ "streams": [],
+ "teamnames": [
+  "^36^13^3:)^4"
+ ],
+ "tiers": [
+  {
+   "channel_id": "1302336327487848529",
+   "channel_name": "Poland ET:Legacy: #3v3",
+   "size": 6,
+   "tier": "D",
+   "updated_at": "2026-09-18T08:37:09.085501+02:00"
+  },
+  {
+   "channel_id": "1302336401421107200",
+   "channel_name": "Poland ET:Legacy: #6v6",
+   "size": 12,
+   "tier": "D",
+   "updated_at": "2026-09-18T08:37:09.085501+02:00"
+  }
+ ],
+ "top_killers": [
+  {
+   "discord_nick": "AnDy!",
+   "kills": 3104,
+   "nick": "AnDy!",
+   "player_id": "dc2edf8f-e791-55b5-90a8-4037c64e1829"
+  },
+  {
+   "discord_nick": "eLx",
+   "kills": 2040,
+   "nick": "eLx",
+   "player_id": "cac90d29-efbc-5f6c-a989-5d1d09d733cd"
+  },
+  {
+   "discord_nick": "eV!L*lemr",
+   "kills": 1933,
+   "nick": "^1L^Ae^Lg^3i^Oo^7n",
+   "player_id": "2266e800-7fe4-5e48-8126-9d93c1f88be0"
+  },
+  {
+   "discord_nick": "ddd331",
+   "kills": 1738,
+   "nick": "ddd331",
+   "player_id": "55e2623b-eccc-5f23-9126-2eee84a70cb2"
+  },
+  {
+   "discord_nick": "kiz",
+   "kills": 1476,
+   "nick": "kiz",
+   "player_id": "d6787384-b37f-507c-914f-6b2f97dde79e"
+  }
+ ],
+ "top_victims": [
+  {
+   "discord_nick": "eV!L*lemr",
+   "kills": 1963,
+   "nick": "^1L^Ae^Lg^3i^Oo^7n",
+   "player_id": "2266e800-7fe4-5e48-8126-9d93c1f88be0"
+  },
+  {
+   "discord_nick": "AnDy!",
+   "kills": 1882,
+   "nick": "AnDy!",
+   "player_id": "dc2edf8f-e791-55b5-90a8-4037c64e1829"
+  },
+  {
+   "discord_nick": "eLx",
+   "kills": 1087,
+   "nick": "eLx",
+   "player_id": "cac90d29-efbc-5f6c-a989-5d1d09d733cd"
+  },
+  {
+   "discord_nick": "ddd331",
+   "kills": 772,
+   "nick": "ddd331",
+   "player_id": "55e2623b-eccc-5f23-9126-2eee84a70cb2"
+  },
+  {
+   "discord_nick": "Sn00k",
+   "kills": 704,
+   "nick": "Sn00k",
+   "player_id": "6c711578-149b-5ae7-90cf-3f0dbe23117c"
+  }
+ ],
+ "weapons": [
+  {
+   "accuracy": 0.2820632690798929,
+   "damage_given": 2821279,
+   "damage_received": 3985863,
+   "deaths": 21041,
+   "gib_damage": 244343,
+   "headshot_accuracy": 0.0783740984763327,
+   "headshots": 9552,
+   "hit_regions": {
+    "arms": 43296,
+    "body": 50362,
+    "head": 9543,
+    "legs": 19022,
+    "none": 24497
+   },
+   "hits": 121877,
+   "kills": 13338,
+   "objective_damage": 0,
+   "self_damage": 0,
+   "shots": 432091,
+   "team_damage_given": 86935,
+   "team_damage_received": 64531,
+   "weapon_name": "MP 40"
+  },
+  {
+   "accuracy": 0.24594542287594348,
+   "damage_given": 2726914,
+   "damage_received": 3846219,
+   "deaths": 17215,
+   "gib_damage": 196882,
+   "headshot_accuracy": 0.08725543793383364,
+   "headshots": 10534,
+   "hit_regions": {
+    "arms": 42075,
+    "body": 50823,
+    "head": 10512,
+    "legs": 17400,
+    "none": 19446
+   },
+   "hits": 120726,
+   "kills": 10643,
+   "objective_damage": 0,
+   "self_damage": 0,
+   "shots": 490865,
+   "team_damage_given": 88717,
+   "team_damage_received": 72935,
+   "weapon_name": "Thompson"
+  },
+  {
+   "accuracy": 0.18935820658222483,
+   "damage_given": 279910,
+   "damage_received": 758033,
+   "deaths": 3331,
+   "gib_damage": 30546,
+   "headshot_accuracy": null,
+   "headshots": 0,
+   "hit_regions": {
+    "arms": 0,
+    "body": 0,
+    "head": 0,
+    "legs": 0,
+    "none": 3894
+   },
+   "hits": 3573,
+   "kills": 1211,
+   "objective_damage": 0,
+   "self_damage": 31140,
+   "shots": 18869,
+   "team_damage_given": 46491,
+   "team_damage_received": 60572,
+   "weapon_name": "Grenade"
+  },
+  {
+   "accuracy": 0.22965633023898874,
+   "damage_given": 115340,
+   "damage_received": 287886,
+   "deaths": 1826,
+   "gib_damage": 14202,
+   "headshot_accuracy": 0.059342076972694044,
+   "headshots": 276,
+   "hit_regions": {
+    "arms": 1777,
+    "body": 1741,
+    "head": 278,
+    "legs": 854,
+    "none": 1442
+   },
+   "hits": 4651,
+   "kills": 575,
+   "objective_damage": 0,
+   "self_damage": 0,
+   "shots": 20252,
+   "team_damage_given": 6064,
+   "team_damage_received": 6503,
+   "weapon_name": "Luger"
+  },
+  {
+   "accuracy": 0.2233389544688027,
+   "damage_given": 80433,
+   "damage_received": 179153,
+   "deaths": 1029,
+   "gib_damage": 10710,
+   "headshot_accuracy": 0.07097553609181516,
+   "headshots": 235,
+   "hit_regions": {
+    "arms": 1269,
+    "body": 1311,
+    "head": 236,
+    "legs": 498,
+    "none": 905
+   },
+   "hits": 3311,
+   "kills": 334,
+   "objective_damage": 0,
+   "self_damage": 0,
+   "shots": 14825,
+   "team_damage_given": 3808,
+   "team_damage_received": 4049,
+   "weapon_name": "Colt"
+  },
+  {
+   "accuracy": 0.11959248840568691,
+   "damage_given": 4660,
+   "damage_received": 5097,
+   "deaths": 318,
+   "gib_damage": 360,
+   "headshot_accuracy": null,
+   "headshots": 0,
+   "hit_regions": {
+    "arms": 0,
+    "body": 0,
+    "head": 0,
+    "legs": 0,
+    "none": 235
+   },
+   "hits": 1573,
+   "kills": 122,
+   "objective_damage": 0,
+   "self_damage": 0,
+   "shots": 13153,
+   "team_damage_given": 60,
+   "team_damage_received": 0,
+   "weapon_name": "MG 42 Gun"
+  },
+  {
+   "accuracy": 0.016314423433444566,
+   "damage_given": 4794,
+   "damage_received": 6676,
+   "deaths": 35,
+   "gib_damage": 1869,
+   "headshot_accuracy": null,
+   "headshots": 0,
+   "hit_regions": {
+    "arms": 0,
+    "body": 0,
+    "head": 0,
+    "legs": 0,
+    "none": 47
+   },
+   "hits": 44,
+   "kills": 38,
+   "objective_damage": 48806,
+   "self_damage": 2453,
+   "shots": 2697,
+   "team_damage_given": 3725,
+   "team_damage_received": 3071,
+   "weapon_name": "Dynamite"
+  },
+  {
+   "accuracy": 0.2395543175487465,
+   "damage_given": 5015,
+   "damage_received": 17549,
+   "deaths": 78,
+   "gib_damage": 42,
+   "headshot_accuracy": 0.06589147286821706,
+   "headshots": 17,
+   "hit_regions": {
+    "arms": 94,
+    "body": 85,
+    "head": 16,
+    "legs": 54,
+    "none": 87
+   },
+   "hits": 258,
+   "kills": 22,
+   "objective_damage": 0,
+   "self_damage": 0,
+   "shots": 1077,
+   "team_damage_given": 166,
+   "team_damage_received": 243,
+   "weapon_name": "Sten"
+  },
+  {
+   "accuracy": 0.42857142857142855,
+   "damage_given": 718,
+   "damage_received": 11194,
+   "deaths": 52,
+   "gib_damage": 188,
+   "headshot_accuracy": null,
+   "headshots": 0,
+   "hit_regions": {
+    "arms": 0,
+    "body": 0,
+    "head": 0,
+    "legs": 0,
+    "none": 9
+   },
+   "hits": 9,
+   "kills": 5,
+   "objective_damage": 0,
+   "self_damage": 118,
+   "shots": 21,
+   "team_damage_given": 190,
+   "team_damage_received": 443,
+   "weapon_name": "Airstrike"
+  },
+  {
+   "accuracy": 0.6363636363636364,
+   "damage_given": 660,
+   "damage_received": 3303,
+   "deaths": 18,
+   "gib_damage": 0,
+   "headshot_accuracy": null,
+   "headshots": 0,
+   "hit_regions": {
+    "arms": 0,
+    "body": 0,
+    "head": 0,
+    "legs": 0,
+    "none": 8
+   },
+   "hits": 7,
+   "kills": 4,
+   "objective_damage": 0,
+   "self_damage": 0,
+   "shots": 11,
+   "team_damage_given": 0,
+   "team_damage_received": 941,
+   "weapon_name": "Artillery"
+  },
+  {
+   "accuracy": 0.003156708004509583,
+   "damage_given": 427,
+   "damage_received": 8264,
+   "deaths": 54,
+   "gib_damage": 116,
+   "headshot_accuracy": null,
+   "headshots": 0,
+   "hit_regions": {
+    "arms": 0,
+    "body": 0,
+    "head": 0,
+    "legs": 0,
+    "none": 36
+   },
+   "hits": 14,
+   "kills": 3,
+   "objective_damage": 0,
+   "self_damage": 0,
+   "shots": 4435,
+   "team_damage_given": 10,
+   "team_damage_received": 22,
+   "weapon_name": "Knife"
+  },
+  {
+   "accuracy": 0.3684210526315789,
+   "damage_given": 385,
+   "damage_received": 2612,
+   "deaths": 14,
+   "gib_damage": 0,
+   "headshot_accuracy": 0.07142857142857142,
+   "headshots": 1,
+   "hit_regions": {
+    "arms": 5,
+    "body": 5,
+    "head": 1,
+    "legs": 3,
+    "none": 12
+   },
+   "hits": 14,
+   "kills": 1,
+   "objective_damage": 0,
+   "self_damage": 0,
+   "shots": 38,
+   "team_damage_given": 14,
+   "team_damage_received": 0,
+   "weapon_name": "MP 34"
+  },
+  {
+   "accuracy": 0.0199501246882793,
+   "damage_given": 294,
+   "damage_received": 4591,
+   "deaths": 12,
+   "gib_damage": 14,
+   "headshot_accuracy": null,
+   "headshots": 0,
+   "hit_regions": {
+    "arms": 0,
+    "body": 0,
+    "head": 0,
+    "legs": 0,
+    "none": 25
+   },
+   "hits": 8,
+   "kills": 1,
+   "objective_damage": 0,
+   "self_damage": 0,
+   "shots": 401,
+   "team_damage_given": 78,
+   "team_damage_received": 488,
+   "weapon_name": "Ka-Bar"
+  },
+  {
+   "accuracy": null,
+   "damage_given": 0,
+   "damage_received": 5880,
+   "deaths": 0,
+   "gib_damage": 0,
+   "headshot_accuracy": null,
+   "headshots": 0,
+   "hit_regions": {
+    "arms": 0,
+    "body": 0,
+    "head": 0,
+    "legs": 0,
+    "none": 0
+   },
+   "hits": 0,
+   "kills": 0,
+   "objective_damage": 0,
+   "self_damage": 0,
+   "shots": 0,
+   "team_damage_given": 0,
+   "team_damage_received": 102,
+   "weapon_name": "Garand"
+  },
+  {
+   "accuracy": 0,
+   "damage_given": 5,
+   "damage_received": 336,
+   "deaths": 1,
+   "gib_damage": 0,
+   "headshot_accuracy": null,
+   "headshots": 0,
+   "hit_regions": {
+    "arms": 0,
+    "body": 0,
+    "head": 0,
+    "legs": 0,
+    "none": 1
+   },
+   "hits": 0,
+   "kills": 0,
+   "objective_damage": 12060,
+   "self_damage": 176,
+   "shots": 60,
+   "team_damage_given": 55,
+   "team_damage_received": 354,
+   "weapon_name": "Satchel"
+  },
+  {
+   "accuracy": null,
+   "damage_given": 0,
+   "damage_received": 57534,
+   "deaths": 261,
+   "gib_damage": 0,
+   "headshot_accuracy": null,
+   "headshots": 0,
+   "hit_regions": {
+    "arms": 0,
+    "body": 0,
+    "head": 0,
+    "legs": 0,
+    "none": 0
+   },
+   "hits": 0,
+   "kills": 0,
+   "objective_damage": 0,
+   "self_damage": 0,
+   "shots": 0,
+   "team_damage_given": 0,
+   "team_damage_received": 150,
+   "weapon_name": "Scp.Garand"
+  },
+  {
+   "accuracy": null,
+   "damage_given": 0,
+   "damage_received": 2003,
+   "deaths": 11,
+   "gib_damage": 0,
+   "headshot_accuracy": null,
+   "headshots": 0,
+   "hit_regions": {
+    "arms": 0,
+    "body": 0,
+    "head": 0,
+    "legs": 0,
+    "none": 0
+   },
+   "hits": 0,
+   "kills": 0,
+   "objective_damage": 0,
+   "self_damage": 0,
+   "shots": 0,
+   "team_damage_given": 0,
+   "team_damage_received": 350,
+   "weapon_name": "Scp.K43"
+  },
+  {
+   "accuracy": null,
+   "damage_given": 0,
+   "damage_received": 1595,
+   "deaths": 6,
+   "gib_damage": 0,
+   "headshot_accuracy": null,
+   "headshots": 0,
+   "hit_regions": {
+    "arms": 0,
+    "body": 0,
+    "head": 0,
+    "legs": 0,
+    "none": 0
+   },
+   "hits": 0,
+   "kills": 0,
+   "objective_damage": 0,
+   "self_damage": 0,
+   "shots": 0,
+   "team_damage_given": 0,
+   "team_damage_received": 130,
+   "weapon_name": "FG 42"
+  },
+  {
+   "accuracy": 0.8320642978003384,
+   "damage_given": 0,
+   "damage_received": 0,
+   "deaths": 0,
+   "gib_damage": 0,
+   "headshot_accuracy": null,
+   "headshots": 0,
+   "hit_regions": {
+    "arms": 0,
+    "body": 0,
+    "head": 0,
+    "legs": 0,
+    "none": 0
+   },
+   "hits": 13769,
+   "kills": 0,
+   "objective_damage": 0,
+   "self_damage": 0,
+   "shots": 16548,
+   "team_damage_given": 0,
+   "team_damage_received": 0,
+   "weapon_name": "Syringe"
+  },
+  {
+   "accuracy": 0,
+   "damage_given": 0,
+   "damage_received": 0,
+   "deaths": 0,
+   "gib_damage": 0,
+   "headshot_accuracy": null,
+   "headshots": 0,
+   "hit_regions": {
+    "arms": 0,
+    "body": 0,
+    "head": 0,
+    "legs": 0,
+    "none": 0
+   },
+   "hits": 0,
+   "kills": 0,
+   "objective_damage": 0,
+   "self_damage": 0,
+   "shots": 4,
+   "team_damage_given": 0,
+   "team_damage_received": 0,
+   "weapon_name": "Landmine"
+  },
+  {
+   "accuracy": null,
+   "damage_given": 0,
+   "damage_received": 1583,
+   "deaths": 3,
+   "gib_damage": 0,
+   "headshot_accuracy": null,
+   "headshots": 0,
+   "hit_regions": {
+    "arms": 0,
+    "body": 0,
+    "head": 0,
+    "legs": 0,
+    "none": 0
+   },
+   "hits": 0,
+   "kills": 0,
+   "objective_damage": 0,
+   "self_damage": 0,
+   "shots": 0,
+   "team_damage_given": 0,
+   "team_damage_received": 34,
+   "weapon_name": "K43 Rifle"
+  }
+ ],
+ "worst_teammates": [
+  {
+   "discord_nick": "immoo",
+   "match_draws": 0,
+   "match_losses": 13,
+   "match_wins": 3,
+   "matches_with": 16,
+   "nick": "immoo",
+   "player_id": "2a86e86d-d74d-5d60-a7c6-60d3db1ae870",
+   "win_rate": 0.1875
+  },
+  {
+   "discord_nick": "antii",
+   "match_draws": 1,
+   "match_losses": 9,
+   "match_wins": 3,
+   "matches_with": 13,
+   "nick": "antii^x'",
+   "player_id": "44965729-4804-5829-b6f4-8858de19033b",
+   "win_rate": 0.25
+  },
+  {
+   "discord_nick": "Stino",
+   "match_draws": 1,
+   "match_losses": 8,
+   "match_wins": 3,
+   "matches_with": 12,
+   "nick": "Stino",
+   "player_id": "b18252d4-50b5-581b-987b-6c64795a60cf",
+   "win_rate": 0.2727272727272727
+  },
+  {
+   "discord_nick": "JrG",
+   "match_draws": 1,
+   "match_losses": 30,
+   "match_wins": 12,
+   "matches_with": 43,
+   "nick": "JrG",
+   "player_id": "e06aac2c-9c77-5e63-a1df-9e5dd4ed6fcc",
+   "win_rate": 0.2857142857142857
+  },
+  {
+   "discord_nick": "w4daw",
+   "match_draws": 1,
+   "match_losses": 7,
+   "match_wins": 3,
+   "matches_with": 11,
+   "nick": "w4daw",
+   "player_id": "4d64ba29-7ed1-5027-ae01-3d40864daf24",
+   "win_rate": 0.3
+  }
+ ]
+}

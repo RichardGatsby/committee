@@ -1,0 +1,461 @@
+{
+ "$schema": "https://gibhub.gg/PageMatchListItem.json",
+ "items": [
+  {
+   "alpha_captain_id": "55e2623b-eccc-5f23-9126-2eee84a70cb2",
+   "alpha_score": 2,
+   "alpha_teamname": "^i+/- 5",
+   "beta_captain_id": "adeb5cb6-285a-5680-af40-6ad161f885b2",
+   "beta_score": 4,
+   "beta_teamname": "{name} ^r0^s_^to",
+   "channel_id": "1302336327487848529",
+   "channel_name": "Poland ET:Legacy: #3v3",
+   "end_time": "2026-09-18T12:41:12+02:00",
+   "maps": [
+    {
+     "map": "te_escape2",
+     "play_index": 1,
+     "result": {
+      "alpha": 0,
+      "beta": 2
+     }
+    },
+    {
+     "map": "etl_adlernest",
+     "play_index": 1,
+     "result": {
+      "alpha": 2,
+      "beta": 0
+     }
+    },
+    {
+     "map": "braundorf_b4",
+     "play_index": 1,
+     "result": {
+      "alpha": 0,
+      "beta": 2
+     }
+    }
+   ],
+   "match_id": "f25a4877-f99a-58ff-aa20-5d9a6285d1c3",
+   "match_score": "2-4",
+   "server": {
+    "instance": "1",
+    "ip": "gather.example.invalid",
+    "name": "^7polandetlegacy.com ^3netcup",
+    "port": "27960",
+    "pw": "REDACTED"
+   },
+   "size": 6,
+   "size_label": "3v3",
+   "start_time": "2026-09-18T12:06:44+02:00",
+   "state": "finished",
+   "tags": [
+    "gather"
+   ],
+   "teams": {
+    "alpha": [
+     {
+      "discord_nick": "Kexy",
+      "nick": "^4Kexy",
+      "player_id": "12b497e1-e6d6-5539-bda7-1dd50a836fc6",
+      "player_name": "^i+/- 5^p '^4Kexy"
+     },
+     {
+      "discord_nick": "ddd331",
+      "nick": "ddd331",
+      "player_id": "55e2623b-eccc-5f23-9126-2eee84a70cb2",
+      "player_name": "^i+/- 5^a '^7ddd331"
+     },
+     {
+      "discord_nick": "KiljAn",
+      "nick": "KiljAn",
+      "player_id": "98ad2f3d-6ac0-538e-9ff4-a5269484bdd2",
+      "player_name": "^i+/- 5^b '^7KiljAn"
+     }
+    ],
+    "beta": [
+     {
+      "discord_nick": "Skywa1keR",
+      "nick": "Skywa1keR",
+      "player_id": "7adb82c9-a1cf-505c-9777-abc23fb622aa",
+      "player_name": "^7Skywa1keR ^r0^s_^to"
+     },
+     {
+      "discord_nick": "Kredenc",
+      "nick": "^6K^5R^3E^2D^EY",
+      "player_id": "adeb5cb6-285a-5680-af40-6ad161f885b2",
+      "player_name": "^6K^5R^3E^2D^EY ^r0^s_^to"
+     },
+     {
+      "discord_nick": "Cru3l",
+      "nick": "Cru3l",
+      "player_id": "c0b6e5ee-06c2-5909-860e-ab8f7c2ce325",
+      "player_name": "^7Cru3l ^r0^s_^to"
+     }
+    ]
+   },
+   "winner": "beta"
+  },
+  {
+   "alpha_captain_id": "76903d56-f455-5be9-8c7f-b8d4c11c5b97",
+   "alpha_score": 4,
+   "alpha_teamname": "^xPLUG+FORK",
+   "beta_captain_id": "57d4161f-8046-5ecf-bc7b-3d864adccb47",
+   "beta_score": 2,
+   "beta_teamname": "{name} ^uis ^sa ^vlow+",
+   "channel_id": "1194582311182807142",
+   "channel_name": "ET:Legacy Events: #3vs3",
+   "end_time": "2026-09-18T12:44:48+02:00",
+   "maps": [
+    {
+     "map": "etl_ice",
+     "play_index": 1,
+     "result": {
+      "alpha": 2,
+      "beta": 0
+     }
+    },
+    {
+     "map": "etl_frostbite",
+     "play_index": 1,
+     "result": {
+      "alpha": 0,
+      "beta": 2
+     }
+    },
+    {
+     "map": "sw_goldrush_te",
+     "play_index": 1,
+     "result": {
+      "alpha": 2,
+      "beta": 0
+     }
+    }
+   ],
+   "match_id": "c37a612a-1c3a-5709-bbfb-e08b923d6747",
+   "match_score": "4-2",
+   "server": {
+    "instance": "1",
+    "ip": "gather.example.invalid",
+    "name": "gather.example.invalid - server 1",
+    "port": "27960",
+    "pw": "REDACTED"
+   },
+   "size": 6,
+   "size_label": "3v3",
+   "start_time": "2026-09-18T11:59:07+02:00",
+   "state": "finished",
+   "tags": [
+    "gather"
+   ],
+   "teams": {
+    "alpha": [
+     {
+      "discord_nick": "nefjuz",
+      "nick": "nef",
+      "player_id": "5107feb3-1871-51a1-b2ca-02304fd0f713",
+      "player_name": "^xPLUG+FORK^7nef"
+     },
+     {
+      "discord_nick": "jussi8030",
+      "nick": "^6M ^5R ^3C",
+      "player_id": "76903d56-f455-5be9-8c7f-b8d4c11c5b97",
+      "player_name": "^xPLUG+FORK^6M ^5R ^3C"
+     },
+     {
+      "discord_nick": "devix",
+      "nick": "devix",
+      "player_id": "f1ecbdb6-18cc-51eb-bf46-aaf5fcad132e",
+      "player_name": "^xPLUG+FORK^7devix"
+     }
+    ],
+    "beta": [
+     {
+      "discord_nick": "subak",
+      "nick": "subak",
+      "player_id": "57d4161f-8046-5ecf-bc7b-3d864adccb47",
+      "player_name": "^7subak ^uis ^sa ^vlow+"
+     },
+     {
+      "discord_nick": "takerjay",
+      "nick": "takerjay",
+      "player_id": "9dc03c9f-16e8-53b0-bdcc-283da8ccea99",
+      "player_name": "^7takerjay ^uis ^sa ^vlow+"
+     },
+     {
+      "discord_nick": "kiz",
+      "nick": "kiz",
+      "player_id": "d6787384-b37f-507c-914f-6b2f97dde79e",
+      "player_name": "^7kiz ^uis ^sa ^vlow+"
+     }
+    ]
+   },
+   "vods_count": 2,
+   "winner": "alpha"
+  },
+  {
+   "alpha_captain_id": "12b497e1-e6d6-5539-bda7-1dd50a836fc6",
+   "alpha_score": 4,
+   "alpha_teamname": "^36^13^3:)^4",
+   "beta_captain_id": "2266e800-7fe4-5e48-8126-9d93c1f88be0",
+   "beta_score": 0,
+   "beta_teamname": "^7K^ON^3I^LF^AI^1E.",
+   "channel_id": "1302336327487848529",
+   "channel_name": "Poland ET:Legacy: #3v3",
+   "end_time": "2026-09-18T11:54:38+02:00",
+   "maps": [
+    {
+     "map": "te_escape2",
+     "play_index": 1,
+     "result": {
+      "alpha": 2,
+      "beta": 0
+     }
+    },
+    {
+     "map": "etl_frostbite",
+     "play_index": 1,
+     "result": {
+      "alpha": 2,
+      "beta": 0
+     }
+    },
+    {
+     "map": "sw_goldrush_te",
+     "play_index": 1
+    }
+   ],
+   "match_id": "7e342c36-3cc6-556c-b49c-9686d9b3c2ac",
+   "match_score": "4-0",
+   "server": {
+    "instance": "1",
+    "ip": "gather.example.invalid",
+    "name": "^7polandetlegacy.com ^3netcup",
+    "port": "27960",
+    "pw": "REDACTED"
+   },
+   "size": 6,
+   "size_label": "3v3",
+   "start_time": "2026-09-18T11:19:09+02:00",
+   "state": "finished",
+   "tags": [
+    "gather"
+   ],
+   "teams": {
+    "alpha": [
+     {
+      "discord_nick": "Kexy",
+      "nick": "^4Kexy",
+      "player_id": "12b497e1-e6d6-5539-bda7-1dd50a836fc6",
+      "player_name": "^36^13^3:)^4^4Kexy"
+     },
+     {
+      "discord_nick": "Cru3l",
+      "nick": "Cru3l",
+      "player_id": "c0b6e5ee-06c2-5909-860e-ab8f7c2ce325",
+      "player_name": "^36^13^3:)^4Cru3l"
+     },
+     {
+      "discord_nick": "Gilbey",
+      "nick": "Mani",
+      "player_id": "f4dff459-c005-5078-8837-f7c529bd15e5",
+      "player_name": "^36^13^3:)^4Mani"
+     }
+    ],
+    "beta": [
+     {
+      "discord_nick": "eV!L*lemr",
+      "nick": "^1L^Ae^Lg^3i^Oo^7n",
+      "player_id": "2266e800-7fe4-5e48-8126-9d93c1f88be0",
+      "player_name": "^7K^ON^3I^LF^AI^1E.^1L^Ae^Lg^3i^Oo"
+     },
+     {
+      "discord_nick": "bRAH1",
+      "nick": "bRAH1",
+      "player_id": "a937b030-8055-52fa-9fdb-05d57f9fae76",
+      "player_name": "^7K^ON^3I^LF^AI^1E.^7bRAH1"
+     },
+     {
+      "discord_nick": "kiz",
+      "nick": "kiz",
+      "player_id": "d6787384-b37f-507c-914f-6b2f97dde79e",
+      "player_name": "^7K^ON^3I^LF^AI^1E.^7kiz"
+     }
+    ]
+   },
+   "winner": "alpha"
+  },
+  {
+   "alpha_captain_id": "71eacdac-c4b5-5083-abc0-51c431f04039",
+   "alpha_score": 4,
+   "alpha_teamname": "^2S^7D^1C",
+   "beta_captain_id": "9dc03c9f-16e8-53b0-bdcc-283da8ccea99",
+   "beta_score": 2,
+   "beta_teamname": "^~shidon",
+   "channel_id": "1194582311182807142",
+   "channel_name": "ET:Legacy Events: #3vs3",
+   "end_time": "2026-09-18T00:26:13+02:00",
+   "maps": [
+    {
+     "map": "etl_sp_delivery",
+     "play_index": 1,
+     "result": {
+      "alpha": 0,
+      "beta": 2
+     }
+    },
+    {
+     "map": "te_escape2",
+     "play_index": 1,
+     "result": {
+      "alpha": 2,
+      "beta": 0
+     }
+    },
+    {
+     "map": "etl_adlernest",
+     "play_index": 1,
+     "result": {
+      "alpha": 2,
+      "beta": 0
+     }
+    }
+   ],
+   "match_id": "05bf16df-eb37-5288-83da-bc3fd4131d2d",
+   "match_score": "4-2",
+   "server": {
+    "instance": "1",
+    "ip": "gather.example.invalid",
+    "name": "gather.example.invalid - server 1",
+    "port": "27960",
+    "pw": "REDACTED"
+   },
+   "size": 6,
+   "size_label": "3v3",
+   "start_time": "2026-09-17T23:31:14+02:00",
+   "state": "finished",
+   "tags": [
+    "gather"
+   ],
+   "teams": {
+    "alpha": [
+     {
+      "discord_nick": "littyJ",
+      "nick": "^0The^3Adjuster",
+      "player_id": "25f700e4-6deb-5657-b16f-5bcd715951a7",
+      "player_name": "^2S^7D^1C^?' ^0The^3Adjuster"
+     },
+     {
+      "discord_nick": "nefjuz",
+      "nick": "nef",
+      "player_id": "5107feb3-1871-51a1-b2ca-02304fd0f713",
+      "player_name": "^2S^7D^1C^i' ^7nef"
+     },
+     {
+      "discord_nick": "ViKO",
+      "nick": "ViKO",
+      "player_id": "71eacdac-c4b5-5083-abc0-51c431f04039",
+      "player_name": "^2S^7D^1C^f' ^7ViKO"
+     }
+    ],
+    "beta": [
+     {
+      "discord_nick": "Plain",
+      "nick": "^0PL^~4^0IN",
+      "player_id": "572cb5d3-65e9-507f-81bd-1e2edd2c9dcf",
+      "player_name": "^Dshidon^0PL^64^0IN"
+     },
+     {
+      "discord_nick": "kazim",
+      "nick": "GRiEZMANN",
+      "player_id": "57e01011-ff50-583f-9d11-a4c64a62ce0e",
+      "player_name": "^Nshidon^7GRiEZMANN"
+     },
+     {
+      "discord_nick": "takerjay",
+      "nick": "takerjay",
+      "player_id": "9dc03c9f-16e8-53b0-bdcc-283da8ccea99",
+      "player_name": "^7shidon^7takerjay"
+     }
+    ]
+   },
+   "vods_count": 1,
+   "winner": "alpha"
+  },
+  {
+   "alpha_score": null,
+   "alpha_teamname": "^0b2k",
+   "beta_score": null,
+   "beta_teamname": "[^0SkyLine^7]",
+   "channel_id": "0000000000000000999",
+   "channel_name": "unsorted",
+   "end_time": "2026-09-17T22:09:28+02:00",
+   "maps": [
+    {
+     "map": "etl_sp_delivery",
+     "play_index": 1,
+     "result": {
+      "alpha": 0,
+      "beta": 0
+     }
+    }
+   ],
+   "match_id": "e7fb8606-6053-5a99-b7e4-61e6bdbad667",
+   "match_score": null,
+   "server": {
+    "instance": "",
+    "ip": "REDACTED",
+    "name": "ETLAC EU Gather #1",
+    "port": "27960",
+    "pw": ""
+   },
+   "size": 6,
+   "size_label": "3v3",
+   "start_time": "2026-09-17T22:09:28+02:00",
+   "state": "finished",
+   "tags": [],
+   "teams": {
+    "alpha": [
+     {
+      "discord_nick": "w1lko",
+      "nick": "w1lko",
+      "player_id": "31faeb36-e8f3-5f15-8d45-9672b8722f1f",
+      "player_name": "^0w1lko^5:^2x"
+     },
+     {
+      "discord_nick": "meehow",
+      "nick": "meehow",
+      "player_id": "37e0b414-ff2a-529b-b1b2-c5b961ae978c",
+      "player_name": "meehow"
+     },
+     {
+      "discord_nick": "lockheed",
+      "nick": "lock",
+      "player_id": "702a1672-be8c-5381-976a-8a0e196ae86b",
+      "player_name": "^0L^koC^8kh^3ee^7dDoS^3Au^8Ro^0S"
+     }
+    ],
+    "beta": [
+     {
+      "discord_nick": "SkyLine",
+      "nick": "SkyLine",
+      "player_id": "01702113-4580-57e0-bf81-ca77121db3ea",
+      "player_name": "^0SkyLine"
+     },
+     {
+      "discord_nick": "roOX",
+      "nick": "roOX",
+      "player_id": "bbc395b8-83d0-5ee2-bbdf-54e818151f83",
+      "player_name": "roOX"
+     }
+    ]
+   },
+   "winner": ""
+  }
+ ],
+ "page": 1,
+ "per_page": 5,
+ "total": 7465,
+ "total_pages": 1493
+}

@@ -1,0 +1,909 @@
+{
+ "$schema": "https://gibhub.gg/PageLeaderboardEntry.json",
+ "items": [
+  {
+   "discord_nick": "uYop",
+   "maps": 0,
+   "matches": 0,
+   "nick": "uYop",
+   "player_id": "488e5a36-e5d7-52cb-9db4-0b74b5796316",
+   "rounds": 111,
+   "value": 1.3331652113369532
+  },
+  {
+   "discord_nick": "h2o",
+   "maps": 0,
+   "matches": 0,
+   "nick": "h2o",
+   "player_id": "5f2ed995-afe3-502f-9a07-1293b09303a8",
+   "rounds": 782,
+   "value": 1.3116078586171531
+  },
+  {
+   "discord_nick": "Damon",
+   "maps": 0,
+   "matches": 0,
+   "nick": "^pinsurgent",
+   "player_id": "20ebd36e-c3e0-5b98-805b-70f88b6c9b90",
+   "rounds": 508,
+   "value": 1.294058692158978
+  },
+  {
+   "discord_nick": "L4mpje",
+   "maps": 0,
+   "matches": 0,
+   "nick": "L4mpje",
+   "player_id": "b2711a98-e4a8-5607-8f1c-52b8048ef313",
+   "rounds": 130,
+   "value": 1.2641814330528522
+  },
+  {
+   "discord_nick": "roltzz",
+   "maps": 0,
+   "matches": 0,
+   "nick": "^~A.T. MIXXX",
+   "player_id": "92e50dc8-8eef-5ab2-b6f9-54d08840bd30",
+   "rounds": 683,
+   "value": 1.2440509186433175
+  },
+  {
+   "discord_nick": "jussi8030",
+   "maps": 0,
+   "matches": 0,
+   "nick": "^6M ^5R ^3C",
+   "player_id": "76903d56-f455-5be9-8c7f-b8d4c11c5b97",
+   "rounds": 1771,
+   "value": 1.239861949293771
+  },
+  {
+   "discord_nick": "agsor",
+   "maps": 0,
+   "matches": 0,
+   "nick": "^1agsor",
+   "player_id": "75746c3e-d6f6-52f1-9464-a559a08ee687",
+   "rounds": 467,
+   "value": 1.235818244114951
+  },
+  {
+   "discord_nick": "Sheeter",
+   "maps": 0,
+   "matches": 0,
+   "nick": "Sheeter",
+   "player_id": "7a5ee32f-e3a3-53a9-9327-aea8255fe222",
+   "rounds": 752,
+   "value": 1.2288779938858212
+  },
+  {
+   "discord_nick": "kresti",
+   "maps": 0,
+   "matches": 0,
+   "nick": "^7KRESTI",
+   "player_id": "a98936e3-befb-55db-9169-3c62a3432eea",
+   "rounds": 202,
+   "value": 1.213652308635448
+  },
+  {
+   "discord_nick": "WuT",
+   "maps": 0,
+   "matches": 0,
+   "nick": "^7WuT^~>/",
+   "player_id": "c5e3942e-d058-564e-97b6-a9311f0229b2",
+   "rounds": 59,
+   "value": 1.2128817680719737
+  },
+  {
+   "discord_nick": "Plaz",
+   "maps": 0,
+   "matches": 0,
+   "nick": "Plaz",
+   "player_id": "94bfa40d-6041-5883-bd3b-408e0cbdec42",
+   "rounds": 24,
+   "value": 1.2099429644071138
+  },
+  {
+   "discord_nick": "sNi",
+   "maps": 0,
+   "matches": 0,
+   "nick": "sNi",
+   "player_id": "58e727ef-eb06-50c5-b496-c89da160a4fb",
+   "rounds": 152,
+   "value": 1.2008357647650256
+  },
+  {
+   "discord_nick": "ddd331",
+   "maps": 0,
+   "matches": 0,
+   "nick": "ddd331",
+   "player_id": "55e2623b-eccc-5f23-9126-2eee84a70cb2",
+   "rounds": 696,
+   "value": 1.1969983426830437
+  },
+  {
+   "discord_nick": "outlAw",
+   "maps": 0,
+   "matches": 0,
+   "nick": "^0succidamQu^~e",
+   "player_id": "f0ce76b4-4b0d-5315-8c29-354df172c33f",
+   "rounds": 32,
+   "value": 1.183158793347947
+  },
+  {
+   "discord_nick": "rapz",
+   "maps": 0,
+   "matches": 0,
+   "nick": "r4pZ",
+   "player_id": "6581d5ae-5e30-56bd-a727-5688418b3f72",
+   "rounds": 87,
+   "value": 1.1769685008946587
+  },
+  {
+   "discord_nick": "ViKO",
+   "maps": 0,
+   "matches": 0,
+   "nick": "ViKO",
+   "player_id": "71eacdac-c4b5-5083-abc0-51c431f04039",
+   "rounds": 91,
+   "value": 1.166589543504535
+  },
+  {
+   "discord_nick": "pengu",
+   "maps": 0,
+   "matches": 0,
+   "nick": "pengu",
+   "player_id": "1d429a29-b9cc-55c8-bebe-962ccd09c243",
+   "rounds": 19,
+   "value": 1.1582477793974035
+  },
+  {
+   "discord_nick": "mAus",
+   "maps": 0,
+   "matches": 0,
+   "nick": "mAus",
+   "player_id": "9403ad77-6c28-51dd-9e14-b35da0ca7670",
+   "rounds": 36,
+   "value": 1.1578677962808048
+  },
+  {
+   "discord_nick": "jAcket",
+   "maps": 0,
+   "matches": 0,
+   "nick": "jAcket",
+   "player_id": "1b5ec3d5-ac24-5079-adfb-5661148e9adf",
+   "rounds": 276,
+   "value": 1.1528100377505588
+  },
+  {
+   "discord_nick": "subak",
+   "maps": 0,
+   "matches": 0,
+   "nick": "subak",
+   "player_id": "57d4161f-8046-5ecf-bc7b-3d864adccb47",
+   "rounds": 1183,
+   "value": 1.1503056084771388
+  },
+  {
+   "discord_nick": "jam",
+   "maps": 0,
+   "matches": 0,
+   "nick": "jam",
+   "player_id": "970dd070-2355-5088-b02a-d05086612cce",
+   "rounds": 255,
+   "value": 1.1497741142908733
+  },
+  {
+   "discord_nick": "Rg",
+   "maps": 0,
+   "matches": 0,
+   "nick": "Rg",
+   "player_id": "014fac0a-eaad-57fc-86b5-22e192396d27",
+   "rounds": 584,
+   "value": 1.1454619931458232
+  },
+  {
+   "discord_nick": "xen",
+   "maps": 0,
+   "matches": 0,
+   "nick": "Xen",
+   "player_id": "880d0b35-0dfd-5dc4-a2fe-bc7b1fc2a0d5",
+   "rounds": 109,
+   "value": 1.1447783170207855
+  },
+  {
+   "discord_nick": "hAkim",
+   "maps": 0,
+   "matches": 0,
+   "nick": "hAkim",
+   "player_id": "b875a377-2397-5b5c-b64c-1e53abbaf6f3",
+   "rounds": 117,
+   "value": 1.1409830992872065
+  },
+  {
+   "discord_nick": "toxiN",
+   "maps": 0,
+   "matches": 0,
+   "nick": "^9toxin",
+   "player_id": "9f1ebaea-9fb2-5acc-a15a-bd33316fe2b1",
+   "rounds": 277,
+   "value": 1.1390319805439204
+  },
+  {
+   "discord_nick": "lEku",
+   "maps": 0,
+   "matches": 0,
+   "nick": "lEku",
+   "player_id": "7f1ecd4d-f6b1-5677-bbff-9d56eac9ce3a",
+   "rounds": 195,
+   "value": 1.126680816922869
+  },
+  {
+   "discord_nick": "indyferentny",
+   "maps": 0,
+   "matches": 0,
+   "nick": "iii",
+   "player_id": "ecd44a0d-4ce7-55bc-a6e2-d0f2eb8c1739",
+   "rounds": 26,
+   "value": 1.1232477048548257
+  },
+  {
+   "discord_nick": "squAze",
+   "maps": 0,
+   "matches": 0,
+   "nick": "squAze",
+   "player_id": "9e4589e9-4306-5c19-a95e-c16ac933edbc",
+   "rounds": 229,
+   "value": 1.1219825715315146
+  },
+  {
+   "discord_nick": "w1lko",
+   "maps": 0,
+   "matches": 0,
+   "nick": "w1lko",
+   "player_id": "31faeb36-e8f3-5f15-8d45-9672b8722f1f",
+   "rounds": 194,
+   "value": 1.1158465723101603
+  },
+  {
+   "discord_nick": "semik",
+   "maps": 0,
+   "matches": 0,
+   "nick": "semik",
+   "player_id": "ab210a6f-9666-52bc-a032-cb23368af94f",
+   "rounds": 938,
+   "value": 1.1124408822995293
+  },
+  {
+   "discord_nick": "weslann",
+   "maps": 0,
+   "matches": 0,
+   "nick": "weslann",
+   "player_id": "c0b0bd96-d68f-5077-92ac-ac537a08d737",
+   "rounds": 49,
+   "value": 1.1117331720888615
+  },
+  {
+   "discord_nick": "s1LENT",
+   "maps": 0,
+   "matches": 0,
+   "nick": "s1lent",
+   "player_id": "e5c44edb-2c9c-5c7f-8215-af8586220e56",
+   "rounds": 536,
+   "value": 1.1104664049650494
+  },
+  {
+   "discord_nick": "takerjay",
+   "maps": 0,
+   "matches": 0,
+   "nick": "takerjay",
+   "player_id": "9dc03c9f-16e8-53b0-bdcc-283da8ccea99",
+   "rounds": 737,
+   "value": 1.1047509564681257
+  },
+  {
+   "discord_nick": "snjh",
+   "maps": 0,
+   "matches": 0,
+   "nick": "snjh",
+   "player_id": "c7d554d2-edfc-5b1b-96b3-c14e1ec0b4b5",
+   "rounds": 337,
+   "value": 1.1046121018854054
+  },
+  {
+   "discord_nick": "tezaXo",
+   "maps": 0,
+   "matches": 0,
+   "nick": "^7t^jZ^7x^j...",
+   "player_id": "fa4219b9-b84c-5b91-97d5-9eeb14116b59",
+   "rounds": 669,
+   "value": 1.1040019690990448
+  },
+  {
+   "discord_nick": "Kredenc",
+   "maps": 0,
+   "matches": 0,
+   "nick": "^6K^5R^3E^2D^EY",
+   "player_id": "adeb5cb6-285a-5680-af40-6ad161f885b2",
+   "rounds": 632,
+   "value": 1.1011599757387611
+  },
+  {
+   "discord_nick": "mental",
+   "maps": 0,
+   "matches": 0,
+   "nick": "mental",
+   "player_id": "d7401853-4d9e-58ac-bebd-286adc564c92",
+   "rounds": 523,
+   "value": 1.0963886677110948
+  },
+  {
+   "discord_nick": "FiREBALL",
+   "maps": 0,
+   "matches": 0,
+   "nick": "FiREBALL",
+   "player_id": "553dd54c-4b18-50a3-a387-10adbce6ed80",
+   "rounds": 61,
+   "value": 1.0935151106432865
+  },
+  {
+   "discord_nick": "Webe",
+   "maps": 0,
+   "matches": 0,
+   "nick": "Webe",
+   "player_id": "cc1daa13-2b32-5ff3-b4bc-f219cf75bf1a",
+   "rounds": 294,
+   "value": 1.0908065652384342
+  },
+  {
+   "discord_nick": "Turki",
+   "maps": 0,
+   "matches": 0,
+   "nick": "Turki",
+   "player_id": "736bf744-64e4-56ee-87ee-40874c769b74",
+   "rounds": 65,
+   "value": 1.0900195986032486
+  },
+  {
+   "discord_nick": "treyzz",
+   "maps": 0,
+   "matches": 0,
+   "nick": "treyzz",
+   "player_id": "2a1df91c-359e-5c8d-8789-6856673fac34",
+   "rounds": 378,
+   "value": 1.0825857806751746
+  },
+  {
+   "discord_nick": "Jinosta",
+   "maps": 0,
+   "matches": 0,
+   "nick": "Jinosta",
+   "player_id": "4672d35d-e9e9-527f-b6be-a2fa795b0006",
+   "rounds": 92,
+   "value": 1.0825074766283838
+  },
+  {
+   "discord_nick": "kREPOX",
+   "maps": 0,
+   "matches": 0,
+   "nick": "kREPOX",
+   "player_id": "ff480fc7-fbce-5158-9ea0-37bef4c6be28",
+   "rounds": 52,
+   "value": 1.0823966638365787
+  },
+  {
+   "discord_nick": "zubl1k",
+   "maps": 0,
+   "matches": 0,
+   "nick": "zubl1x",
+   "player_id": "b9739907-352a-5826-8de7-97764d25dc0c",
+   "rounds": 235,
+   "value": 1.082233281135559
+  },
+  {
+   "discord_nick": "SkyLine",
+   "maps": 0,
+   "matches": 0,
+   "nick": "SkyLine",
+   "player_id": "01702113-4580-57e0-bf81-ca77121db3ea",
+   "rounds": 438,
+   "value": 1.0816552623218258
+  },
+  {
+   "discord_nick": "mietas",
+   "maps": 0,
+   "matches": 0,
+   "nick": "mietas",
+   "player_id": "e7079d53-f451-5c49-bd30-9fa749714ee4",
+   "rounds": 30,
+   "value": 1.0711402893066406
+  },
+  {
+   "discord_nick": "kazim",
+   "maps": 0,
+   "matches": 0,
+   "nick": "GRiEZMANN",
+   "player_id": "57e01011-ff50-583f-9d11-a4c64a62ce0e",
+   "rounds": 390,
+   "value": 1.0681772673571552
+  },
+  {
+   "discord_nick": "ZeD",
+   "maps": 0,
+   "matches": 0,
+   "nick": "ludA",
+   "player_id": "654017c0-62f0-58bd-9aac-b16b908f7463",
+   "rounds": 12,
+   "value": 1.06781890657213
+  },
+  {
+   "discord_nick": "Aquila",
+   "maps": 0,
+   "matches": 0,
+   "nick": "Aquila",
+   "player_id": "138efbbc-4a17-5d56-816d-6219ec102445",
+   "rounds": 32,
+   "value": 1.0616503776387964
+  },
+  {
+   "discord_nick": "Terifire",
+   "maps": 0,
+   "matches": 0,
+   "nick": "Terifire",
+   "player_id": "1a759f99-fd12-5cd2-876f-aee1447e2579",
+   "rounds": 765,
+   "value": 1.0613658886689405
+  },
+  {
+   "discord_nick": "carnage",
+   "maps": 0,
+   "matches": 0,
+   "nick": "^0carnage",
+   "player_id": "c901ff98-5308-5356-b036-98937d6fb54c",
+   "rounds": 207,
+   "value": 1.0603940776876501
+  },
+  {
+   "discord_nick": "sandi",
+   "maps": 0,
+   "matches": 0,
+   "nick": "sandi",
+   "player_id": "4e7d0024-9f0c-52c8-a9dd-7b33c33a7b2d",
+   "rounds": 463,
+   "value": 1.060204421875367
+  },
+  {
+   "discord_nick": "REINA",
+   "maps": 0,
+   "matches": 0,
+   "nick": "R E I N A",
+   "player_id": "5769503d-3a2d-58e6-9772-dd5a92f3f2d2",
+   "rounds": 244,
+   "value": 1.055097081026055
+  },
+  {
+   "discord_nick": "nozz",
+   "maps": 0,
+   "matches": 0,
+   "nick": "nozz",
+   "player_id": "1aa9f249-2ce8-543e-9aac-ee7f386abc11",
+   "rounds": 8,
+   "value": 1.0526249927023184
+  },
+  {
+   "discord_nick": "stownage",
+   "maps": 0,
+   "matches": 0,
+   "nick": "stownage",
+   "player_id": "0e2b21b8-9310-5d8e-96f2-8c0c1438d2e6",
+   "rounds": 92,
+   "value": 1.0486635537905113
+  },
+  {
+   "discord_nick": "littyJ",
+   "maps": 0,
+   "matches": 0,
+   "nick": "^0The^3Adjuster",
+   "player_id": "25f700e4-6deb-5657-b16f-5bcd715951a7",
+   "rounds": 553,
+   "value": 1.0469922339412527
+  },
+  {
+   "discord_nick": "Athlon",
+   "maps": 0,
+   "matches": 0,
+   "nick": "Athlon",
+   "player_id": "ce7621db-21c0-5df2-abec-4f1eb39762a7",
+   "rounds": 6,
+   "value": 1.0454597132546561
+  },
+  {
+   "discord_nick": "BOBiKA",
+   "maps": 0,
+   "matches": 0,
+   "nick": "^pMangekyouiQa",
+   "player_id": "e9590511-d6b3-52e3-84b2-097c202ffbbd",
+   "rounds": 1,
+   "value": 1.0445746034383774
+  },
+  {
+   "discord_nick": "Bl4d3",
+   "maps": 0,
+   "matches": 0,
+   "nick": "blade",
+   "player_id": "6d34830a-6e96-58ef-a69d-c33202a01ee1",
+   "rounds": 85,
+   "value": 1.0424645960330963
+  },
+  {
+   "discord_nick": "kiz",
+   "maps": 0,
+   "matches": 0,
+   "nick": "kiz",
+   "player_id": "d6787384-b37f-507c-914f-6b2f97dde79e",
+   "rounds": 741,
+   "value": 1.040264217626481
+  },
+  {
+   "discord_nick": "czkk_",
+   "maps": 0,
+   "matches": 0,
+   "nick": "czkk_",
+   "player_id": "fb8bda08-bace-5c27-b9d7-efbab9694933",
+   "rounds": 687,
+   "value": 1.039955596638541
+  },
+  {
+   "discord_nick": "Shootej",
+   "maps": 0,
+   "matches": 0,
+   "nick": "Shootej",
+   "player_id": "df7a5b8a-b225-5e57-ab75-e86eada0e786",
+   "rounds": 5,
+   "value": 1.0384432673454285
+  },
+  {
+   "discord_nick": "Elviss",
+   "maps": 0,
+   "matches": 0,
+   "nick": "Elviss",
+   "player_id": "1a43976f-534d-539b-9da6-6b91fed9fdd4",
+   "rounds": 58,
+   "value": 1.0323818481131777
+  },
+  {
+   "discord_nick": "detdet",
+   "maps": 0,
+   "matches": 0,
+   "nick": "detdet",
+   "player_id": "455f4977-7667-55e7-8c63-5b11bf52bc75",
+   "rounds": 8,
+   "value": 1.0319402114204739
+  },
+  {
+   "discord_nick": "Lepari",
+   "maps": 0,
+   "matches": 0,
+   "nick": "Lepari",
+   "player_id": "0f2b958e-a29c-5189-86dd-5a16db10834f",
+   "rounds": 257,
+   "value": 1.0315341524341528
+  },
+  {
+   "discord_nick": "Lazy",
+   "maps": 0,
+   "matches": 0,
+   "nick": "Lazy",
+   "player_id": "f509fb11-b50d-509c-bea1-4fb18a80ba38",
+   "rounds": 11,
+   "value": 1.0311814546585083
+  },
+  {
+   "discord_nick": "Sinche",
+   "maps": 0,
+   "matches": 0,
+   "nick": "Sinche",
+   "player_id": "c6440070-5a66-5930-8fc0-7495817d8746",
+   "rounds": 9,
+   "value": 1.0305642634630203
+  },
+  {
+   "discord_nick": "bodo48",
+   "maps": 0,
+   "matches": 0,
+   "nick": "bodo",
+   "player_id": "e128e1e5-167c-5c42-8e8a-7b16851c6f4e",
+   "rounds": 193,
+   "value": 1.0300051799187293
+  },
+  {
+   "discord_nick": "sEo",
+   "maps": 0,
+   "matches": 0,
+   "nick": "sEo",
+   "player_id": "9875042f-723a-50c8-b51e-f9759ab36cb4",
+   "rounds": 237,
+   "value": 1.029144016050157
+  },
+  {
+   "discord_nick": "eronnn.",
+   "maps": 0,
+   "matches": 0,
+   "nick": "eron",
+   "player_id": "028bd5a3-f870-5c4c-be8d-02e2c271eac4",
+   "rounds": 207,
+   "value": 1.027140731747086
+  },
+  {
+   "discord_nick": "nefjuz",
+   "maps": 0,
+   "matches": 0,
+   "nick": "nef",
+   "player_id": "5107feb3-1871-51a1-b2ca-02304fd0f713",
+   "rounds": 94,
+   "value": 1.026667240562789
+  },
+  {
+   "discord_nick": "Baczo",
+   "maps": 0,
+   "matches": 0,
+   "nick": "Baczo",
+   "player_id": "ec2319ec-c3b4-5cc2-8b4f-897fc522c9d4",
+   "rounds": 559,
+   "value": 1.0264494784617673
+  },
+  {
+   "discord_nick": "JOSHUA",
+   "maps": 0,
+   "matches": 0,
+   "nick": "JOSHUA",
+   "player_id": "a98fcd9a-8322-59bc-a34b-7436e1994e87",
+   "rounds": 85,
+   "value": 1.0256056606769561
+  },
+  {
+   "discord_nick": "rak",
+   "maps": 0,
+   "matches": 0,
+   "nick": "hinny",
+   "player_id": "2bb9d594-a213-5380-a2ca-3bb7f4c80acb",
+   "rounds": 6,
+   "value": 1.0246702943529402
+  },
+  {
+   "discord_nick": "dialer",
+   "maps": 0,
+   "matches": 0,
+   "nick": "dialer",
+   "player_id": "82e6779a-2b9e-5451-a85b-86450e6bf01d",
+   "rounds": 16,
+   "value": 1.0238366280832598
+  },
+  {
+   "discord_nick": "GUILDbrett",
+   "maps": 0,
+   "matches": 0,
+   "nick": "GUILDbrett",
+   "player_id": "f058298e-4bd4-5361-8c06-8a94caa1a300",
+   "rounds": 1,
+   "value": 1.0223752930760384
+  },
+  {
+   "discord_nick": "FREE 90 TSU SURF",
+   "maps": 0,
+   "matches": 0,
+   "nick": "FREE 90 TSU SURF",
+   "player_id": "d98372a3-52b3-546c-b48b-a75641d4034c",
+   "rounds": 3,
+   "value": 1.021175781885783
+  },
+  {
+   "discord_nick": "meehow",
+   "maps": 0,
+   "matches": 0,
+   "nick": "meehow",
+   "player_id": "37e0b414-ff2a-529b-b1b2-c5b961ae978c",
+   "rounds": 22,
+   "value": 1.0211178483189762
+  },
+  {
+   "discord_nick": "creK",
+   "maps": 0,
+   "matches": 0,
+   "nick": "creK",
+   "player_id": "eb50d65d-9e94-5c34-820f-eb288fb3a92c",
+   "rounds": 490,
+   "value": 1.0204137410267744
+  },
+  {
+   "discord_nick": "valk",
+   "maps": 0,
+   "matches": 0,
+   "nick": "superlight",
+   "player_id": "bdf58626-e958-5e26-a307-5b0e07904202",
+   "rounds": 96,
+   "value": 1.018742947965055
+  },
+  {
+   "discord_nick": "Bliss",
+   "maps": 0,
+   "matches": 0,
+   "nick": "Bliss",
+   "player_id": "2a0545b6-4127-50ab-9965-27c49187ea6c",
+   "rounds": 3,
+   "value": 1.0186683932940166
+  },
+  {
+   "discord_nick": "low-",
+   "maps": 0,
+   "matches": 0,
+   "nick": null,
+   "player_id": "3388c96e-53ac-5a05-819a-1beb91375669",
+   "rounds": 2,
+   "value": 1.0166654586791992
+  },
+  {
+   "discord_nick": "ETLaine",
+   "maps": 0,
+   "matches": 0,
+   "nick": "ETLaine",
+   "player_id": "6af21a44-2742-5272-926a-2b699c0b82eb",
+   "rounds": 1,
+   "value": 1.0153572335839272
+  },
+  {
+   "discord_nick": "eLx",
+   "maps": 0,
+   "matches": 0,
+   "nick": "eLx",
+   "player_id": "cac90d29-efbc-5f6c-a989-5d1d09d733cd",
+   "rounds": 755,
+   "value": 1.014882991840313
+  },
+  {
+   "discord_nick": "Tranix",
+   "maps": 0,
+   "matches": 0,
+   "nick": "Tranix",
+   "player_id": "120b0da3-2bb8-5dba-826d-858c97cb9564",
+   "rounds": 2,
+   "value": 1.0142977237701416
+  },
+  {
+   "discord_nick": "frickface",
+   "maps": 0,
+   "matches": 0,
+   "nick": "frickface",
+   "player_id": "1b2b4033-42ba-5aee-9869-108fea2beb0f",
+   "rounds": 2,
+   "value": 1.013709404889275
+  },
+  {
+   "discord_nick": "Kominiarz",
+   "maps": 0,
+   "matches": 0,
+   "nick": "Kominiarz",
+   "player_id": "88724c55-e1d7-5719-a81e-b4419f2e029a",
+   "rounds": 362,
+   "value": 1.0132965099274005
+  },
+  {
+   "discord_nick": "Roykuss",
+   "maps": 0,
+   "matches": 0,
+   "nick": "Roykuss",
+   "player_id": "e0a2671c-ee9f-5b07-a3b8-4f6c40f3350c",
+   "rounds": 1,
+   "value": 1.0126715898513794
+  },
+  {
+   "discord_nick": "Tohaj",
+   "maps": 0,
+   "matches": 0,
+   "nick": "Tohaj",
+   "player_id": "9ab5e98b-4b3b-5bee-ab7c-963b99db97c9",
+   "rounds": 2,
+   "value": 1.012465757482192
+  },
+  {
+   "discord_nick": "Sem",
+   "maps": 0,
+   "matches": 0,
+   "nick": "Sem",
+   "player_id": "cce8bb76-2a3b-5057-9040-dde245a74744",
+   "rounds": 7,
+   "value": 1.0122496052221819
+  },
+  {
+   "discord_nick": "Gnat:>",
+   "maps": 0,
+   "matches": 0,
+   "nick": "^~tangatanga",
+   "player_id": "5115ef9e-aa55-5940-b761-61b7c2bdcfed",
+   "rounds": 38,
+   "value": 1.0117653990691562
+  },
+  {
+   "discord_nick": "Supra",
+   "maps": 0,
+   "matches": 0,
+   "nick": "Supra",
+   "player_id": "acd051aa-f309-591e-9637-a9e2798d4cd1",
+   "rounds": 436,
+   "value": 1.0107717841797552
+  },
+  {
+   "discord_nick": "tisken",
+   "maps": 0,
+   "matches": 0,
+   "nick": "^0t^7isken",
+   "player_id": "4e5afc13-2103-5f40-bbdf-066038409cd9",
+   "rounds": 4,
+   "value": 1.0106869747764187
+  },
+  {
+   "discord_nick": "late",
+   "maps": 0,
+   "matches": 0,
+   "nick": "^woperaattori",
+   "player_id": "467be8ad-2f65-59bc-b65f-eab681c05782",
+   "rounds": 568,
+   "value": 1.0092884688598214
+  },
+  {
+   "discord_nick": "BloOdje",
+   "maps": 0,
+   "matches": 0,
+   "nick": "BloOdje",
+   "player_id": "f1e04772-97ec-590d-828c-a51a244ab236",
+   "rounds": 1,
+   "value": 1.008752353489399
+  },
+  {
+   "discord_nick": "Gojo",
+   "maps": 0,
+   "matches": 0,
+   "nick": "Gojo",
+   "player_id": "fbe735fc-8992-525f-b8df-c1cf71775ae3",
+   "rounds": 1,
+   "value": 1.007444329559803
+  },
+  {
+   "discord_nick": "mayan",
+   "maps": 0,
+   "matches": 0,
+   "nick": "^pmayan",
+   "player_id": "104ab2de-0e4f-5176-b2f3-3a2116e193db",
+   "rounds": 198,
+   "value": 1.007043354947802
+  },
+  {
+   "discord_nick": "^1e ^0\\'sixers",
+   "maps": 0,
+   "matches": 0,
+   "nick": null,
+   "player_id": "14e984fe-f062-5431-9329-36e3298fdbb1",
+   "rounds": 1,
+   "value": 1.005357839167118
+  },
+  {
+   "discord_nick": "viSualiNsAne",
+   "maps": 0,
+   "matches": 0,
+   "nick": "iNsAne",
+   "player_id": "eef809c5-f596-554f-b14c-b38200ca0675",
+   "rounds": 10,
+   "value": 1.0025557041168214
+  },
+  {
+   "discord_nick": "waffle",
+   "maps": 0,
+   "matches": 0,
+   "nick": "waffle",
+   "player_id": "76c2cd15-6750-547b-9105-491e9debf03a",
+   "rounds": 1,
+   "value": 1.0020184963941574
+  }
+ ],
+ "page": 1,
+ "per_page": 100,
+ "total": 360,
+ "total_pages": 4
+}

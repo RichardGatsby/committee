@@ -1,0 +1,14 @@
+{
+ "$schema": "https://gibhub.gg/SearchPlayersOutputBody.json",
+ "data": [
+  {
+   "country": "sk",
+   "discord_avatar_id": null,
+   "discord_id": "717063328790347826",
+   "discord_nick": "Kredenc",
+   "maps_played": 2597,
+   "nick": "^6K^5R^3E^2D^EY",
+   "player_id": "adeb5cb6-285a-5680-af40-6ad161f885b2"
+  }
+ ]
+}
