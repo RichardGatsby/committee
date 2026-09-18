@@ -325,11 +325,53 @@ pins entries whose Discord name is not searchable.
 favoured and won/lost as underdog, so a record built entirely on stacked teams is
 visible rather than hidden inside a single delta.
 
+**Categories of game.** Matches are split into `legacy` / `poland` gathers, `cup`
+(cups, tournaments, league seasons and games between named teams), and
+`other-gather` (subAk, eV!L, Frag Center, PRAWDZIWY). Read off the `gather` tag,
+the channel name, and the zero-padded channel id that marks a tournament channel —
+Nations Cup and subak's cups carry no `cup` tag and would otherwise be
+indistinguishable from scrims. The small gather channels are excluded from reports
+and from the fit, since nobody is tiered on them. `--only` restricts a report to
+chosen categories, and a report spanning several gets a per-category verdict.
+
+**A verdict that scales with sample size.** The spec's fixed +-1.5 win threshold
+did not, so on a 300-match window nearly every player drifted past it: one player
+read OVER on a +3.94 gap across 324 matches, a 1.2% edge that is noise. The label
+now reads off an exact Poisson-binomial tail probability — better than 1 in 100
+for `CLEARLY OVER`/`CLEARLY UNDER`, 1 in 20 for `OVER`/`UNDER`, otherwise
+`ON TIER`.
+
+**An explicit decision.** OVER/UNDER described the results but not the action, so
+each report now states the move: `MOVE DOWN: A -> B`, `CONSIDER MOVING UP: B -> A`,
+`KEEP at E`. The target tier is taken from the points scale rather than the
+alphabet, so "up" from A is E.
+
+**A committee tier list.** The API's tiers are incomplete, so
+`data/tierlist-events-3v3.txt` holds the committee's own list and
+`tools/resolve_tierlist.py` resolves it into `overrides.txt`. The resolver refuses
+to guess: a fuzzy hit is accepted only when the found nick shares a substring with
+the search term (search returns `Gilbey` for `maNic` and `juissi` for `poshtat`),
+and two entries resolving to one account are both rejected. A `Name -> lookup`
+syntax pins entries whose Discord name is not searchable.
+
 ## Corrections to the design above
 
 - The per-player stats line was labelled "3v3 lifetime", but the profile endpoint
   scopes those stats to `--range`. It now names its window. The UTRO baseline each
   match is compared against is scoped the same way.
+- The default window is a rolling 4 months and reads **every** match in it;
+  `--matches` caps it and the report warns when it truncated. The previous default
+  of 50 silently took the most recent 50, which turned one player's correct
+  ON TIER into a spurious OVER.
+- The per-match table is no longer printed. It ran to hundreds of rows and could
+  not be pasted or screenshotted; the verdict is still computed from every match,
+  and `--format json` carries them all.
+- Tables are aligned monospace with explicit column names rather than markdown
+  pipes: the output is read in a terminal and screenshotted, and Discord does not
+  render markdown tables at all.
+- The header lists only tiers from the channel the model is scoring with, and
+  falls back to the committee list where the API has no tier — it previously read
+  "no 3v3 tier held" for a player whose lineups below showed their tier.
 - Three modules exist that the component table does not list — `bundle.py`,
   `build.py`, `fetch.py` — to keep `model.py`, `tiers.py` and `report.py` free of
   I/O as the design requires.
@@ -348,7 +390,7 @@ four ways:
 | free six-coefficient fit | +24.7 | 0.0006 |
 | fixed points, uncapped imputation | +20.2 | 0.004 |
 | fixed points, imputation capped at A | +15.3 | 0.023 |
-| the above plus 124 committee overrides | +10.3 | 0.095 |
+| the above plus the committee tier list | +10.3 | 0.095 |
 
 The apparent overperformance was substantially an artefact of guessed tiers: with
 79% of inputs coming from the real tier list, it falls below significance. **Any
@@ -357,9 +399,13 @@ footer counts the four input sources for exactly this reason.
 
 ## Known gaps
 
-- 96 players appearing in the last three months of 3v3 hold no tier, filling about
-  30% of all roster slots. The ten most frequent cover 60% of the guessed slots.
-- 22 of 146 names on the committee tier list resolve to no account, or to an
+- Around 90 players appearing in recent 3v3 hold no tier. Loading the committee
+  list and tiering the five highest-volume regulars cut guessed roster slots from
+  1,945 to 1,056 over three months; what remains is spread thinly enough that no
+  one player distorts much.
+- 22 of 154 names on the committee tier list resolve to no account or to an
   ambiguous one, and are listed for a human rather than guessed.
-- Tier history still does not exist, so all-time figures score old matches against
+- Tier history still does not exist, so long windows score old matches against
   today's tiers.
+- The `cup` category is inferred by exclusion — anything without a `gather` tag —
+  so a gather reported in an unrecognised channel would land there.

@@ -1,24 +1,20 @@
 # committee
 
 Evidence generator for the ET:Legacy 3v3 tiering committee. For each player it
-shows the win probability their team's tier composition implied for every recent
-match, what actually happened, and how the player themself performed — so the
-committee can see whether a record matches the tier held.
+works out what their team's tier composition said should happen in every recent
+match, compares that to what actually happened, and states plainly whether the
+tier they hold should change.
 
 Python 3.9+, no runtime dependencies.
 
 ## Use
 
-Report on one player (Discord-ready markdown):
+Report on one player:
 
-    python3 -m gibhub.cli player Kredenc                  # last 4 months
-    python3 -m gibhub.cli player Kredenc --range 1y
-    python3 -m gibhub.cli player Kredenc --from 2026-01-01 --extremes 5
-    python3 -m gibhub.cli player adeb5cb6-285a-5680-af40-6ad161f885b2 --format json
-
-The default window is a rolling **4 months** and every match in it is read.
-`--matches N` caps that, but a cap takes the most recent N and the report says so
-— on one player a 50-match cap turned a correct "ON TIER" into a spurious "OVER".
+    python3 -m gibhub.cli player Lepari                   # last 4 months
+    python3 -m gibhub.cli player Jassi --range 1y --extremes 5
+    python3 -m gibhub.cli player devix --only gathers
+    python3 -m gibhub.cli player Kredenc --from 2026-01-01 --format json
 
 Review a whole tier as a spreadsheet:
 
@@ -30,170 +26,194 @@ Inspect or refit the model:
     python3 -m gibhub.cli fit            # show the committed model
     python3 tools/check_fit.py           # sanity-check a fitted bundle
 
-    # refit from the live API (~45s). This is how the committed model was made:
-    python3 -m gibhub.cli fit --refit \
-        --tier-channel Events --points --impute-max A
+`--bundle` and `--cache` are global and go *before* the subcommand:
 
-`--tier-channel` restricts the tier index to one channel's assignments (matching a
-channel id or a substring of its name), so the coefficients and UTRO bands come
-only from that committee's tiers. `--points` fixes the tier values instead of
-fitting six free ones; `--points "S=5,E=4,A=3,B=2,C=1,D=0"` sets your own scale.
-`--impute-max` caps what an untiered player can be imputed as.
+    python3 -m gibhub.cli --cache /tmp/c player Lepari
 
-`--bundle` and `--cache` are global options and go *before* the subcommand:
+### Options that change what is counted
 
-    python3 -m gibhub.cli --cache /tmp/c player Kredenc
+| option | effect |
+| --- | --- |
+| `--range 4m` | rolling window, the default. `1y`, `6m`, `2w` all work |
+| `--from 2026-01-01` | fixed start date instead of a rolling window |
+| `--to 2026-06-01` | exclusive end date |
+| `--only legacy` | restrict to one kind of game; repeatable. See below |
+| `--extremes 5` | rows in the surprising-results tables (default 3, `0` hides) |
+| `--matches N` | cap matches read. Default `0` = every match in the window |
+
+Every match in the window is read by default. `--matches N` takes the most recent
+N and the report says so, because a cap can change the verdict: reading 50 of one
+player's 339 matches reported OVER where the full window was ON TIER.
 
 ## Reading the output
 
-`exp` is the probability the player's side wins, given the six players' tiers.
-`res` is what happened. A win at `exp` below 50% or a loss above it is marked
-`upset`. The headline sums the per-match probabilities into expected wins and
-compares that to actual wins, then says how likely that gap is to be luck:
-
-    **Expected 179.06 wins, actual 183 — +3.94 → ON TIER**
-    _(+1 per 100 games; luck alone does this 1 time in 3)_
-
-- **CLEARLY OVER / CLEARLY UNDER** — a gap this big happens by luck less than 1
-  time in 100. Strong evidence the tier is wrong.
-- **OVER / UNDER** — less than 1 time in 20. Reasonable evidence.
-- **ON TIER** — within what luck produces. No evidence either way.
-
-Each report then states the decision outright, naming the tier to move to. OVER
-means winning *more* than the tier predicts, so the tier is too low and the player
-moves **up**; UNDER means the tier is too high and they move **down**:
+    **Expected 13.33 wins, actual 7 — -6.33 → CLEARLY UNDER**
 
     ### → MOVE DOWN: A → B
-    ### → CONSIDER MOVING UP: B → A
-    ### → KEEP at E
 
-The target tier comes off the points scale, not the alphabet, so "up" from A is E
-rather than S.
+The headline sums each match's win probability into expected wins and compares it
+to what happened. The label says how likely that gap is to be luck:
+
+| label | meaning | decision |
+| --- | --- | --- |
+| `CLEARLY OVER` | wins **more** than the tier predicts; luck explains it less than 1 time in 100 | `MOVE UP` |
+| `OVER` | same, less than 1 time in 20 | `CONSIDER MOVING UP` |
+| `ON TIER` | within what luck produces | `KEEP` |
+| `UNDER` | wins **fewer**, less than 1 time in 20 | `CONSIDER MOVING DOWN` |
+| `CLEARLY UNDER` | wins fewer, less than 1 time in 100 | `MOVE DOWN` |
+
+OVER means the tier is too **low** (they beat it), UNDER means it is too **high**.
+The target tier comes off the points scale rather than the alphabet, so "up" from
+A is E, not S.
 
 The label reads off that probability rather than a raw win count, because the same
 gap means different things at different sample sizes: +5 wins is real over 20
-matches and noise over 400. An earlier version used a fixed +-1.5 win threshold and
-called a player OVER on a +4 gap across 324 matches — a 1.2% edge that is pure
-noise. The two numbers in brackets are the ones to argue over: **per 100 games** is
-how big the effect is, comparable between players however many matches each has
-played, and **1 time in N** is how sure you can be.
+matches and noise over 400. An earlier version used a fixed ±1.5 win threshold and
+called a player OVER on a +4 gap across 324 matches — a 1.2% edge that is noise.
 
-`pts` is the team's tier-points margin, `utro` the player's own performance rating
-for the match, playtime-weighted, with the change from their baseline in brackets.
+Below the headline:
 
-`--extremes N` (default 3) additionally tables the N biggest underdog wins and the
-N worst losses while favoured, each with both lineups and their tier sources, so a
-surprising result can be read without digging.
+- **stacked vs underdog** — the record when favoured against when not, so a record
+  built entirely on stacked teams is visible rather than hidden inside one number
+- **By type of game** — a separate verdict per kind of game
+- **Biggest underdog wins** and **worst losses while favoured** — the most
+  surprising results with both lineups, their tiers, and the player's own rating
+
+`Tier lead` is the team's tier-points margin. `Win chance` is what the model gave
+them. `His rating` is UTRO for that match, playtime-weighted, with the change from
+their baseline for the window in brackets.
+
+The per-match table is not printed — it runs to hundreds of rows — but the verdict
+is computed from every match in the window. `--format json` has them all.
 
 ## Types of game
 
-Matches are split into five kinds, read off the `gather` tag, the channel, and
-whether that channel is a real Discord one or a synthetic tournament one:
+Matches are split by the `gather` tag, the channel, and whether that channel is a
+real Discord one or a synthetic tournament one:
 
-| key | what it covers | counted |
+| key | covers | counted |
 | --- | --- | --- |
 | `legacy` | ET:Legacy Events and ET:Legacy Gathers 3v3 | yes |
 | `poland` | Poland ET:Legacy 3v3 | yes |
 | `cup` | cups, tournaments, league seasons, and games between named teams | yes |
 | `other` | the small gather channels: subAk, eV!L, Frag Center, PRAWDZIWY | **no** |
 
-`gathers` means **legacy + poland** — the two channels the committee tiers for.
-The small one-off gather channels are dropped from reports *and* from the fit,
-since nobody is tiered on them; ask for them by name (`--only other`, or
-`--only all`) to see them.
+`--only gathers` means legacy + poland, the two channels the committee tiers for.
+The small one-off channels are dropped from reports *and* from the fit, since
+nobody is tiered on them; `--only other` or `--only all` brings them back.
+`--only team` is a synonym for `cup`: both are played by fixed teams rather than
+picked sides, which is the distinction that matters when reading a result.
 
-Cups and team games share a category because both are played by fixed teams
-rather than picked sides, which is the distinction that matters for reading a
-result. Tournaments carrying no `cup` tag — Nations Cup and subak's cups among
-them — are caught by their zero-padded channel id, which is how the API marks a
-tournament channel apart from a Discord one.
+Tournaments carrying no `cup` tag — Nations Cup and subak's cups among them — are
+caught by their zero-padded channel id, which is how the API marks a tournament
+channel apart from a Discord one.
 
-A report covering more than one kind gets a **By type of game** table with a
-separate verdict for each, since a player can be correctly tiered in gathers and
-not in team games. `--only` restricts the whole report and is repeatable:
-`--only legacy`, `--only gathers`, `--only team`. A run of losses
-while favoured with UTRO *above* baseline says something different about a player
-than the same losses with UTRO below it.
+## The tier list
 
-## The tier letters are not an A-to-E ladder
+The API's own tiers are incomplete, so the committee's list is the source of
+truth. It lives in `data/tierlist-events-3v3.txt`, one name per line under its
+tier heading:
 
-**In this data the tiers rank S > E > A > B > C > D.** Tier E is the second
-*strongest* tier, not the weakest — its holders have a 51.5% 3v3 win rate over
-5,413 matches and the second-highest median UTRO (1.10, against A's 1.04). The
-pattern is identical in both tiered channels, which suggests E stands for
-something like "Elite" rather than being the bottom of an alphabetical ladder.
+    [A]
+    chuCk
+    Jassi
+    hevimies -> jussi8030      # Discord name differs from the in-game one
 
-The model never assumed an order — it fits each tier's value from results — and
-the fitted order agrees with the independently computed UTRO bands on all 15 tier
-pairs. But it is worth knowing before reading any output, and worth confirming
-with whoever assigns the tiers.
+`Name -> lookup` pins an entry whose Discord name is not searchable to the account
+to use (a nick or a UUID). Resolve it into an overrides file, then refit:
 
-    tier   points   log-odds   median UTRO
-    S         5      +1.761        1.250
-    E         4      +1.409        1.099
-    A         3      +1.057        1.042
-    B         2      +0.704        0.976
-    C         1      +0.352        0.752
-    D         0       0.000        0.603
+    python3 tools/resolve_tierlist.py data/tierlist-events-3v3.txt overrides.txt
+    python3 -m gibhub.cli fit --refit \
+        --tier-channel Events --points --impute-max A --overrides overrides.txt
 
-The default point scale puts E at 4, between S and A, to match this.
+The resolver refuses to guess. A fuzzy hit is accepted only when the found nick
+shares a substring with the search term — without that, search returns `Gilbey`
+for `maNic` and `juissi` for `poshtat` — and two list entries resolving to one
+account are both rejected rather than silently one-tiered. Anything it cannot
+place is printed for a human to resolve by UUID.
 
 ## How the model works
 
 Each tier is worth fixed points — **S 5, E 4, A 3, B 2, C 1, D 0** — and a team's
 strength is the sum of its three players' points. The only fitted parameter is how
-much one point of advantage is worth, currently **0.352 log-odds per point**:
+much one point of advantage is worth:
 
-    P(win) = sigmoid(0.352 * (my team's points - their points))
+    P(win) = sigmoid(0.35 × (my team's points − their points))
 
 So a +2 point edge is a 67% favourite, +4 is 83%. There is no intercept, so two
-equal rosters always score exactly 50%. Fitted on 6,920 decided 3v3 matches:
-62.3% accuracy, 0.228 Brier, 0.647 log loss.
+equal rosters always score exactly 50%. Fitted on 6,377 decided 3v3 matches:
+63.0% accuracy, 0.225 Brier, 0.640 log loss.
 
-Fitting all six tier values freely instead scores marginally better (62.8%,
-0.227 Brier) but is harder to check by hand, and it valued S at only +0.94
-log-odds against the +1.76 the 5-point scale implies — so the fixed scale
-somewhat overrates S relative to what results show. Run `fit --refit` without
-`--points` to compare.
+Fitting all six tier values freely instead scores marginally better but is harder
+to check by hand, and it valued S well below what the 5-point scale implies — so
+the fixed scale somewhat overrates S relative to what results show. Run
+`fit --refit` without `--points` to compare.
 
-Players without a tier in the match's channel fall back to their tier elsewhere;
-players with no tier at all get one imputed from their 3v3 `utro_shrunken`,
-**capped at A** by default (`--impute-max`). The cap exists because a genuinely
-elite player would already have been tiered, so imputing S or E to an unknown is
-unjustified. It is applied by measured strength, not by letter — capping at "A"
-also excludes E, since E outranks A here.
+### The tier letters are not an A-to-E ladder
 
-Imputation matters more than it sounds: only 8 of the 40 most recent 3v3 matches
-had all six players tiered in their own channel, so a tier-only model would
-discard most of the data. Every report footer counts how many of its inputs were
-imputed — treat a report that is mostly imputed with corresponding caution, and
-note that the cap is a conservative assumption that can move a player's verdict.
+**The strength order is S > E > A > B > C > D.** Tier E is the second *strongest*
+tier: its holders have a 51.5% 3v3 win rate over 5,413 matches and the second
+highest median UTRO, and the pattern is identical in both tiered channels. E
+appears to stand for something like "Elite".
+
+Nothing in the tool assumes an order — the fitted values agree with the
+independently computed UTRO bands on all 15 tier pairs — but every place that
+needs "the next tier up" reads it off the points scale, never the alphabet.
+
+    tier   points   log-odds   median UTRO
+    S         5      +1.76        1.250
+    E         4      +1.41        1.099
+    A         3      +1.06        1.042
+    B         2      +0.70        0.976
+    C         1      +0.35        0.752
+    D         0       0.00        0.603
+
+### Players with no tier
+
+Tiers are per channel. A player without one in the match's channel falls back to
+their tier elsewhere; a player with none anywhere gets one imputed from their 3v3
+`utro_shrunken`, **capped at A** (`--impute-max`). The cap exists because a
+genuinely elite player would already have been tiered, and is applied by measured
+strength, so capping at A also excludes E.
+
+This matters more than it sounds: before the committee list was loaded, only 8 of
+the 40 most recent 3v3 matches had all six players tiered in their own channel. It
+also moves verdicts. The same player's record, scored four ways:
+
+| model | gap | luck |
+| --- | --- | --- |
+| free six-coefficient fit | +24.7 | 1 in 1667 |
+| fixed points, uncapped imputation | +20.2 | 1 in 250 |
+| fixed points, imputation capped at A | +15.3 | 1 in 43 |
+| the above plus the committee tier list | +10.3 | 1 in 11 |
+
+Most of that player's apparent overperformance was imputation error. **Treat a
+report whose inputs are largely imputed as provisional** — the footer counts the
+four sources (committee override, exact channel tier, cross-channel, imputed).
 
 ## Reproducibility
 
-`coefficients.json` is the committed model: coefficients, the tier index,
-per-player UTRO, and a provenance stamp. Finished matches are immutable and cached
-in `.cache/`, so the same command with the same cache produces identical output.
-Only `fit --refit` changes the model.
+`coefficients.json` is the committed model: the fitted scale, tier points, tier
+index, per-player UTRO, the overrides and the imputation cap. Finished matches are
+immutable and cached in `.cache/`, so the same command with the same cache gives
+identical output. Only `fit --refit` changes the model, and every report footer
+stamps the fit date, sample size and window so two reports can be compared — or
+shown to be incomparable.
 
 ## Known limitations
 
 - **Tiers have no history**, so past matches are scored against today's tiers. A
-  recently promoted player looks like they were overperforming for their whole
-  history — hence the 6-month default window.
-- **Tiers are per-channel**, so a player active in several channels may be scored
-  against another channel's assignment. Those inputs are counted as
-  "cross-channel" in the footer. With `--tier-channel` this gets more common, not
-  less: everyone keeps the selected channel's tier wherever they play.
-- **The stats line is scoped to `--range`, not career-to-date.** It is labelled
-  with its window for that reason. The UTRO baseline each match is compared
-  against is scoped the same way.
+  recently promoted player looks like they were overperforming all year. Hence the
+  4-month default window.
+- **Tiers are per channel**, so a player active in several may be scored against
+  another channel's assignment; those inputs are counted as "cross-channel".
 - **The approach is partly circular** by design: it asks whether a record is
   consistent with the tier held, not what tier a player should have in the
   absolute.
-- **The API's own betting odds are unusable** and are not read. They are
-  pari-mutuel payout multipliers from a joke-money pool, absent from every one of
-  40 sampled 3v3 matches.
+- **The `cup` bucket is inferred by exclusion** — anything without a `gather` tag.
+  A gather reported in an unrecognised channel would land there.
+- **The API's own betting odds are unusable** and are not read: pari-mutuel payout
+  multipliers from a joke-money pool, absent from all 40 sampled 3v3 matches.
 
 ## Development
 
