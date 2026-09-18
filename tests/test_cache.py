@@ -61,3 +61,34 @@ def test_fetch_does_not_cache_an_unfinished_match(tmp_path):
     cache.fetch("abc", fetch)
     cache.fetch("abc", fetch)
     assert calls == ["abc", "abc"]
+
+
+def test_two_writers_can_cache_the_same_match_concurrently(tmp_path):
+    """A shared temp filename would make the loser's rename fail with ENOENT."""
+    import threading
+
+    cache = MatchCache(tmp_path)
+    errors = []
+
+    def write():
+        try:
+            for _ in range(20):
+                cache.put("abc", {"match_id": "abc", "state": "finished"})
+        except Exception as error:  # noqa: BLE001 - the test is about not raising
+            errors.append(error)
+
+    threads = [threading.Thread(target=write) for _ in range(4)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    assert errors == []
+    assert cache.get("abc") == {"match_id": "abc", "state": "finished"}
+
+
+def test_no_temp_files_are_left_behind(tmp_path):
+    cache = MatchCache(tmp_path)
+    cache.put("abc", {"state": "finished"})
+    leftovers = [p for p in (tmp_path / "matches").iterdir() if p.name.endswith(".tmp")]
+    assert leftovers == []

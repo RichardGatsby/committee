@@ -3825,4 +3825,4 @@ Run before declaring the work complete.
       `diff <(python3 -m gibhub.cli player Kredenc) <(python3 -m gibhub.cli player Kredenc)`
 - [ ] `git status` is clean and `.cache/` is untracked
 - [ ] No API token appears anywhere in the repository:
-      `git grep -i <REDACTED-TOKEN-PREFIX> || echo clean`
+      `git grep -iE '[0-9a-f]{64}' || echo clean`

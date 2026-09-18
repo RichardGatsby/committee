@@ -2,6 +2,7 @@
 
 import json
 import os
+import tempfile
 from typing import Any, Callable, Dict, Optional
 
 DEFAULT_ROOT = ".cache"
@@ -35,10 +36,17 @@ class MatchCache:
         if not path or payload.get("state") != "finished":
             return False
         os.makedirs(self.root, exist_ok=True)
-        temporary = path + ".tmp"
-        with open(temporary, "w", encoding="utf-8") as handle:
-            json.dump(payload, handle)
-        os.replace(temporary, path)
+        # A unique temp name per writer: two processes caching the same match
+        # would otherwise race, and the loser's rename fails with ENOENT.
+        handle_fd, temporary = tempfile.mkstemp(dir=self.root, suffix=".tmp")
+        try:
+            with os.fdopen(handle_fd, "w", encoding="utf-8") as handle:
+                json.dump(payload, handle)
+            os.replace(temporary, path)
+        except BaseException:
+            if os.path.exists(temporary):
+                os.unlink(temporary)
+            raise
         return True
 
     def fetch(self, match_id: str, loader: Callable[[str], Dict[str, Any]]) -> Dict[str, Any]:
