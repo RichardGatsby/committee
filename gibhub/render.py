@@ -56,9 +56,13 @@ def to_markdown(report: PlayerReport) -> str:
         lines.append("- no 3v3 tier held")
 
     life = report.lifetime
+    # These stats come back scoped to the same window as the match table, not
+    # career-to-date, so the label must say so.
+    window = report.provenance.get("window")
     lines.append(
-        "- 3v3 lifetime: %d matches, %dW-%dL (%s)  UTRO %s  KDR %s"
+        "- 3v3 (%s): %d matches, %dW-%dL (%s)  UTRO %s  KDR %s"
         % (
+            "last %s" % window if window else "all time",
             life["matches"], life["wins"], life["losses"], _pct(life["win_rate"]),
             "%.2f" % life["utro"] if life["utro"] else "n/a",
             "%.2f" % life["kdr"] if life["kdr"] else "n/a",
@@ -80,14 +84,18 @@ def to_markdown(report: PlayerReport) -> str:
             % (report.expected_wins, report.actual_wins, report.delta, report.label)
         )
         lines.append("")
-        lines.append("| date | maps | exp | res | utro (vs base) | |")
-        lines.append("| --- | --- | ---: | :---: | ---: | --- |")
+        show_points = any(row.points is not None for row in report.rows)
+        lines.append("| date | maps |%s exp | res | utro (vs base) | |"
+                     % (" pts |" if show_points else ""))
+        lines.append("| --- | --- |%s ---: | :---: | ---: | --- |"
+                     % (" ---: |" if show_points else ""))
         for row in report.rows:
             lines.append(
-                "| %s | %s | %s | %s | %s | %s |"
+                "| %s | %s |%s %s | %s | %s | %s |"
                 % (
                     row.date,
                     "/".join(row.maps) or "-",
+                    (" %+g |" % row.points) if show_points else "",
                     _pct(row.expected),
                     row.result,
                     _utro(row.utro, row.utro_delta),
@@ -127,10 +135,11 @@ def to_markdown(report: PlayerReport) -> str:
     total = counts["exact"] + counts["cross_channel"] + counts["imputed"]
     lines.append("")
     lines.append(
-        "_%d of %d tier inputs imputed, %d cross-channel. Tiers from: %s. "
+        "_%d of %d tier inputs imputed (capped at %s), %d cross-channel. Tiers from: %s. "
         "Model fitted %s on %s matches, cutoff %s, window %s._"
         % (
-            counts["imputed"], total, counts["cross_channel"],
+            counts["imputed"], total, report.provenance.get("impute_max") or "none",
+            counts["cross_channel"],
             report.provenance.get("tier_source", "all channels"),
             report.provenance.get("fitted_at"), report.provenance.get("sample_size"),
             report.provenance.get("data_cutoff"), report.provenance.get("window"),

@@ -3,7 +3,7 @@
 import dataclasses
 import json
 import os
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from .model import TIERS
 from .tiers import Holding, TierIndex
@@ -28,9 +28,17 @@ class Bundle:
     channel_names: Dict[str, str]
     # Channels the tier index was restricted to at fit time; empty means all.
     tier_channels: List[str] = dataclasses.field(default_factory=list)
+    # Fixed committee points per tier, when the fit was constrained to them.
+    # Empty means the six coefficients were fitted freely.
+    tier_points: Dict[str, float] = dataclasses.field(default_factory=dict)
+    # Log-odds per point of team advantage; only meaningful with tier_points.
+    scale: Optional[float] = None
+    # Strongest tier imputation may assign; None means uncapped.
+    impute_max: Optional[str] = None
 
     def index(self) -> TierIndex:
-        return TierIndex(holdings=self.holdings, bands=self.bands, utro=self.utro)
+        return TierIndex(holdings=self.holdings, bands=self.bands, utro=self.utro,
+                         impute_max=self.impute_max)
 
 
 def save(bundle: Bundle, path=DEFAULT_PATH) -> None:
@@ -50,6 +58,9 @@ def save(bundle: Bundle, path=DEFAULT_PATH) -> None:
         },
         "channel_names": bundle.channel_names,
         "tier_channels": bundle.tier_channels,
+        "tier_points": bundle.tier_points,
+        "scale": bundle.scale,
+        "impute_max": bundle.impute_max,
     }
     temporary = str(path) + ".tmp"
     with open(temporary, "w", encoding="utf-8") as handle:
@@ -79,4 +90,7 @@ def load(path=DEFAULT_PATH) -> Bundle:
         },
         channel_names=payload.get("channel_names", {}),
         tier_channels=payload.get("tier_channels", []),
+        tier_points=payload.get("tier_points", {}),
+        scale=payload.get("scale"),
+        impute_max=payload.get("impute_max"),
     )

@@ -30,7 +30,23 @@ def build_bands(
     return bands
 
 
-def nearest_tier(bands: Mapping[str, float], utro: Optional[float]) -> str:
+def capped_bands(bands: Mapping[str, float], cap: Optional[str]) -> Dict[str, float]:
+    """The bands no stronger than `cap`, judged by band value rather than letter.
+
+    Used to stop imputation handing an unknown player a top tier: a genuinely
+    elite player would already have been tiered by someone. Because E outranks A
+    in this data, the ceiling has to be applied by measured strength — capping at
+    "A" by letter would leave E, the second strongest tier, available.
+    """
+    if not cap or cap not in bands:
+        return dict(bands)
+    ceiling = bands[cap]
+    return {tier: band for tier, band in bands.items() if band <= ceiling}
+
+
+def nearest_tier(
+    bands: Mapping[str, float], utro: Optional[float], cap: Optional[str] = None
+) -> str:
     """The tier whose band is closest to `utro`.
 
     Ties go to the tier with the higher band — the empirically stronger one — and
@@ -42,9 +58,12 @@ def nearest_tier(bands: Mapping[str, float], utro: Optional[float]) -> str:
     """
     if not bands:
         raise ValueError("no tier bands available")
+    usable = capped_bands(bands, cap)
+    if not usable:
+        raise ValueError("no tier bands at or below the %r cap" % cap)
     if utro is None:
-        utro = _median(list(bands.values()))
-    return min(bands, key=lambda tier: (abs(bands[tier] - utro), -bands[tier], tier))
+        utro = _median(list(usable.values()))
+    return min(usable, key=lambda tier: (abs(usable[tier] - utro), -usable[tier], tier))
 
 
 @dataclasses.dataclass(frozen=True)
@@ -69,6 +88,8 @@ class TierIndex:
     holdings: Mapping[str, Sequence[Holding]]
     bands: Mapping[str, float]
     utro: Mapping[str, float]
+    # Strongest tier imputation may assign to an untiered player. None = no cap.
+    impute_max: Optional[str] = None
 
     def resolve(self, player_id: str, channel_id: Optional[str]) -> ResolvedTier:
         held = self.holdings.get(player_id) or ()
@@ -82,7 +103,9 @@ class TierIndex:
             newest = max(held, key=lambda holding: holding.updated_at)
             return ResolvedTier(newest.tier, CROSS_CHANNEL)
 
-        return ResolvedTier(nearest_tier(self.bands, self.utro.get(player_id)), IMPUTED)
+        return ResolvedTier(
+            nearest_tier(self.bands, self.utro.get(player_id), self.impute_max), IMPUTED
+        )
 
     def resolve_all(
         self, player_ids: Iterable[str], channel_id: Optional[str]

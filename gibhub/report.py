@@ -4,7 +4,7 @@ import dataclasses
 from typing import Any, Dict, List, Optional, Sequence
 
 from .dataset import TEAM_SIZE, roster_ids, winner_of
-from .model import feature_vector, predict
+from .model import feature_vector, points_delta, predict
 from .tiers import CROSS_CHANNEL, EXACT, IMPUTED, TierIndex
 
 OVER_UNDER_THRESHOLD = 1.5
@@ -57,6 +57,9 @@ class MatchRow:
     utro_delta: Optional[float]
     sources: List[str]
     upset: bool
+    # Team points minus opponent points, from the committee's tier scale.
+    # None when the model was fitted without a fixed points scale.
+    points: Optional[float] = None
 
 
 @dataclasses.dataclass(frozen=True)
@@ -117,6 +120,7 @@ def build_report(
     index: TierIndex,
     coefficients: Sequence[float],
     provenance: Dict[str, Any],
+    tier_points: Optional[Dict[str, float]] = None,
 ) -> PlayerReport:
     player_id = profile["player_id"]
     baseline = (profile.get("lifetime") or {}).get("utro")
@@ -146,11 +150,18 @@ def build_report(
         for resolved in alpha_resolved + beta_resolved:
             counts[resolved.source] += 1
 
-        p_alpha = predict(
-            coefficients,
-            feature_vector([r.tier for r in alpha_resolved], [r.tier for r in beta_resolved]),
+        features = feature_vector(
+            [r.tier for r in alpha_resolved], [r.tier for r in beta_resolved]
         )
+        p_alpha = predict(coefficients, features)
         expected = p_alpha if side == "alpha" else 1.0 - p_alpha
+
+        delta_points = None
+        if tier_points:
+            delta_points = points_delta(features, tier_points)
+            if side == "beta":
+                delta_points = -delta_points
+            delta_points = delta_points or 0.0  # normalise -0.0
 
         winner = winner_of(match)
         if winner is None:
@@ -193,6 +204,7 @@ def build_report(
                 utro_delta=(utro - baseline) if (utro is not None and baseline) else None,
                 sources=[r.source for r in alpha_resolved + beta_resolved],
                 upset=upset,
+                points=delta_points,
             )
         )
 

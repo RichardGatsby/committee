@@ -5,7 +5,7 @@ from typing import Dict, Tuple
 
 from .bundle import Bundle
 from .dataset import iter_samples
-from .model import TIERS, fit, metrics
+from .model import TIERS, fit, fit_points, metrics
 from .tiers import Holding, TierIndex, build_bands
 
 SIZE_3V3 = "3v3"
@@ -96,7 +96,8 @@ def filter_holdings(holdings, channel_names, tokens):
     return kept, names
 
 
-def build_bundle(client, to=None, limit=None, tier_channels=None) -> Bundle:
+def build_bundle(client, to=None, limit=None, tier_channels=None, points=None,
+                 impute_max=None) -> Bundle:
     """Fetch everything, fit, and return a bundle ready to save."""
     utro = fetch_utro(client)
     holdings, channel_names = fetch_tier_holdings(client)
@@ -108,13 +109,16 @@ def build_bundle(client, to=None, limit=None, tier_channels=None) -> Bundle:
             holders[entry.tier].append(player_id)
     bands = build_bands(holders, utro)
 
-    index = TierIndex(holdings=holdings, bands=bands, utro=utro)
+    index = TierIndex(holdings=holdings, bands=bands, utro=utro, impute_max=impute_max)
     samples = list(iter_samples(client, index, to=to, limit=limit))
     if not samples:
         raise ValueError("no usable 3v3 matches found; cannot fit")
 
     training = [(sample.features, sample.outcome) for sample in samples]
-    coefficients = fit(training)
+    if points:
+        scale, coefficients = fit_points(training, points)
+    else:
+        scale, coefficients = None, fit(training)
 
     return Bundle(
         fitted_at=datetime.datetime.now(datetime.timezone.utc).isoformat(),
@@ -127,4 +131,7 @@ def build_bundle(client, to=None, limit=None, tier_channels=None) -> Bundle:
         holdings=holdings,
         channel_names=channel_names,
         tier_channels=list(tier_channels or []),
+        tier_points=dict(points or {}),
+        scale=scale,
+        impute_max=impute_max,
     )

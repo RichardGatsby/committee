@@ -92,3 +92,47 @@ def test_metrics_on_a_coin_flip_model():
     result = metrics([0.0] * 6, samples)
     assert result["brier"] == pytest.approx(0.25)
     assert result["log_loss"] == pytest.approx(0.6931471805599453)
+
+
+from gibhub.model import TIER_POINTS, fit_points, points_delta
+
+
+def test_the_default_points_put_e_between_s_and_a():
+    assert TIER_POINTS["S"] > TIER_POINTS["E"] > TIER_POINTS["A"] > TIER_POINTS["B"]
+    assert TIER_POINTS["B"] > TIER_POINTS["C"] > TIER_POINTS["D"]
+
+
+def test_points_delta_sums_the_tier_values():
+    # alpha has an extra S (5) and one fewer D (0): +5.
+    assert points_delta([1.0, 0, 0, 0, -1.0, 0], TIER_POINTS) == 5.0
+    # A mirrored roster is worth nothing either way.
+    assert points_delta([0.0] * 6, TIER_POINTS) == 0.0
+
+
+def test_points_delta_uses_the_tiers_order():
+    # feature order is S, A, B, C, D, E — the E slot is last, worth 4.
+    assert points_delta([0, 0, 0, 0, 0, 1.0], TIER_POINTS) == 4.0
+
+
+def test_fit_points_learns_a_positive_scale():
+    samples = [([1.0, 0, 0, 0, -1.0, 0], 1)] * 20 + [([-1.0, 0, 0, 0, 1.0, 0], 0)] * 20
+    scale, coefficients = fit_points(samples, TIER_POINTS)
+    assert scale > 0
+    # Coefficients stay proportional to the fixed points.
+    assert coefficients == [scale * TIER_POINTS[t] for t in ("S", "A", "B", "C", "D", "E")]
+
+
+def test_fit_points_is_deterministic():
+    samples = [([1.0, 0, 0, 0, -1.0, 0], 1)] * 10 + [([-1.0, 0, 0, 0, 1.0, 0], 0)] * 10
+    assert fit_points(samples, TIER_POINTS) == fit_points(samples, TIER_POINTS)
+
+
+def test_fit_points_rejects_an_empty_sample_set():
+    with pytest.raises(ValueError, match="no samples"):
+        fit_points([], TIER_POINTS)
+
+
+def test_a_points_fit_keeps_mirrored_rosters_at_exactly_half():
+    samples = [([1.0, 0, 0, 0, -1.0, 0], 1)] * 10 + [([-1.0, 0, 0, 0, 1.0, 0], 0)] * 10
+    _, coefficients = fit_points(samples, TIER_POINTS)
+    assert predict(coefficients, [0.0] * 6) == 0.5

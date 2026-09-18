@@ -154,3 +154,16 @@ def test_json_round_trips_and_includes_the_rows():
     assert len(payload["rows"]) == 4
     assert payload["rows"][0]["expected"] == 0.62
     assert payload["label"] == "ON TIER"
+
+
+def test_markdown_labels_the_stats_with_their_window_not_as_lifetime():
+    """The profile endpoint scopes these to --range, so calling them lifetime lied."""
+    text = to_markdown(REPORT)
+    assert "3v3 (last 6m): 635 matches" in text
+    assert "lifetime" not in text
+
+
+def test_markdown_says_all_time_when_there_is_no_window():
+    no_window = dataclasses.replace(
+        REPORT, provenance=dict(REPORT.provenance, window=None))
+    assert "3v3 (all time):" in to_markdown(no_window)

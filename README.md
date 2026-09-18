@@ -23,8 +23,17 @@ Review a whole tier as a spreadsheet:
 Inspect or refit the model:
 
     python3 -m gibhub.cli fit            # show the committed model
-    python3 -m gibhub.cli fit --refit    # refit from the live API (~45s)
     python3 tools/check_fit.py           # sanity-check a fitted bundle
+
+    # refit from the live API (~45s). This is how the committed model was made:
+    python3 -m gibhub.cli fit --refit \
+        --tier-channel Events --points --impute-max A
+
+`--tier-channel` restricts the tier index to one channel's assignments (matching a
+channel id or a substring of its name), so the coefficients and UTRO bands come
+only from that committee's tiers. `--points` fixes the tier values instead of
+fitting six free ones; `--points "S=5,E=4,A=3,B=2,C=1,D=0"` sets your own scale.
+`--impute-max` caps what an untiered player can be imputed as.
 
 `--bundle` and `--cache` are global options and go *before* the subcommand:
 
@@ -59,26 +68,46 @@ the fitted order agrees with the independently computed UTRO bands on all 15 tie
 pairs. But it is worth knowing before reading any output, and worth confirming
 with whoever assigns the tiers.
 
-    tier   fitted (log-odds)   median UTRO
-    S           +0.69             1.240
-    E           +0.43             1.104
-    A           +0.19             1.040
-    B           -0.10             0.972
-    C           -0.33             0.793
-    D           -0.88             0.603
+    tier   points   log-odds   median UTRO
+    S         5      +1.761        1.250
+    E         4      +1.409        1.099
+    A         3      +1.057        1.042
+    B         2      +0.704        0.976
+    C         1      +0.352        0.752
+    D         0       0.000        0.603
+
+The default point scale puts E at 4, between S and A, to match this.
 
 ## How the model works
 
-A logistic regression over per-tier headcount differences, fitted on 6,918 decided
-3v3 matches. It has no intercept, so two identically-tiered rosters always score
-exactly 50%. Current fit: 62.4% accuracy, 0.229 Brier, 0.650 log loss.
+Each tier is worth fixed points — **S 5, E 4, A 3, B 2, C 1, D 0** — and a team's
+strength is the sum of its three players' points. The only fitted parameter is how
+much one point of advantage is worth, currently **0.352 log-odds per point**:
+
+    P(win) = sigmoid(0.352 * (my team's points - their points))
+
+So a +2 point edge is a 67% favourite, +4 is 83%. There is no intercept, so two
+equal rosters always score exactly 50%. Fitted on 6,920 decided 3v3 matches:
+62.3% accuracy, 0.228 Brier, 0.647 log loss.
+
+Fitting all six tier values freely instead scores marginally better (62.8%,
+0.227 Brier) but is harder to check by hand, and it valued S at only +0.94
+log-odds against the +1.76 the 5-point scale implies — so the fixed scale
+somewhat overrates S relative to what results show. Run `fit --refit` without
+`--points` to compare.
 
 Players without a tier in the match's channel fall back to their tier elsewhere;
-players with no tier at all get one imputed from their 3v3 `utro_shrunken`. This
-matters more than it sounds: only 8 of the 40 most recent 3v3 matches had all six
-players tiered in their own channel, so a tier-only model would discard most of
-the data. Every report footer counts how many of its inputs were imputed — treat a
-report that is mostly imputed with corresponding caution.
+players with no tier at all get one imputed from their 3v3 `utro_shrunken`,
+**capped at A** by default (`--impute-max`). The cap exists because a genuinely
+elite player would already have been tiered, so imputing S or E to an unknown is
+unjustified. It is applied by measured strength, not by letter — capping at "A"
+also excludes E, since E outranks A here.
+
+Imputation matters more than it sounds: only 8 of the 40 most recent 3v3 matches
+had all six players tiered in their own channel, so a tier-only model would
+discard most of the data. Every report footer counts how many of its inputs were
+imputed — treat a report that is mostly imputed with corresponding caution, and
+note that the cap is a conservative assumption that can move a player's verdict.
 
 ## Reproducibility
 
@@ -94,7 +123,11 @@ Only `fit --refit` changes the model.
   history — hence the 6-month default window.
 - **Tiers are per-channel**, so a player active in several channels may be scored
   against another channel's assignment. Those inputs are counted as
-  "cross-channel" in the footer.
+  "cross-channel" in the footer. With `--tier-channel` this gets more common, not
+  less: everyone keeps the selected channel's tier wherever they play.
+- **The stats line is scoped to `--range`, not career-to-date.** It is labelled
+  with its window for that reason. The UTRO baseline each match is compared
+  against is scoped the same way.
 - **The approach is partly circular** by design: it asks whether a record is
   consistent with the tier held, not what tier a player should have in the
   absolute.

@@ -257,3 +257,44 @@ def test_an_exactly_even_match_is_neither_stack_nor_underdog():
     assert report.even_matches == 1
     assert (report.stack_wins, report.upset_wins) == (0, 0)
     assert report.actual_wins == 1
+
+
+def test_points_are_reported_from_the_players_own_side():
+    from gibhub.model import TIER_POINTS
+
+    # 'me' is S (5) on alpha, b1 is E (4) on beta; the rest impute to the same
+    # tier on both sides and cancel. So alpha leads by 1 point.
+    report = build_report(PROFILE, SPIDER, [_detail("m1", "alpha", 1.2)], _index(),
+                          COEFFICIENTS, {}, tier_points=TIER_POINTS)
+    assert report.rows[0].points == 1.0
+
+
+def test_points_flip_sign_for_a_player_on_beta():
+    from gibhub.model import TIER_POINTS
+
+    detail = _detail("m1", "alpha", 1.2)
+    detail["teams"]["alpha"] = [{"player_id": "b1"}, {"player_id": "a2"}, {"player_id": "a3"}]
+    detail["teams"]["beta"] = [{"player_id": "me"}, {"player_id": "x2"}, {"player_id": "x3"}]
+    report = build_report(PROFILE, SPIDER, [detail], _index(), COEFFICIENTS, {},
+                          tier_points=TIER_POINTS)
+    # 'me' (S, 5) is now on beta against b1 (E, 4): beta leads by 1.
+    assert report.rows[0].points == 1.0
+
+
+def test_points_are_absent_without_a_points_scale():
+    report = build_report(PROFILE, SPIDER, [_detail("m1", "alpha", 1.2)], _index(),
+                          COEFFICIENTS, {})
+    assert report.rows[0].points is None
+
+
+def test_a_level_match_reports_positive_zero_points_not_negative_zero():
+    from gibhub.model import TIER_POINTS
+
+    detail = _detail("m1", "alpha", 1.2)
+    detail["teams"]["alpha"] = [{"player_id": "x1"}, {"player_id": "x2"}, {"player_id": "x3"}]
+    detail["teams"]["beta"] = [{"player_id": "me"}, {"player_id": "y2"}, {"player_id": "y3"}]
+    even = TierIndex(holdings={}, bands=BANDS, utro={})
+    report = build_report(PROFILE, SPIDER, [detail], even, COEFFICIENTS, {},
+                          tier_points=TIER_POINTS)
+    assert report.rows[0].points == 0.0
+    assert "%+g" % report.rows[0].points == "+0"

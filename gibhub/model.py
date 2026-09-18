@@ -10,6 +10,10 @@ Features = List[float]
 # richer record carrying the match id and tier provenance.
 TrainingPair = Tuple[Sequence[float], int]
 
+# Fixed tier points, committee-set rather than fitted. Note the ordering: E sits
+# between S and A, matching the measured strength order S > E > A > B > C > D.
+TIER_POINTS = {"S": 5.0, "E": 4.0, "A": 3.0, "B": 2.0, "C": 1.0, "D": 0.0}
+
 ITERATIONS = 2000
 LEARNING_RATE = 0.5
 _EPSILON = 1e-12
@@ -70,6 +74,41 @@ def fit(
             weights[index] -= learning_rate * gradient[index] / count
 
     return weights
+
+
+def points_delta(features: Sequence[float], points: Dict[str, float]) -> float:
+    """Team points minus opponent points, from a per-tier headcount difference."""
+    return sum(points[tier] * f for tier, f in zip(TIERS, features))
+
+
+def fit_points(
+    samples: Sequence[TrainingPair],
+    points: Dict[str, float],
+    *,
+    iterations: int = ITERATIONS,
+    learning_rate: float = LEARNING_RATE,
+) -> Tuple[float, Features]:
+    """Fit a single scale on the tier-points difference.
+
+    The tier values are fixed by the committee; the only free parameter is how
+    much one point of team advantage is worth in log-odds. Returns the scale and
+    the equivalent six coefficients (scale * points), so everything downstream
+    treats this exactly like a free fit.
+    """
+    if not samples:
+        raise ValueError("no samples to fit")
+
+    deltas = [(points_delta(f, points), y) for f, y in samples]
+    scale = 0.0
+    count = float(len(deltas))
+
+    for _ in range(iterations):
+        gradient = 0.0
+        for delta, outcome in deltas:
+            gradient += (sigmoid(scale * delta) - outcome) * delta
+        scale -= learning_rate * gradient / count
+
+    return scale, [scale * points[tier] for tier in TIERS]
 
 
 def metrics(coefficients: Sequence[float], samples: Sequence[TrainingPair]) -> Dict[str, float]:

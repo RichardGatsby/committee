@@ -91,3 +91,64 @@ def test_nearest_tier_ties_break_on_band_strength_not_the_letter():
     assert nearest_tier({"E": 1.5, "A": 0.5}, 1.0) == "E"
     # The letter order would have picked A, since "A" sorts before "E".
     assert nearest_tier({"A": 1.5, "E": 0.5}, 1.0) == "A"
+
+
+from gibhub.tiers import capped_bands
+
+# Real-shaped bands: E outranks A, so a letter-based cap would not work.
+REAL_BANDS = {"S": 1.250, "E": 1.099, "A": 1.042, "B": 0.976, "C": 0.752, "D": 0.603}
+
+
+def test_capping_at_a_excludes_both_s_and_e():
+    assert set(capped_bands(REAL_BANDS, "A")) == {"A", "B", "C", "D"}
+
+
+def test_capping_at_b_excludes_a_as_well():
+    assert set(capped_bands(REAL_BANDS, "B")) == {"B", "C", "D"}
+
+
+def test_no_cap_keeps_every_band():
+    assert capped_bands(REAL_BANDS, None) == REAL_BANDS
+    assert capped_bands(REAL_BANDS, "S") == REAL_BANDS
+
+
+def test_an_unknown_cap_tier_is_ignored_rather_than_emptying_the_bands():
+    assert capped_bands({"A": 1.0, "B": 0.9}, "S") == {"A": 1.0, "B": 0.9}
+
+
+def test_a_strong_untiered_player_is_capped_at_a_not_given_s_or_e():
+    # UTRO 1.40 is nearest S by a mile, but an unknown player cannot be imputed S.
+    assert nearest_tier(REAL_BANDS, 1.40) == "S"
+    assert nearest_tier(REAL_BANDS, 1.40, cap="A") == "A"
+
+
+def test_the_cap_does_not_affect_players_below_it():
+    assert nearest_tier(REAL_BANDS, 0.60, cap="A") == "D"
+    assert nearest_tier(REAL_BANDS, 0.98, cap="A") == "B"
+
+
+def test_capping_at_b_pushes_a_strong_unknown_down_to_b():
+    assert nearest_tier(REAL_BANDS, 1.40, cap="B") == "B"
+
+
+def test_an_untiered_player_with_no_utro_uses_the_capped_median():
+    # Capped bands A/B/C/D sort to 0.603, 0.752, 0.976, 1.042; median 0.864,
+    # equidistant from B and C, and ties go to the stronger band.
+    assert nearest_tier(REAL_BANDS, None, cap="A") == "B"
+    # Uncapped, the median of all six sits higher.
+    assert nearest_tier(REAL_BANDS, None) == "B"
+
+
+def test_the_index_applies_the_cap_when_imputing():
+    index = TierIndex(holdings={}, bands=REAL_BANDS, utro={"strong": 1.40},
+                      impute_max="A")
+    assert index.resolve("strong", "any") == ResolvedTier("A", "imputed")
+    uncapped = TierIndex(holdings={}, bands=REAL_BANDS, utro={"strong": 1.40})
+    assert uncapped.resolve("strong", "any") == ResolvedTier("S", "imputed")
+
+
+def test_the_cap_never_touches_a_real_tier_holding():
+    index = TierIndex(holdings={"p": (Holding("ch", "S", "2026-01-01"),)},
+                      bands=REAL_BANDS, utro={}, impute_max="A")
+    assert index.resolve("p", "ch") == ResolvedTier("S", "exact")
+    assert index.resolve("p", "other") == ResolvedTier("S", "cross_channel")

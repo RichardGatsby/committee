@@ -9,7 +9,7 @@ from .build import build_bundle
 from .bundle import DEFAULT_PATH, BundleMissing, load, save
 from .cache import MatchCache
 from .fetch import AmbiguousPlayer, PlayerNotFound, fetch_player_data, resolve_player
-from .model import TIERS
+from .model import TIERS, TIER_POINTS
 from .render import to_csv, to_json, to_markdown
 from .report import build_report
 
@@ -54,6 +54,19 @@ def build_parser() -> argparse.ArgumentParser:
     )
     fit.add_argument("--to")
     fit.add_argument("--limit", type=int)
+    fit.add_argument(
+        "--impute-max", dest="impute_max", default="A", metavar="TIER",
+        help="strongest tier an untiered player may be imputed as (default: A). "
+             "Applied by measured strength, so capping at A also excludes E. "
+             "Pass 'none' to leave imputation uncapped.",
+    )
+    fit.add_argument(
+        "--points", nargs="?", const="default", metavar="S=5,E=4,...",
+        help="fix the tier values instead of fitting six free coefficients; the "
+             "only fitted parameter is then the log-odds per point of team "
+             "advantage. Bare --points uses %s."
+             % ",".join("%s=%g" % (t, TIER_POINTS[t]) for t in ("S", "E", "A", "B", "C", "D")),
+    )
 
     return parser
 
@@ -76,9 +89,11 @@ def _report_for(client, bundle, player_id, args, cache):
         "tier_channels": bundle.tier_channels,
         "tier_source": (", ".join(sorted(bundle.channel_names.values()))
                         if bundle.tier_channels else "all channels"),
+        "impute_max": bundle.impute_max,
     }
     return build_report(
-        profile, spider, details, bundle.index(), bundle.coefficients, provenance
+        profile, spider, details, bundle.index(), bundle.coefficients, provenance,
+        tier_points=bundle.tier_points or None,
     )
 
 
@@ -144,11 +159,43 @@ def cmd_bulk(args) -> int:
     return 0
 
 
+def parse_impute_max(spec):
+    """A tier name, or None when uncapped."""
+    if not spec or spec.lower() == "none":
+        return None
+    tier = spec.strip().upper()
+    if tier not in TIERS:
+        raise ValueError("unknown tier %r for --impute-max (expected one of %s, or none)"
+                         % (tier, ", ".join(TIERS)))
+    return tier
+
+
+def parse_points(spec):
+    """None, "default", or "S=5,E=4,A=3,B=2,C=1,D=0" into a tier -> points dict."""
+    if not spec:
+        return None
+    if spec == "default":
+        return dict(TIER_POINTS)
+    points = {}
+    for part in spec.split(","):
+        tier, _, value = part.partition("=")
+        tier = tier.strip().upper()
+        if tier not in TIERS:
+            raise ValueError("unknown tier %r in --points (expected one of %s)"
+                             % (tier, ", ".join(TIERS)))
+        points[tier] = float(value)
+    missing = [t for t in TIERS if t not in points]
+    if missing:
+        raise ValueError("--points is missing a value for: %s" % ", ".join(missing))
+    return points
+
+
 def cmd_fit(args) -> int:
     if args.refit:
         bundle = build_bundle(
             make_client(args), to=args.to, limit=args.limit,
-            tier_channels=args.tier_channel,
+            tier_channels=args.tier_channel, points=parse_points(args.points),
+            impute_max=parse_impute_max(args.impute_max),
         )
         save(bundle, args.bundle)
         print("wrote %s" % args.bundle)
@@ -160,17 +207,26 @@ def cmd_fit(args) -> int:
     print("samples:     %d" % bundle.sample_size)
     print("tier source: %s" % (", ".join(sorted(bundle.channel_names.values()))
                                if bundle.tier_channels else "all channels"))
+    print("impute cap:  %s" % (bundle.impute_max or "none"))
     print("metrics:     " + "  ".join(
         "%s=%.4f" % (key, value)
         for key, value in sorted(bundle.fit_metrics.items())
         if key != "samples"
     ))
     print("")
-    print("tier value (log-odds, higher is stronger):")
-    for tier, coefficient in zip(TIERS, bundle.coefficients):
+    if bundle.tier_points:
+        print("fixed tier points, %.4f log-odds per point:" % bundle.scale)
+        header = "  tier  points   log-odds   band utro"
+    else:
+        print("tier value (log-odds, higher is stronger):")
+        header = "  tier           log-odds   band utro"
+    print(header)
+    for tier in sorted(TIERS, key=lambda t: -bundle.coefficients[TIERS.index(t)]):
+        coefficient = bundle.coefficients[TIERS.index(tier)]
         band = bundle.bands.get(tier)
-        print("  %s  %+.4f   band utro %s" % (
-            tier, coefficient, "%.3f" % band if band else "n/a"))
+        points = ("%6.1f" % bundle.tier_points[tier]) if bundle.tier_points else "      "
+        print("  %-4s %s   %+8.4f   %s"
+              % (tier, points, coefficient, "%.3f" % band if band else "n/a"))
     return 0
 
 

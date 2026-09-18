@@ -196,7 +196,8 @@ def test_fit_with_refit_writes_a_bundle(monkeypatch, tmp_path, capsys):
     )
     monkeypatch.setattr("gibhub.cli.make_client", lambda args: FAKE_CLIENT)
     monkeypatch.setattr("gibhub.cli.build_bundle",
-                        lambda client, to=None, limit=None, tier_channels=None: fake)
+                        lambda client, to=None, limit=None, tier_channels=None,
+                               points=None, impute_max=None: fake)
 
     path = tmp_path / "coefficients.json"
     code = main(["--bundle", str(path), "fit", "--refit"])
@@ -214,3 +215,59 @@ def test_fit_accepts_repeated_tier_channel_filters():
 
 def test_tier_channel_defaults_to_none_meaning_all_channels():
     assert build_parser().parse_args(["fit", "--refit"]).tier_channel is None
+
+
+def test_parse_points_bare_flag_uses_the_default_scale():
+    from gibhub.cli import parse_points
+    from gibhub.model import TIER_POINTS
+
+    assert parse_points("default") == TIER_POINTS
+    assert parse_points(None) is None
+
+
+def test_parse_points_reads_an_explicit_scale():
+    from gibhub.cli import parse_points
+
+    assert parse_points("S=5,E=4,A=3,B=2,C=1,D=0") == {
+        "S": 5.0, "E": 4.0, "A": 3.0, "B": 2.0, "C": 1.0, "D": 0.0}
+
+
+def test_parse_points_rejects_an_unknown_tier():
+    from gibhub.cli import parse_points
+
+    with pytest.raises(ValueError, match="unknown tier 'Z'"):
+        parse_points("Z=5,S=5,E=4,A=3,B=2,C=1,D=0")
+
+
+def test_parse_points_rejects_an_incomplete_scale():
+    from gibhub.cli import parse_points
+
+    with pytest.raises(ValueError, match="missing a value for: C, D"):
+        parse_points("S=5,E=4,A=3,B=2")
+
+
+def test_points_flag_is_optional_and_takes_an_optional_value():
+    assert build_parser().parse_args(["fit", "--refit"]).points is None
+    assert build_parser().parse_args(["fit", "--refit", "--points"]).points == "default"
+    assert build_parser().parse_args(
+        ["fit", "--refit", "--points", "S=9,E=4,A=3,B=2,C=1,D=0"]).points == "S=9,E=4,A=3,B=2,C=1,D=0"
+
+
+def test_impute_max_defaults_to_a():
+    assert build_parser().parse_args(["fit", "--refit"]).impute_max == "A"
+
+
+def test_impute_max_accepts_a_tier_or_none():
+    from gibhub.cli import parse_impute_max
+
+    assert parse_impute_max("A") == "A"
+    assert parse_impute_max("b") == "B"
+    assert parse_impute_max("none") is None
+    assert parse_impute_max(None) is None
+
+
+def test_impute_max_rejects_an_unknown_tier():
+    from gibhub.cli import parse_impute_max
+
+    with pytest.raises(ValueError, match="unknown tier 'Q'"):
+        parse_impute_max("Q")
