@@ -16,7 +16,7 @@ You have no context on this domain. Here is what you need.
 
 **The game and the data.** gibhub.gg tracks Wolfenstein: Enemy Territory matches. A *3v3 match* has two sides named `alpha` and `beta`, three players each. A match is played over several *rounds*, each on a *map*. Every player in every round has a **UTRO** score — the site's per-round performance rating, roughly 0.5–1.5, where higher is better. The API describes itself in `openapi.yaml` at the repo root.
 
-**Tiers.** A committee assigns players a *gather tier* from `S, A, B, C, D, E` — S strongest, E weakest. Tiers are assigned **per Discord channel**, so one player can be `A` in one channel and untiered in another. Only 134 players hold a 3v3 tier; most players in any given match do not.
+**Tiers.** A committee assigns players a *gather tier* from `S, A, B, C, D, E`. **These are not an alphabetical ladder:** measured after implementation, the strength order is S > E > A > B > C > D, so E is the second strongest tier (see README). Nothing in this plan assumes an order. Tiers are assigned **per Discord channel**, so one player can be `A` in one channel and untiered in another. Only 134 players hold a 3v3 tier; most players in any given match do not.
 
 **What we are computing.** If we know each of the six players' tiers, we can predict which side should have won. Comparing that prediction to the actual result over a player's last N matches tells the committee whether that player's record is consistent with the tier they hold. That's the whole product.
 
