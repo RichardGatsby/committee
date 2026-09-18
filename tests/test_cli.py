@@ -22,6 +22,8 @@ class _Client:
                                  "match_draws": 0, "utro": 1.1, "kdr": 1.0}}
         if path == "/players/p1/spider":
             return {"metrics": [{"key": "utro", "value": 1.1, "avg": 1.0, "percentile": 70}]}
+        if path.endswith("/matches") and (params or {}).get("pageSize") == 1:
+            return {"total": 1}
         if path.startswith("/matches/"):
             return {
                 "match_id": "m1", "state": "finished", "winner": "alpha",
@@ -71,10 +73,9 @@ def test_parser_defaults_match_the_spec():
     args = build_parser().parse_args(["player", "Kredenc"])
     assert args.command == "player"
     assert args.player == "Kredenc"
-    assert args.matches == 50
-    # Defaults to the 2026 season rather than a rolling window.
-    assert args.from_ == "2026-01-01"
-    assert args.range is None
+    assert args.matches == 0  # 0 = every match in the window
+    assert args.range == "4m"
+    assert args.from_ is None
     assert args.extremes == 3
     assert args.format == "md"
 
@@ -310,12 +311,14 @@ def test_window_label_describes_the_slice_covered():
     from gibhub.cli import window_label
 
     p = build_parser()
-    assert window_label(p.parse_args(["player", "x"])) == "2026-01-01 onwards"
+    assert window_label(p.parse_args(["player", "x"])) == "last 4m"
     assert window_label(p.parse_args(
-        ["player", "x", "--to", "2026-06-01"])) == "2026-01-01 to 2026-06-01"
+        ["player", "x", "--from", "2026-01-01"])) == "2026-01-01 onwards"
     assert window_label(p.parse_args(
-        ["player", "x", "--from", "none", "--range", "6m"])) == "last 6m"
-    assert window_label(p.parse_args(["player", "x", "--from", "none"])) == "all time"
+        ["player", "x", "--from", "2026-01-01", "--to", "2026-06-01"])
+    ) == "2026-01-01 to 2026-06-01"
+    assert window_label(p.parse_args(
+        ["player", "x", "--range", "6m"])) == "last 6m"
 
 
 def test_extremes_can_be_switched_off():

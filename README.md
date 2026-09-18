@@ -11,9 +11,14 @@ Python 3.9+, no runtime dependencies.
 
 Report on one player (Discord-ready markdown):
 
-    python3 -m gibhub.cli player Kredenc
-    python3 -m gibhub.cli player Kredenc --matches 40 --range 1y
+    python3 -m gibhub.cli player Kredenc                  # last 4 months
+    python3 -m gibhub.cli player Kredenc --range 1y
+    python3 -m gibhub.cli player Kredenc --from 2026-01-01 --extremes 5
     python3 -m gibhub.cli player adeb5cb6-285a-5680-af40-6ad161f885b2 --format json
+
+The default window is a rolling **4 months** and every match in it is read.
+`--matches N` caps that, but a cap takes the most recent N and the report says so
+— on one player a 50-match cap turned a correct "ON TIER" into a spurious "OVER".
 
 Review a whole tier as a spreadsheet:
 
@@ -50,8 +55,12 @@ compares that to actual wins:
 - **UNDER** — won at least 1.5 fewer
 - **ON TIER** — within that band
 
-`utro` is the player's own performance rating for the match, playtime-weighted,
-with the change from their lifetime 3v3 baseline in brackets. A run of losses
+`pts` is the team's tier-points margin, `utro` the player's own performance rating
+for the match, playtime-weighted, with the change from their baseline in brackets.
+
+`--extremes N` (default 3) additionally tables the N biggest underdog wins and the
+N worst losses while favoured, each with both lineups and their tier sources, so a
+surprising result can be read without digging. A run of losses
 while favoured with UTRO *above* baseline says something different about a player
 than the same losses with UTRO below it.
 

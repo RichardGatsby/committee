@@ -167,3 +167,18 @@ def test_markdown_says_all_time_when_there_is_no_window():
     no_window = dataclasses.replace(
         REPORT, provenance=dict(REPORT.provenance, window=None))
     assert "3v3 (all time):" in to_markdown(no_window)
+
+
+def test_markdown_warns_when_the_window_was_truncated():
+    """Silently reading the most recent N can flip the verdict."""
+    truncated = dataclasses.replace(
+        REPORT, provenance=dict(REPORT.provenance, available=483, fetched=50))
+    text = to_markdown(truncated)
+    assert "Only the most recent 50 of 483 matches" in text
+    assert "--matches" in text
+
+
+def test_markdown_does_not_warn_when_the_window_was_fully_read():
+    full = dataclasses.replace(
+        REPORT, provenance=dict(REPORT.provenance, available=4, fetched=4))
+    assert "Only the most recent" not in to_markdown(full)

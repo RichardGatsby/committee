@@ -47,17 +47,23 @@ def resolve_player(client, term: str, exact: bool = False) -> str:
 def fetch_player_data(
     client,
     player_id: str,
-    matches: int,
+    matches: Optional[int] = None,
     range_: Optional[str] = None,
     from_: Optional[str] = None,
     to: Optional[str] = None,
     channel: Optional[str] = None,
     cache=None,
-) -> Tuple[Dict[str, Any], Dict[str, Any], List[Dict[str, Any]]]:
+) -> Tuple[Dict[str, Any], Dict[str, Any], List[Dict[str, Any]], int]:
     scope = {"size": SIZE_3V3, "range": range_, "from": from_, "to": to,
              "channel": channel}
     profile = client.get("/players/" + player_id, scope)
     spider = client.get("/players/" + player_id + "/spider", scope)
+
+    # How many matches the window holds, so a truncated report can say so:
+    # silently taking the most recent N can flip a verdict.
+    head = client.get("/players/" + player_id + "/matches",
+                      dict(scope, page=1, pageSize=1))
+    available = head.get("total") or 0
 
     listing = client.paginate(
         "/players/" + player_id + "/matches", scope, page_size=PAGE_SIZE, limit=matches
@@ -71,4 +77,4 @@ def fetch_player_data(
         match_id = item["match_id"]
         details.append(cache.fetch(match_id, load) if cache else load(match_id))
 
-    return profile, spider, details
+    return profile, spider, details, available

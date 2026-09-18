@@ -160,6 +160,14 @@ def to_markdown(report: PlayerReport, extremes: int = 0) -> str:
     if report.skipped:
         lines.append("%d match(es) skipped: incomplete roster or player absent." % report.skipped)
 
+    available = report.provenance.get("available") or 0
+    fetched = report.provenance.get("fetched") or 0
+    if available > fetched:
+        lines.append(
+            "> **Only the most recent %d of %d matches in this window were read.** "
+            "Raise `--matches` for the full picture: a truncated sample can change "
+            "the verdict." % (fetched, available))
+
     if extremes and report.rows:
         wins = sorted((r for r in report.rows if r.result == "W" and r.expected < 0.5),
                       key=lambda r: r.expected)

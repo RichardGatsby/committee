@@ -11,6 +11,9 @@ class FakeClient:
 
     def get(self, path, params=None):
         self.calls.append(path)
+        # A pageSize=1 probe reads the window's total match count.
+        if path.endswith("/matches") and (params or {}).get("pageSize") == 1:
+            return {"total": len(self.pages.get(path, []))}
         return self.singles[path]
 
     def paginate(self, path, params=None, page_size=100, limit=None):
@@ -70,10 +73,12 @@ def test_fetch_player_data_pulls_profile_spider_and_match_details():
         },
         pages={"/players/p1/matches": [{"match_id": "m1"}, {"match_id": "m2"}]},
     )
-    profile, spider, details = fetch_player_data(client, "p1", matches=5, range_="6m")
+    profile, spider, details, available = fetch_player_data(
+        client, "p1", matches=5, range_="6m")
     assert profile["player_id"] == "p1"
     assert spider == {"metrics": []}
     assert [d["match_id"] for d in details] == ["m1", "m2"]
+    assert available == 2
 
 
 def test_fetch_player_data_honours_the_match_limit():
@@ -85,8 +90,10 @@ def test_fetch_player_data_honours_the_match_limit():
         },
         pages={"/players/p1/matches": [{"match_id": "m1"}, {"match_id": "m2"}]},
     )
-    _, _, details = fetch_player_data(client, "p1", matches=1, range_="6m")
+    _, _, details, available = fetch_player_data(client, "p1", matches=1, range_="6m")
     assert len(details) == 1
+    # The window held more than were read; the report must be able to say so.
+    assert available == 2
 
 
 def test_fetch_player_data_uses_the_cache_when_given_one(tmp_path):
@@ -104,3 +111,17 @@ def test_fetch_player_data_uses_the_cache_when_given_one(tmp_path):
     fetch_player_data(client, "p1", matches=5, range_="6m", cache=cache)
     fetch_player_data(client, "p1", matches=5, range_="6m", cache=cache)
     assert client.calls.count("/matches/m1") == 1
+
+
+def test_no_match_cap_reads_the_whole_window():
+    client = FakeClient(
+        singles={
+            "/players/p1": {"player_id": "p1"},
+            "/players/p1/spider": {"metrics": []},
+            "/matches/m1": {"match_id": "m1", "state": "finished"},
+            "/matches/m2": {"match_id": "m2", "state": "finished"},
+        },
+        pages={"/players/p1/matches": [{"match_id": "m1"}, {"match_id": "m2"}]},
+    )
+    _, _, details, available = fetch_player_data(client, "p1", matches=None, range_="4m")
+    assert len(details) == 2 == available

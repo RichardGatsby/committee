@@ -30,14 +30,17 @@ def build_parser() -> argparse.ArgumentParser:
 
     player = sub.add_parser("player", help="report on one player")
     player.add_argument("player", help="name, discord nick, or player UUID")
-    player.add_argument("--matches", type=int, default=50)
+    player.add_argument(
+        "--matches", type=int, default=0, metavar="N",
+        help="cap how many matches to read (default: 0 = every match in the "
+             "window). A cap takes the most recent N, which can change the verdict.")
     player.add_argument("--channel")
     player.add_argument(
-        "--range", help="shorthand window like 6m or 1y. Ignored when --from is set.")
+        "--range", default="4m",
+        help="rolling window like 4m or 1y (default: 4m). Ignored when --from is set.")
     player.add_argument(
-        "--from", dest="from_", default="2026-01-01", metavar="YYYY-MM-DD",
-        help="inclusive start date (default: 2026-01-01). Pass 'none' with "
-             "--range for a rolling window, or 'none' alone for everything.")
+        "--from", dest="from_", metavar="YYYY-MM-DD",
+        help="inclusive start date, instead of the rolling --range window.")
     player.add_argument("--to", metavar="YYYY-MM-DD")
     player.add_argument(
         "--extremes", type=int, default=3, metavar="N",
@@ -49,9 +52,9 @@ def build_parser() -> argparse.ArgumentParser:
     selector = bulk.add_mutually_exclusive_group(required=True)
     selector.add_argument("--tier", action="append")
     selector.add_argument("--players", help="file with one name or UUID per line")
-    bulk.add_argument("--matches", type=int, default=50)
-    bulk.add_argument("--range")
-    bulk.add_argument("--from", dest="from_", default="2026-01-01")
+    bulk.add_argument("--matches", type=int, default=0)
+    bulk.add_argument("--range", default="4m")
+    bulk.add_argument("--from", dest="from_")
     bulk.add_argument("--to")
     bulk.add_argument("--out")
 
@@ -91,7 +94,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def window_label(args):
     """How the report should describe the slice of history it covers."""
-    start = None if (args.from_ or "none").lower() == "none" else args.from_
+    start = None if (getattr(args, "from_", None) or "none").lower() == "none" else args.from_
     end = getattr(args, "to", None)
     if start and end:
         return "%s to %s" % (start, end)
@@ -103,11 +106,11 @@ def window_label(args):
 
 
 def _report_for(client, bundle, player_id, args, cache):
-    start = None if (args.from_ or "none").lower() == "none" else args.from_
-    profile, spider, details = fetch_player_data(
+    start = None if (getattr(args, "from_", None) or "none").lower() == "none" else args.from_
+    profile, spider, details, available = fetch_player_data(
         client,
         player_id,
-        matches=args.matches,
+        matches=args.matches or None,
         range_=args.range if not start else None,
         from_=start,
         to=getattr(args, "to", None),
@@ -123,6 +126,8 @@ def _report_for(client, bundle, player_id, args, cache):
         "tier_source": (", ".join(sorted(bundle.channel_names.values()))
                         if bundle.tier_channels else "all channels"),
         "impute_max": bundle.impute_max,
+        "available": available,
+        "fetched": len(details),
     }
     return build_report(
         profile, spider, details, bundle.index(), bundle.coefficients, provenance,
