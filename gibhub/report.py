@@ -3,6 +3,7 @@
 import dataclasses
 from typing import Any, Dict, List, Optional, Sequence
 
+from .categories import categorise, split
 from .dataset import TEAM_SIZE, roster_ids, winner_of
 from .model import feature_vector, points_delta, predict
 from .tiers import CROSS_CHANNEL, EXACT, IMPUTED, OVERRIDE, TierIndex
@@ -87,6 +88,7 @@ class MatchRow:
     opponents: List[Any] = dataclasses.field(default_factory=list)
     channel: str = ""
     score: str = ""
+    category: str = ""
 
 
 @dataclasses.dataclass(frozen=True)
@@ -116,6 +118,8 @@ class PlayerReport:
     skipped: int
     source_counts: Dict[str, int]
     provenance: Dict[str, Any]
+    # Per-category splits: (key, decided, expected, actual, luck, verdict).
+    categories: List[Any] = dataclasses.field(default_factory=list)
 
 
 def luck_probability(probabilities: Sequence[float], actual: int) -> float:
@@ -180,6 +184,7 @@ def build_report(
     coefficients: Sequence[float],
     provenance: Dict[str, Any],
     tier_points: Optional[Dict[str, float]] = None,
+    only: Optional[Sequence[str]] = None,
 ) -> PlayerReport:
     player_id = profile["player_id"]
     baseline = (profile.get("lifetime") or {}).get("utro")
@@ -197,6 +202,8 @@ def build_report(
     skipped = 0
 
     for match in details:
+        if only and categorise(match) not in only:
+            continue
         side = side_of(match, player_id)
         alpha, beta = roster_ids(match)
         if side is None or len(alpha) != TEAM_SIZE or len(beta) != TEAM_SIZE:
@@ -282,6 +289,7 @@ def build_report(
                 opponents=other,
                 channel=match.get("channel_name") or "",
                 score=score,
+                category=categorise(match),
             )
         )
 
@@ -289,6 +297,17 @@ def build_report(
     decided = sum(1 for row in rows if row.result in ("W", "L"))
     luck = luck_probability([row.expected for row in rows if row.result in ("W", "L")],
                             actual_wins)
+    categories = []
+    for key, group in split(rows):
+        decided_rows = [r for r in group if r.result in ("W", "L")]
+        if not decided_rows:
+            continue
+        won = sum(1 for r in decided_rows if r.result == "W")
+        exp = sum(r.expected for r in decided_rows)
+        group_luck = luck_probability([r.expected for r in decided_rows], won)
+        categories.append((key, len(decided_rows), exp, won, group_luck,
+                           classify(won - exp, group_luck)))
+
     spider_metrics = spider.get("metrics") or []
 
     return PlayerReport(
@@ -315,4 +334,5 @@ def build_report(
         skipped=skipped,
         source_counts=counts,
         provenance=provenance,
+        categories=categories,
     )

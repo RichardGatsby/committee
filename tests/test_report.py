@@ -339,3 +339,43 @@ def test_a_report_carries_the_effect_size_per_hundred_games():
     assert report.decided == 4
     assert report.per_100 == pytest.approx(100.0 * report.delta / 4)
     assert 0.0 <= report.luck <= 1.0
+
+
+def _categorised(match_id, winner, channel, tags, channel_id="1194582311182807142"):
+    detail = _detail(match_id, winner, 1.2)
+    detail["channel_name"] = channel
+    detail["tags"] = tags
+    detail["channel_id"] = channel_id
+    return detail
+
+
+def test_the_report_splits_results_by_type_of_game():
+    details = [
+        _categorised("m1", "alpha", "ET:Legacy Events: #3vs3", ["gather"]),
+        _categorised("m2", "beta", "Poland ET:Legacy: #3v3", ["gather"]),
+        _categorised("m3", "alpha", "unsorted", None, ""),
+    ]
+    report = build_report(PROFILE, SPIDER, details, _index(), COEFFICIENTS, {})
+    keys = [c[0] for c in report.categories]
+    assert keys == ["legacy", "poland", "team"]
+    assert all(c[1] == 1 for c in report.categories)  # one decided match each
+
+
+def test_only_restricts_the_report_to_one_type():
+    details = [
+        _categorised("m1", "alpha", "ET:Legacy Events: #3vs3", ["gather"]),
+        _categorised("m2", "beta", "Poland ET:Legacy: #3v3", ["gather"]),
+    ]
+    report = build_report(PROFILE, SPIDER, details, _index(), COEFFICIENTS, {},
+                          only=["poland"])
+    assert len(report.rows) == 1
+    assert report.rows[0].category == "poland"
+    assert report.decided == 1
+
+
+def test_a_filtered_out_match_is_not_counted_as_skipped():
+    details = [_categorised("m1", "alpha", "Poland ET:Legacy: #3v3", ["gather"])]
+    report = build_report(PROFILE, SPIDER, details, _index(), COEFFICIENTS, {},
+                          only=["legacy"])
+    assert report.rows == []
+    assert report.skipped == 0

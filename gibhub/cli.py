@@ -8,6 +8,7 @@ from .api import ApiError, Client
 from .build import build_bundle
 from .bundle import DEFAULT_PATH, BundleMissing, load, save
 from .cache import MatchCache
+from .categories import parse_selection
 from .fetch import AmbiguousPlayer, PlayerNotFound, fetch_player_data, resolve_player
 from .model import TIERS, TIER_POINTS
 from .render import to_csv, to_json, to_markdown
@@ -43,6 +44,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="inclusive start date, instead of the rolling --range window.")
     player.add_argument("--to", metavar="YYYY-MM-DD")
     player.add_argument(
+        "--only", action="append", metavar="TYPE",
+        help="restrict to a kind of game; repeat for several. legacy, poland, "
+             "other, gathers (all three), cup, team. Omit for everything.")
+    player.add_argument(
         "--extremes", type=int, default=3, metavar="N",
         help="also table the N biggest underdog wins and worst losses while "
              "favoured, with both lineups (default: 3; 0 to hide)")
@@ -55,6 +60,7 @@ def build_parser() -> argparse.ArgumentParser:
     bulk.add_argument("--matches", type=int, default=0)
     bulk.add_argument("--range", default="4m")
     bulk.add_argument("--from", dest="from_")
+    bulk.add_argument("--only", action="append")
     bulk.add_argument("--to")
     bulk.add_argument("--out")
 
@@ -132,6 +138,7 @@ def _report_for(client, bundle, player_id, args, cache):
     return build_report(
         profile, spider, details, bundle.index(), bundle.coefficients, provenance,
         tier_points=bundle.tier_points or None,
+        only=parse_selection(getattr(args, "only", None)),
     )
 
 

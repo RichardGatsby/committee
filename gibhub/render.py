@@ -7,6 +7,7 @@ import json
 import re
 from typing import Optional, Sequence
 
+from .categories import LABELS
 from .report import PlayerReport
 
 # Quake 3 colour codes: a caret followed by any single character.
@@ -177,6 +178,18 @@ def to_markdown(report: PlayerReport, extremes: int = 0) -> str:
             "> **Only the most recent %d of %d matches in this window were read.** "
             "Raise `--matches` for the full picture: a truncated sample can change "
             "the verdict." % (fetched, available))
+
+    if len(report.categories) > 1:
+        lines.append("**By type of game**")
+        lines.append("")
+        lines.append("| type | games | expected | actual | | |")
+        lines.append("| --- | ---: | ---: | ---: | --- | --- |")
+        for key, decided, exp, won, luck, verdict in report.categories:
+            odds = int(round(1.0 / luck)) if luck > 0 else 10000
+            lines.append("| %s | %d | %.1f | %d | %+.1f | %s _(1 in %d)_ |" % (
+                LABELS.get(key, key), decided, exp, won, won - exp, verdict,
+                max(odds, 2)))
+        lines.append("")
 
     if extremes and report.rows:
         wins = sorted((r for r in report.rows if r.result == "W" and r.expected < 0.5),

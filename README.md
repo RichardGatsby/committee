@@ -72,7 +72,29 @@ for the match, playtime-weighted, with the change from their baseline in bracket
 
 `--extremes N` (default 3) additionally tables the N biggest underdog wins and the
 N worst losses while favoured, each with both lineups and their tier sources, so a
-surprising result can be read without digging. A run of losses
+surprising result can be read without digging.
+
+## Types of game
+
+Matches are split into five kinds, read off the `gather` tag, the channel, and
+whether that channel is a real Discord one or a synthetic tournament one:
+
+| key | what it covers |
+| --- | --- |
+| `legacy` | ET:Legacy Events and ET:Legacy Gathers 3v3 |
+| `poland` | Poland ET:Legacy 3v3 |
+| `other` | every other gather channel (subAk, eV!L, Frag Center, …) |
+| `cup` | cups, tournaments and league seasons |
+| `team` | untagged games between named teams — scrims and internal matches |
+
+A report covering more than one kind gets a **By type of game** table with a
+separate verdict for each, since a player can be correctly tiered in gathers and
+not in team games. `--only` restricts the whole report: `--only legacy`,
+`--only gathers` (all three gather kinds), `--only team`, repeatable.
+
+Tournaments that carry no `cup` tag — Nations Cup and subak's cups among them —
+are caught by their zero-padded channel id, which is how the API marks a
+tournament channel apart from a Discord one. A run of losses
 while favoured with UTRO *above* baseline says something different about a player
 than the same losses with UTRO below it.
 
