@@ -71,7 +71,11 @@ third-party numerics.
 
 All matches from `GET /api/matches?size=3v3&state=finished`, paginated. Excluded:
 
-- matches with `winner` neither `alpha` nor `beta` (draws, cancelled, unreported)
+- matches with no decided winner. `winner` is taken at face value when it reads
+  `alpha` or `beta`; where it is empty the scoreline decides, because the API
+  leaves it empty on unsettled matches even when the score is decisive (one
+  observed match reads 0-10 with an empty `winner`). Equal or absent scores are
+  treated as draws.
 - matches whose rosters are not 3 players per side
 
 Training uses the same tier-resolution rules as reporting, imputation included, so
@@ -240,6 +244,12 @@ One integration test hits the live API as a contract check, skipped unless
   counted per report so the committee can discount accordingly.
 - **Per-channel tiers** mean a player active across channels may be scored against
   a tier assigned by a different channel's committee.
+- **The tier letters are not an alphabetical ladder.** Measured after
+  implementation: the strength order is S > E > A > B > C > D. Tier E holders have
+  a 51.5% 3v3 win rate over 5,413 matches and a median UTRO of 1.104, second only
+  to S. The pattern holds in both tiered channels. Nothing in the design depends
+  on an assumed order — the model fits each tier's value from results — but any
+  reader of this spec should not assume E is the bottom.
 
 ## Out of scope
 

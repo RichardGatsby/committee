@@ -33,14 +33,18 @@ def build_bands(
 def nearest_tier(bands: Mapping[str, float], utro: Optional[float]) -> str:
     """The tier whose band is closest to `utro`.
 
-    Ties go to the stronger tier, so the result never depends on dict ordering.
+    Ties go to the tier with the higher band — the empirically stronger one — and
+    then to the label, so the result never depends on dict ordering. Note that the
+    tie-break reads strength from the data, not from the letters: in this dataset
+    E is the second-strongest tier, not the weakest (see README).
+
     With no UTRO at all, the median band stands in for the player.
     """
     if not bands:
         raise ValueError("no tier bands available")
     if utro is None:
         utro = _median(list(bands.values()))
-    return min(bands, key=lambda tier: (abs(bands[tier] - utro), TIERS.index(tier)))
+    return min(bands, key=lambda tier: (abs(bands[tier] - utro), -bands[tier], tier))
 
 
 @dataclasses.dataclass(frozen=True)

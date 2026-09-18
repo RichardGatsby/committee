@@ -53,10 +53,30 @@ def roster_ids(match: Dict[str, Any]) -> Tuple[List[str], List[str]]:
     return _roster_from_rounds(match, "alpha"), _roster_from_rounds(match, "beta")
 
 
+def winner_of(match: Dict[str, Any]) -> Optional[str]:
+    """"alpha", "beta", or None for a draw or an undecided match.
+
+    `winner` is left empty on matches the API has not settled (state "unknown
+    match" and friends), even where the scoreline is decisive — one such match
+    reads 0-10 with an empty winner. Falling back to the scores keeps those
+    results instead of silently recording them as draws.
+    """
+    winner = match.get("winner")
+    if winner in ("alpha", "beta"):
+        return winner
+    if winner == "draw":
+        return None
+
+    alpha, beta = match.get("alpha_score"), match.get("beta_score")
+    if alpha is None or beta is None or alpha == beta:
+        return None
+    return "alpha" if alpha > beta else "beta"
+
+
 def match_to_sample(match: Dict[str, Any], index: TierIndex) -> Optional[Sample]:
     """None when the match cannot train the model: a draw, or an odd roster."""
-    winner = match.get("winner")
-    if winner not in ("alpha", "beta"):
+    winner = winner_of(match)
+    if winner is None:
         return None
 
     alpha, beta = roster_ids(match)

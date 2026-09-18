@@ -83,3 +83,11 @@ def test_resolve_all_returns_one_result_per_player_in_order():
 
 def test_tiers_of_returns_just_the_letters():
     assert _index().tiers_of(["multi", "ghost"], "poland") == ["B", "C"]
+
+
+def test_nearest_tier_ties_break_on_band_strength_not_the_letter():
+    """The letters are not an ordered ladder: E is the second-strongest tier here."""
+    # 1.0 is exactly equidistant from E (1.5) and A (0.5); E has the higher band.
+    assert nearest_tier({"E": 1.5, "A": 0.5}, 1.0) == "E"
+    # The letter order would have picked A, since "A" sorts before "E".
+    assert nearest_tier({"A": 1.5, "E": 0.5}, 1.0) == "A"

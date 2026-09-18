@@ -115,3 +115,33 @@ def test_the_teams_block_wins_when_both_are_present():
         "rounds": [{"alpha": [{"player_id": "derived", "playtime_percent": 100}], "beta": []}],
     }
     assert roster_ids(match) == (["listed"], [])
+
+
+from gibhub.dataset import winner_of
+
+
+def test_winner_of_reads_an_explicit_winner():
+    assert winner_of({"winner": "alpha"}) == "alpha"
+    assert winner_of({"winner": "beta"}) == "beta"
+
+
+def test_winner_of_treats_an_explicit_draw_as_none():
+    assert winner_of({"winner": "draw", "alpha_score": 3, "beta_score": 3}) is None
+
+
+def test_winner_of_falls_back_to_the_scoreline_on_an_unsettled_match():
+    """An 'unknown match' leaves `winner` empty even at 0-10; the score decides."""
+    match = {"state": "unknown match", "winner": "", "alpha_score": 0, "beta_score": 10}
+    assert winner_of(match) == "beta"
+    assert winner_of({"winner": "", "alpha_score": 4, "beta_score": 2}) == "alpha"
+
+
+def test_winner_of_is_a_draw_when_the_scores_are_level_or_absent():
+    assert winner_of({"winner": "", "alpha_score": 3, "beta_score": 3}) is None
+    assert winner_of({"winner": "", "alpha_score": None, "beta_score": None}) is None
+    assert winner_of({"winner": ""}) is None
+
+
+def test_an_unsettled_match_with_a_decisive_score_still_trains_the_model():
+    match = _match(winner="", alpha_score=0, beta_score=10)
+    assert match_to_sample(match, _index()).outcome == 0

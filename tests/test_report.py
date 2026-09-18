@@ -195,3 +195,14 @@ def test_lifetime_and_percentiles_are_carried_through():
     assert report.percentiles == [("utro", 87.5)]
     assert report.provenance["fitted_at"] == "2026-09-18T00:00:00+00:00"
     assert report.label == "ON TIER"
+
+
+def test_an_unsettled_match_is_scored_from_its_scoreline_not_called_a_draw():
+    detail = _detail("m1", "", 1.2)
+    detail["state"] = "unknown match"
+    detail["alpha_score"] = 0
+    detail["beta_score"] = 10
+    report = build_report(PROFILE, SPIDER, [detail], _index(), COEFFICIENTS, {})
+    # The player is on alpha, so 0-10 is a loss, not a draw.
+    assert report.rows[0].result == "L"
+    assert report.draws == 0

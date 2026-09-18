@@ -3,7 +3,7 @@
 import dataclasses
 from typing import Any, Dict, List, Optional, Sequence
 
-from .dataset import TEAM_SIZE, roster_ids
+from .dataset import TEAM_SIZE, roster_ids, winner_of
 from .model import feature_vector, predict
 from .tiers import CROSS_CHANNEL, EXACT, IMPUTED, TierIndex
 
@@ -145,8 +145,8 @@ def build_report(
         )
         expected = p_alpha if side == "alpha" else 1.0 - p_alpha
 
-        winner = match.get("winner")
-        if winner not in ("alpha", "beta"):
+        winner = winner_of(match)
+        if winner is None:
             result = "D"
             draws += 1
         elif winner == side:
