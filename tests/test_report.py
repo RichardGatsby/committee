@@ -206,3 +206,54 @@ def test_an_unsettled_match_is_scored_from_its_scoreline_not_called_a_draw():
     # The player is on alpha, so 0-10 is a loss, not a draw.
     assert report.rows[0].result == "L"
     assert report.draws == 0
+
+
+def test_the_four_outcome_buckets_partition_the_decided_matches():
+    """Every decided match is exactly one of: stack win, upset loss,
+    upset win, underdog loss."""
+    strong = _detail("m1", "alpha", 1.2)   # player on alpha with S vs E: favoured
+    lost_favoured = _detail("m2", "beta", 1.2)
+
+    underdog = _detail("m3", "beta", 1.2)
+    underdog["teams"]["alpha"] = [{"player_id": "a1"}, {"player_id": "a2"}, {"player_id": "a3"}]
+    underdog["teams"]["beta"] = [{"player_id": "me"}, {"player_id": "b2"}, {"player_id": "b3"}]
+    lost_underdog = dict(underdog, match_id="m4", winner="alpha")
+
+    index = TierIndex(
+        holdings={"me": (Holding("poland", "S", "2026-09-01"),),
+                  "b1": (Holding("poland", "E", "2026-09-01"),),
+                  "a1": (Holding("poland", "S", "2026-09-01"),)},
+        bands=BANDS, utro={},
+    )
+    # m3/m4 put 'me' on beta as an E-tier underdog against a1's S.
+    index2 = TierIndex(
+        holdings={"a1": (Holding("poland", "S", "2026-09-01"),),
+                  "me": (Holding("poland", "E", "2026-09-01"),)},
+        bands=BANDS, utro={},
+    )
+
+    favoured = build_report(PROFILE, SPIDER, [strong, lost_favoured], index,
+                            COEFFICIENTS, {})
+    assert (favoured.stack_wins, favoured.upset_losses) == (1, 1)
+    assert (favoured.upset_wins, favoured.underdog_losses) == (0, 0)
+
+    dogs = build_report(PROFILE, SPIDER, [underdog, lost_underdog], index2,
+                        COEFFICIENTS, {})
+    assert (dogs.upset_wins, dogs.underdog_losses) == (1, 1)
+    assert (dogs.stack_wins, dogs.upset_losses) == (0, 0)
+
+    for report in (favoured, dogs):
+        decided = sum(1 for row in report.rows if row.result in ("W", "L"))
+        assert (report.stack_wins + report.upset_losses
+                + report.upset_wins + report.underdog_losses) == decided
+
+
+def test_an_exactly_even_match_is_neither_stack_nor_underdog():
+    detail = _detail("m1", "alpha", 1.2)
+    # An empty tier index gives both sides the same imputed tier: exactly 50%.
+    even_index = TierIndex(holdings={}, bands=BANDS, utro={})
+    report = build_report(PROFILE, SPIDER, [detail], even_index, COEFFICIENTS, {})
+    assert report.rows[0].expected == 0.5
+    assert report.even_matches == 1
+    assert (report.stack_wins, report.upset_wins) == (0, 0)
+    assert report.actual_wins == 1

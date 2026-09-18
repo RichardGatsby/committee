@@ -26,6 +26,8 @@ class Bundle:
     utro: Dict[str, float]
     holdings: Dict[str, Tuple[Holding, ...]]
     channel_names: Dict[str, str]
+    # Channels the tier index was restricted to at fit time; empty means all.
+    tier_channels: List[str] = dataclasses.field(default_factory=list)
 
     def index(self) -> TierIndex:
         return TierIndex(holdings=self.holdings, bands=self.bands, utro=self.utro)
@@ -47,6 +49,7 @@ def save(bundle: Bundle, path=DEFAULT_PATH) -> None:
             for player_id, holdings in sorted(bundle.holdings.items())
         },
         "channel_names": bundle.channel_names,
+        "tier_channels": bundle.tier_channels,
     }
     temporary = str(path) + ".tmp"
     with open(temporary, "w", encoding="utf-8") as handle:
@@ -75,4 +78,5 @@ def load(path=DEFAULT_PATH) -> Bundle:
             for player_id, holdings in payload["holdings"].items()
         },
         channel_names=payload.get("channel_names", {}),
+        tier_channels=payload.get("tier_channels", []),
     )

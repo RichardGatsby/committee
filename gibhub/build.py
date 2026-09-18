@@ -65,10 +65,42 @@ def fetch_tier_holdings(client) -> Tuple[Dict[str, Tuple[Holding, ...]], Dict[st
     return holdings, channel_names
 
 
-def build_bundle(client, to=None, limit=None) -> Bundle:
+def filter_holdings(holdings, channel_names, tokens):
+    """Keep only tiers assigned in the named channels.
+
+    A token matches a channel id exactly, or any case-insensitive substring of a
+    channel name ("events" matches "ET:Legacy Events: #3vs3"). Players left with
+    no holding drop out of the index entirely and are imputed instead.
+    """
+    if not tokens:
+        return holdings, channel_names
+
+    lowered = [token.lower() for token in tokens]
+
+    def keep(channel_id):
+        name = (channel_names.get(channel_id) or "").lower()
+        return any(token == channel_id or (token and token in name) for token in lowered)
+
+    kept = {}
+    for player_id, entries in holdings.items():
+        matching = tuple(entry for entry in entries if keep(entry.channel_id))
+        if matching:
+            kept[player_id] = matching
+
+    names = {cid: name for cid, name in channel_names.items() if keep(cid)}
+    if not kept:
+        raise ValueError(
+            "no 3v3 tiers match channel filter %r; known channels: %s"
+            % (tokens, ", ".join(sorted(channel_names.values())) or "none")
+        )
+    return kept, names
+
+
+def build_bundle(client, to=None, limit=None, tier_channels=None) -> Bundle:
     """Fetch everything, fit, and return a bundle ready to save."""
     utro = fetch_utro(client)
     holdings, channel_names = fetch_tier_holdings(client)
+    holdings, channel_names = filter_holdings(holdings, channel_names, tier_channels)
 
     holders = {tier: [] for tier in TIERS}
     for player_id, entries in holdings.items():
@@ -94,4 +126,5 @@ def build_bundle(client, to=None, limit=None) -> Bundle:
         utro=utro,
         holdings=holdings,
         channel_names=channel_names,
+        tier_channels=list(tier_channels or []),
     )

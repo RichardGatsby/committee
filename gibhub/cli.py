@@ -46,6 +46,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     fit = sub.add_parser("fit", help="show or refit the model")
     fit.add_argument("--refit", action="store_true")
+    fit.add_argument(
+        "--tier-channel", action="append", dest="tier_channel",
+        help="restrict the tier index to these channels; repeat for multiple "
+             "(e.g. --tier-channel Events). Matches a channel id or a substring "
+             "of its name. Omit to use every channel's tiers.",
+    )
     fit.add_argument("--to")
     fit.add_argument("--limit", type=int)
 
@@ -67,6 +73,9 @@ def _report_for(client, bundle, player_id, args, cache):
         "data_cutoff": bundle.data_cutoff,
         "sample_size": bundle.sample_size,
         "window": args.range,
+        "tier_channels": bundle.tier_channels,
+        "tier_source": (", ".join(sorted(bundle.channel_names.values()))
+                        if bundle.tier_channels else "all channels"),
     }
     return build_report(
         profile, spider, details, bundle.index(), bundle.coefficients, provenance
@@ -137,7 +146,10 @@ def cmd_bulk(args) -> int:
 
 def cmd_fit(args) -> int:
     if args.refit:
-        bundle = build_bundle(make_client(args), to=args.to, limit=args.limit)
+        bundle = build_bundle(
+            make_client(args), to=args.to, limit=args.limit,
+            tier_channels=args.tier_channel,
+        )
         save(bundle, args.bundle)
         print("wrote %s" % args.bundle)
     else:
@@ -146,6 +158,8 @@ def cmd_fit(args) -> int:
     print("fitted_at:   %s" % bundle.fitted_at)
     print("data_cutoff: %s" % bundle.data_cutoff)
     print("samples:     %d" % bundle.sample_size)
+    print("tier source: %s" % (", ".join(sorted(bundle.channel_names.values()))
+                               if bundle.tier_channels else "all channels"))
     print("metrics:     " + "  ".join(
         "%s=%.4f" % (key, value)
         for key, value in sorted(bundle.fit_metrics.items())

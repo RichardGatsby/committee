@@ -74,6 +74,10 @@ class PlayerReport:
     label: str
     upset_wins: int
     upset_losses: int
+    # The other half of the 2x2: results that went the way the tiers predicted.
+    stack_wins: int        # favoured (expected > 50%) and won
+    underdog_losses: int   # underdog (expected < 50%) and lost
+    even_matches: int      # expected exactly 50%, neither favoured nor underdog
     draws: int
     skipped: int
     source_counts: Dict[str, int]
@@ -123,6 +127,9 @@ def build_report(
     actual_wins = 0
     upset_wins = 0
     upset_losses = 0
+    stack_wins = 0
+    underdog_losses = 0
+    even_matches = 0
     draws = 0
     skipped = 0
 
@@ -155,17 +162,23 @@ def build_report(
             result = "L"
 
         upset = False
-        if result == "W":
-            actual_wins += 1
+        if result in ("W", "L"):
             expected_wins += expected
-            upset = expected < 0.5
-            if upset:
-                upset_wins += 1
-        elif result == "L":
-            expected_wins += expected
-            upset = expected > 0.5
-            if upset:
-                upset_losses += 1
+            if expected == 0.5:
+                even_matches += 1
+            if result == "W":
+                actual_wins += 1
+                upset = expected < 0.5
+                if upset:
+                    upset_wins += 1
+                elif expected > 0.5:
+                    stack_wins += 1
+            else:
+                upset = expected > 0.5
+                if upset:
+                    upset_losses += 1
+                elif expected < 0.5:
+                    underdog_losses += 1
 
         utro = weighted_utro(match, player_id)
         rows.append(
@@ -200,6 +213,9 @@ def build_report(
         label=classify(delta),
         upset_wins=upset_wins,
         upset_losses=upset_losses,
+        stack_wins=stack_wins,
+        underdog_losses=underdog_losses,
+        even_matches=even_matches,
         draws=draws,
         skipped=skipped,
         source_counts=counts,

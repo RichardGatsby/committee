@@ -195,10 +195,22 @@ def test_fit_with_refit_writes_a_bundle(monkeypatch, tmp_path, capsys):
         channel_names={},
     )
     monkeypatch.setattr("gibhub.cli.make_client", lambda args: FAKE_CLIENT)
-    monkeypatch.setattr("gibhub.cli.build_bundle", lambda client, to=None, limit=None: fake)
+    monkeypatch.setattr("gibhub.cli.build_bundle",
+                        lambda client, to=None, limit=None, tier_channels=None: fake)
 
     path = tmp_path / "coefficients.json"
     code = main(["--bundle", str(path), "fit", "--refit"])
     assert code == 0
     assert load(path).sample_size == 7
     assert "7" in capsys.readouterr().out
+
+
+def test_fit_accepts_repeated_tier_channel_filters():
+    args = build_parser().parse_args(
+        ["fit", "--refit", "--tier-channel", "Events", "--tier-channel", "Poland"]
+    )
+    assert args.tier_channel == ["Events", "Poland"]
+
+
+def test_tier_channel_defaults_to_none_meaning_all_channels():
+    assert build_parser().parse_args(["fit", "--refit"]).tier_channel is None

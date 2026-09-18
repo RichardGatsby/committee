@@ -31,6 +31,9 @@ REPORT = PlayerReport(
     label="ON TIER",
     upset_wins=1,
     upset_losses=1,
+    stack_wins=1,
+    underdog_losses=0,
+    even_matches=0,
     draws=1,
     skipped=0,
     source_counts={"exact": 23, "cross_channel": 0, "imputed": 1},
@@ -95,9 +98,24 @@ def test_csv_header_matches_the_spec():
     assert CSV_COLUMNS == [
         "player_id", "nick", "discord_nick", "tier", "tier_channel", "tier_updated_at",
         "matches", "wins", "losses", "draws", "win_rate", "expected_wins", "actual_wins",
-        "delta", "label", "upset_wins", "upset_losses", "utro", "utro_percentile", "kdr",
+        "delta", "label", "stack_wins", "stack_losses", "underdog_wins", "underdog_losses",
+        "upset_wins", "upset_losses", "utro", "utro_percentile", "kdr",
         "exact_tiers", "crosschannel_tiers", "imputed_tiers",
     ]
+
+
+def test_markdown_splits_results_into_favoured_and_underdog():
+    text = to_markdown(REPORT)
+    assert "When favoured (stacked): **1W-1L** (50%)" in text
+    assert "As underdog: **1W-0L** (100%)" in text
+
+
+def test_csv_carries_the_stack_and_underdog_columns():
+    rows = list(csv.DictReader(io.StringIO(to_csv([REPORT]))))
+    assert rows[0]["stack_wins"] == "1"
+    assert rows[0]["stack_losses"] == "1"
+    assert rows[0]["underdog_wins"] == "1"
+    assert rows[0]["underdog_losses"] == "0"
 
 
 def test_csv_writes_one_row_per_report():

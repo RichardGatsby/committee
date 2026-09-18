@@ -15,7 +15,8 @@ _COLOR = re.compile(r"\^.")
 CSV_COLUMNS = [
     "player_id", "nick", "discord_nick", "tier", "tier_channel", "tier_updated_at",
     "matches", "wins", "losses", "draws", "win_rate", "expected_wins", "actual_wins",
-    "delta", "label", "upset_wins", "upset_losses", "utro", "utro_percentile", "kdr",
+    "delta", "label", "stack_wins", "stack_losses", "underdog_wins", "underdog_losses",
+    "upset_wins", "upset_losses", "utro", "utro_percentile", "kdr",
     "exact_tiers", "crosschannel_tiers", "imputed_tiers",
 ]
 
@@ -94,6 +95,18 @@ def to_markdown(report: PlayerReport) -> str:
                 )
             )
         lines.append("")
+        favoured = report.stack_wins + report.upset_losses
+        underdog = report.upset_wins + report.underdog_losses
+        lines.append(
+            "When favoured (stacked): **%dW-%dL**%s. As underdog: **%dW-%dL**%s.%s"
+            % (
+                report.stack_wins, report.upset_losses,
+                " (%d%%)" % round(100 * report.stack_wins / favoured) if favoured else "",
+                report.upset_wins, report.underdog_losses,
+                " (%d%%)" % round(100 * report.upset_wins / underdog) if underdog else "",
+                " %d even game(s)." % report.even_matches if report.even_matches else "",
+            )
+        )
         lines.append(
             "Upsets: %d win%s against the odds, %d loss%s while favoured."
             % (
@@ -114,10 +127,11 @@ def to_markdown(report: PlayerReport) -> str:
     total = counts["exact"] + counts["cross_channel"] + counts["imputed"]
     lines.append("")
     lines.append(
-        "_%d of %d tier inputs imputed, %d cross-channel. Model fitted %s on %s matches, "
-        "cutoff %s, window %s._"
+        "_%d of %d tier inputs imputed, %d cross-channel. Tiers from: %s. "
+        "Model fitted %s on %s matches, cutoff %s, window %s._"
         % (
             counts["imputed"], total, counts["cross_channel"],
+            report.provenance.get("tier_source", "all channels"),
             report.provenance.get("fitted_at"), report.provenance.get("sample_size"),
             report.provenance.get("data_cutoff"), report.provenance.get("window"),
         )
@@ -154,6 +168,10 @@ def _csv_row(report: PlayerReport):
         "actual_wins": report.actual_wins,
         "delta": "%.2f" % report.delta,
         "label": report.label,
+        "stack_wins": report.stack_wins,
+        "stack_losses": report.upset_losses,
+        "underdog_wins": report.upset_wins,
+        "underdog_losses": report.underdog_losses,
         "upset_wins": report.upset_wins,
         "upset_losses": report.upset_losses,
         "utro": life["utro"] if life["utro"] is not None else "",

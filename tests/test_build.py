@@ -99,3 +99,46 @@ def test_fetch_tier_holdings_fetches_each_player_once():
     )
     fetch_tier_holdings(client)
     assert client.calls.count(("/players/p1", "3v3")) == 1
+
+
+import pytest
+
+from gibhub.build import filter_holdings
+from gibhub.tiers import Holding
+
+HOLDINGS = {
+    "both": (Holding("ev", "E", "2026-09-18"), Holding("pl", "A", "2026-09-18")),
+    "poland_only": (Holding("pl", "S", "2026-09-18"),),
+    "events_only": (Holding("ev", "B", "2026-09-18"),),
+}
+NAMES = {"ev": "ET:Legacy Events: #3vs3", "pl": "Poland ET:Legacy: #3v3"}
+
+
+def test_no_filter_keeps_everything():
+    kept, names = filter_holdings(HOLDINGS, NAMES, None)
+    assert kept == HOLDINGS
+    assert names == NAMES
+
+
+def test_a_name_substring_selects_one_channel():
+    kept, names = filter_holdings(HOLDINGS, NAMES, ["events"])
+    assert set(kept) == {"both", "events_only"}
+    assert [h.tier for h in kept["both"]] == ["E"]  # the Poland A is dropped
+    assert names == {"ev": "ET:Legacy Events: #3vs3"}
+
+
+def test_matching_is_case_insensitive():
+    assert set(filter_holdings(HOLDINGS, NAMES, ["EVENTS"])[0]) == {"both", "events_only"}
+
+
+def test_a_channel_id_matches_exactly():
+    assert set(filter_holdings(HOLDINGS, NAMES, ["pl"])[0]) == {"both", "poland_only"}
+
+
+def test_several_tokens_are_ored():
+    assert set(filter_holdings(HOLDINGS, NAMES, ["events", "poland"])[0]) == set(HOLDINGS)
+
+
+def test_a_filter_matching_nothing_raises_and_lists_the_channels():
+    with pytest.raises(ValueError, match="Poland ET:Legacy"):
+        filter_holdings(HOLDINGS, NAMES, ["nonsense"])
