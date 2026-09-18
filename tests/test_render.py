@@ -58,38 +58,30 @@ def test_markdown_leads_with_the_nick_and_tier():
     assert "Poland ET:Legacy: #3v3: **A**" in text
 
 
-def test_markdown_shows_the_verdict_in_plain_language():
+def test_the_headline_is_one_compact_line():
     text = to_markdown(REPORT)
-    assert "**Verdict: ON TIER**" in text
-    assert "Won **2 of 3**" in text
-    assert "their tier predicted about **2**" in text
-    assert "per 100 games" in text
+    headline = [l for l in text.splitlines() if l.startswith("**Expected")]
+    assert len(headline) == 1
+    assert "Expected 1.73 wins, actual 2 — +0.27 → ON TIER" in headline[0]
     # No z-scores or p-values in the committee-facing text.
     assert "z-score" not in text and "p =" not in text
 
 
-def test_markdown_explains_the_strength_of_evidence_as_odds():
-    text = to_markdown(REPORT)
-    assert "1 time in 3" in text
-    assert "correctly tiered" in text
+def test_the_headline_carries_effect_size_and_odds():
+    headline = [l for l in to_markdown(REPORT).splitlines()
+                if l.startswith("**Expected")][0]
+    assert "+7 per 100 games" in headline
+    assert "luck alone does this 1 time in 3" in headline
 
 
-def test_a_significant_verdict_says_the_tier_is_wrong():
+def test_a_strong_result_reads_as_clearly_over():
     strong = dataclasses.replace(
-        REPORT, label="CLEARLY ABOVE TIER", luck=0.0006, delta=24.7, per_100=10.3,
+        REPORT, label="CLEARLY OVER", luck=0.0006, delta=24.7, per_100=10.3,
         decided=240, actual_wins=143, expected_wins=118.3)
-    text = to_markdown(strong)
-    assert "**Verdict: CLEARLY ABOVE TIER**" in text
-    assert "1 time in 1667" in text
-    assert "strong evidence the tier is wrong" in text
-
-
-def test_a_below_tier_verdict_reads_as_worse_than_predicted():
-    weak = dataclasses.replace(
-        REPORT, label="BELOW TIER", luck=0.03, delta=-6.0, per_100=-8.0)
-    text = to_markdown(weak)
-    assert "worse than predicted" in text
-    assert "reasonable evidence" in text
+    headline = [l for l in to_markdown(strong).splitlines()
+                if l.startswith("**Expected")][0]
+    assert "→ CLEARLY OVER**" in headline
+    assert "1 time in 1667" in headline
 
 
 def test_markdown_marks_upsets():
@@ -215,10 +207,6 @@ def test_markdown_does_not_warn_when_the_window_was_fully_read():
     assert "Only the most recent" not in to_markdown(full)
 
 
-def test_the_per_100_figure_agrees_with_its_own_plural():
-    one = dataclasses.replace(REPORT, per_100=1.2)
-    assert "+1 win per 100 games" in to_markdown(one)
-    many = dataclasses.replace(REPORT, per_100=7.1)
-    assert "+7 wins per 100 games" in to_markdown(many)
-    none = dataclasses.replace(REPORT, per_100=0.2)
-    assert "+0 wins per 100 games" in to_markdown(none)
+def test_the_per_100_figure_is_rounded_in_the_headline():
+    assert "+1 per 100 games" in to_markdown(dataclasses.replace(REPORT, per_100=1.2))
+    assert "-8 per 100 games" in to_markdown(dataclasses.replace(REPORT, per_100=-8.4))

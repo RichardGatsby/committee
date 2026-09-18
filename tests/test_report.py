@@ -67,11 +67,11 @@ COEFFICIENTS = [0.9, 0.6, 0.3, 0.0, -0.4, -0.8]
 
 
 def test_classify_reads_off_the_luck_probability_not_the_raw_gap():
-    assert classify(2.6, 0.005) == "CLEARLY ABOVE TIER"
-    assert classify(2.6, 0.03) == "ABOVE TIER"
+    assert classify(2.6, 0.005) == "CLEARLY OVER"
+    assert classify(2.6, 0.03) == "OVER"
     assert classify(2.6, 0.30) == "ON TIER"
-    assert classify(-6.0, 0.005) == "CLEARLY BELOW TIER"
-    assert classify(-6.0, 0.03) == "BELOW TIER"
+    assert classify(-6.0, 0.005) == "CLEARLY UNDER"
+    assert classify(-6.0, 0.03) == "UNDER"
     assert classify(-6.0, 0.30) == "ON TIER"
 
 
@@ -80,7 +80,7 @@ def test_the_same_gap_means_different_things_at_different_sample_sizes():
     +-1.5 win threshold could not tell those apart."""
     small = luck_probability([0.5] * 20, 15)
     large = luck_probability([0.5] * 400, 205)
-    assert classify(5.0, small) == "ABOVE TIER"
+    assert classify(5.0, small) == "OVER"
     assert classify(5.0, large) == "ON TIER"
     assert small < large
 

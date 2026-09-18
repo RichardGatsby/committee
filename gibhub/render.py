@@ -68,23 +68,13 @@ def _extremes_table(title, rows, limit) -> list:
     return lines
 
 
-def _luck_sentence(report: PlayerReport) -> str:
-    """Plain-English strength of evidence, for readers who do not want a z-score."""
+def _luck_note(report: PlayerReport) -> str:
+    """How often luck alone produces a gap this big, over this many matches."""
     if not report.decided:
-        return "_No decided matches in this window._"
-
+        return ""
     odds = int(round(1.0 / report.luck)) if report.luck > 0 else 10000
-    direction = "better" if report.delta > 0 else "worse"
-    if report.label == "ON TIER":
-        return (
-            "A gap this size happens by luck roughly **1 time in %d**, so it is not "
-            "evidence either way — this player looks correctly tiered." % max(odds, 2)
-        )
-    strength = "strong" if report.label.startswith("CLEARLY") else "reasonable"
-    return (
-        "Doing this much %s than predicted happens by luck only about **1 time in "
-        "%d**, which is %s evidence the tier is wrong." % (direction, odds, strength)
-    )
+    return "  _(%+.0f per 100 games; luck alone does this 1 time in %d)_" % (
+        report.per_100, max(odds, 2))
 
 
 def to_markdown(report: PlayerReport, extremes: int = 0) -> str:
@@ -127,16 +117,11 @@ def to_markdown(report: PlayerReport, extremes: int = 0) -> str:
         lines.append("_no 3v3 matches in this window_")
         lines.append("")
     else:
-        lines.append("**Verdict: %s**" % report.label)
-        lines.append("")
         lines.append(
-            "Won **%d of %d**; their tier predicted about **%d**. That is **%+.0f "
-            "%s per 100 games**."
-            % (report.actual_wins, report.decided, round(report.expected_wins),
-               report.per_100,
-               "win" if abs(round(report.per_100)) == 1 else "wins")
+            "**Expected %.2f wins, actual %d — %+.2f → %s**%s"
+            % (report.expected_wins, report.actual_wins, report.delta, report.label,
+               _luck_note(report))
         )
-        lines.append(_luck_sentence(report))
         lines.append("")
         show_points = any(row.points is not None for row in report.rows)
         lines.append("| date | maps |%s exp | res | utro (vs base) | |"

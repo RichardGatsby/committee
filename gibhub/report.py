@@ -147,11 +147,11 @@ def classify(delta: float, probability: float) -> str:
     Reads off how likely the gap is to be luck, not off a raw win count: a
     +4 win gap is decisive over 20 matches and meaningless over 400.
     """
-    direction = "ABOVE" if delta > 0 else "BELOW"
+    direction = "OVER" if delta > 0 else "UNDER"
     if probability < CLEAR_P:
-        return "CLEARLY %s TIER" % direction
+        return "CLEARLY %s" % direction
     if probability < LIKELY_P:
-        return "%s TIER" % direction
+        return direction
     return "ON TIER"
 
 

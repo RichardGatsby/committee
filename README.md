@@ -51,17 +51,21 @@ fitting six free ones; `--points "S=5,E=4,A=3,B=2,C=1,D=0"` sets your own scale.
 `upset`. The headline sums the per-match probabilities into expected wins and
 compares that to actual wins, then says how likely that gap is to be luck:
 
-- **CLEARLY ABOVE / BELOW TIER** — a gap this big happens by luck less than 1 time
-  in 100. Strong evidence the tier is wrong.
-- **ABOVE / BELOW TIER** — less than 1 time in 20. Reasonable evidence.
-- **ON TIER** — the gap is within what luck produces. No evidence either way.
+    **Expected 179.06 wins, actual 183 — +3.94 → ON TIER**
+    _(+1 per 100 games; luck alone does this 1 time in 3)_
 
-The verdict reads off that probability rather than a raw win count, because the
-same gap means different things at different sample sizes: +5 wins is real over 20
+- **CLEARLY OVER / CLEARLY UNDER** — a gap this big happens by luck less than 1
+  time in 100. Strong evidence the tier is wrong.
+- **OVER / UNDER** — less than 1 time in 20. Reasonable evidence.
+- **ON TIER** — within what luck produces. No evidence either way.
+
+The label reads off that probability rather than a raw win count, because the same
+gap means different things at different sample sizes: +5 wins is real over 20
 matches and noise over 400. An earlier version used a fixed +-1.5 win threshold and
-labelled a player "OVER" on a +4 gap across 324 matches — a 1.2% edge that is pure
-noise. The report also gives the effect as wins per 100 games, which is comparable
-between players however many matches each has played.
+called a player OVER on a +4 gap across 324 matches — a 1.2% edge that is pure
+noise. The two numbers in brackets are the ones to argue over: **per 100 games** is
+how big the effect is, comparable between players however many matches each has
+played, and **1 time in N** is how sure you can be.
 
 `pts` is the team's tier-points margin, `utro` the player's own performance rating
 for the match, playtime-weighted, with the change from their baseline in brackets.
