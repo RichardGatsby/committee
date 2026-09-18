@@ -12,7 +12,8 @@ def test_recorded_fixtures_carry_no_server_credentials():
     def walk(node, path=""):
         if isinstance(node, dict):
             for key, value in node.items():
-                if key in ("ip", "pw") and value not in (None, "", "REDACTED"):
+                if key in ("ip", "pw") and value not in (
+                        None, "", "REDACTED", "gather.example.invalid"):
                     yield "%s.%s = %r" % (path, key, value)
                 for found in walk(value, path + "." + key):
                     yield found
