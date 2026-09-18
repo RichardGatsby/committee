@@ -38,7 +38,7 @@ REPORT = PlayerReport(
     skipped=0,
     source_counts={"exact": 23, "cross_channel": 0, "imputed": 1, "override": 0},
     provenance={"fitted_at": "2026-09-18T10:00:00+00:00", "data_cutoff": "2026-09-18",
-                "sample_size": 4200, "window": "6m"},
+                "sample_size": 4200, "window": "last 6m"},
 )
 
 

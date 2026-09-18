@@ -49,11 +49,13 @@ def fetch_player_data(
     player_id: str,
     matches: int,
     range_: Optional[str] = None,
+    from_: Optional[str] = None,
     to: Optional[str] = None,
     channel: Optional[str] = None,
     cache=None,
 ) -> Tuple[Dict[str, Any], Dict[str, Any], List[Dict[str, Any]]]:
-    scope = {"size": SIZE_3V3, "range": range_, "to": to, "channel": channel}
+    scope = {"size": SIZE_3V3, "range": range_, "from": from_, "to": to,
+             "channel": channel}
     profile = client.get("/players/" + player_id, scope)
     spider = client.get("/players/" + player_id + "/spider", scope)
 

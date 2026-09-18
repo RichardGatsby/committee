@@ -71,15 +71,18 @@ def test_parser_defaults_match_the_spec():
     args = build_parser().parse_args(["player", "Kredenc"])
     assert args.command == "player"
     assert args.player == "Kredenc"
-    assert args.matches == 20
-    assert args.range == "6m"
+    assert args.matches == 50
+    # Defaults to the 2026 season rather than a rolling window.
+    assert args.from_ == "2026-01-01"
+    assert args.range is None
+    assert args.extremes == 3
     assert args.format == "md"
 
 
 def test_parser_accepts_the_documented_flags():
     args = build_parser().parse_args(
         ["player", "p1", "--matches", "5", "--channel", "Poland", "--range", "1y",
-         "--to", "2026-01-01", "--format", "json"]
+         "--from", "none", "--to", "2026-01-01", "--format", "json"]
     )
     assert args.matches == 5
     assert args.channel == "Poland"
@@ -301,3 +304,19 @@ def test_no_overrides_file_means_no_overrides():
     from gibhub.cli import load_overrides
 
     assert load_overrides(object(), None) == {}
+
+
+def test_window_label_describes_the_slice_covered():
+    from gibhub.cli import window_label
+
+    p = build_parser()
+    assert window_label(p.parse_args(["player", "x"])) == "2026-01-01 onwards"
+    assert window_label(p.parse_args(
+        ["player", "x", "--to", "2026-06-01"])) == "2026-01-01 to 2026-06-01"
+    assert window_label(p.parse_args(
+        ["player", "x", "--from", "none", "--range", "6m"])) == "last 6m"
+    assert window_label(p.parse_args(["player", "x", "--from", "none"])) == "all time"
+
+
+def test_extremes_can_be_switched_off():
+    assert build_parser().parse_args(["player", "x", "--extremes", "0"]).extremes == 0

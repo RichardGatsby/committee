@@ -3,6 +3,7 @@
 
 [S]
 KRESTI
+roltzz
 L4mpje
 h2o - awards missing
 Damon
@@ -35,6 +36,9 @@ REINA
 
 [A]
 chuCk
+jam
+Kredenc
+JOSHUA
 Valar
 Cupra
 Oksii
@@ -70,7 +74,6 @@ godz
 bystry
 Kris
 sandi
-JOSHUA
 stRay
 almexx
 Sinche

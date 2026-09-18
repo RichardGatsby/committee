@@ -39,7 +39,36 @@ def _utro(value: Optional[float], delta: Optional[float]) -> str:
     return "%.2f (%+.2f)" % (value, delta)
 
 
-def to_markdown(report: PlayerReport) -> str:
+MARK = {"override": "", "exact": "", "cross_channel": "*", "imputed": "?"}
+
+
+def _lineup(players) -> str:
+    return " ".join(
+        "%s(%s%s)" % (strip_colors(nick) or "?", tier, MARK.get(source, "?"))
+        for nick, tier, source in players
+    )
+
+
+def _extremes_table(title, rows, limit) -> list:
+    if not rows:
+        return []
+    lines = ["", "**%s**" % title, "",
+             "| date | pts | exp | score | his team | opponents | his utro |",
+             "| --- | ---: | ---: | :---: | --- | --- | ---: |"]
+    for row in rows[:limit]:
+        lines.append("| %s | %s | %s | %s | %s | %s | %s |" % (
+            row.date,
+            "%+g" % row.points if row.points is not None else "-",
+            _pct(row.expected),
+            row.score or "-",
+            _lineup(row.team),
+            _lineup(row.opponents),
+            _utro(row.utro, row.utro_delta),
+        ))
+    return lines
+
+
+def to_markdown(report: PlayerReport, extremes: int = 0) -> str:
     lines = []
     name = strip_colors(report.nick) or report.discord_nick
     lines.append("## %s (%s)" % (name, report.discord_nick))
@@ -62,7 +91,7 @@ def to_markdown(report: PlayerReport) -> str:
     lines.append(
         "- 3v3 (%s): %d matches, %dW-%dL (%s)  UTRO %s  KDR %s"
         % (
-            "last %s" % window if window else "all time",
+            window or "all time",
             life["matches"], life["wins"], life["losses"], _pct(life["win_rate"]),
             "%.2f" % life["utro"] if life["utro"] else "n/a",
             "%.2f" % life["kdr"] if life["kdr"] else "n/a",
@@ -130,6 +159,21 @@ def to_markdown(report: PlayerReport) -> str:
         )
     if report.skipped:
         lines.append("%d match(es) skipped: incomplete roster or player absent." % report.skipped)
+
+    if extremes and report.rows:
+        wins = sorted((r for r in report.rows if r.result == "W" and r.expected < 0.5),
+                      key=lambda r: r.expected)
+        losses = sorted((r for r in report.rows if r.result == "L" and r.expected > 0.5),
+                        key=lambda r: -r.expected)
+        lines += _extremes_table(
+            "Biggest underdog wins (%d in this window)" % len(wins), wins, extremes)
+        lines += _extremes_table(
+            "Worst losses while favoured (%d in this window)" % len(losses),
+            losses, extremes)
+        if wins or losses:
+            lines.append("")
+            lines.append("_Lineups show tier; `*` = tier from another channel, "
+                         "`?` = guessed._")
 
     counts = report.source_counts
     total = sum(counts.values())

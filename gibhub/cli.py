@@ -30,18 +30,29 @@ def build_parser() -> argparse.ArgumentParser:
 
     player = sub.add_parser("player", help="report on one player")
     player.add_argument("player", help="name, discord nick, or player UUID")
-    player.add_argument("--matches", type=int, default=20)
+    player.add_argument("--matches", type=int, default=50)
     player.add_argument("--channel")
-    player.add_argument("--range", default="6m")
-    player.add_argument("--to")
+    player.add_argument(
+        "--range", help="shorthand window like 6m or 1y. Ignored when --from is set.")
+    player.add_argument(
+        "--from", dest="from_", default="2026-01-01", metavar="YYYY-MM-DD",
+        help="inclusive start date (default: 2026-01-01). Pass 'none' with "
+             "--range for a rolling window, or 'none' alone for everything.")
+    player.add_argument("--to", metavar="YYYY-MM-DD")
+    player.add_argument(
+        "--extremes", type=int, default=3, metavar="N",
+        help="also table the N biggest underdog wins and worst losses while "
+             "favoured, with both lineups (default: 3; 0 to hide)")
     player.add_argument("--format", choices=["md", "json", "csv"], default="md")
 
     bulk = sub.add_parser("bulk", help="report on many players as CSV")
     selector = bulk.add_mutually_exclusive_group(required=True)
     selector.add_argument("--tier", action="append")
     selector.add_argument("--players", help="file with one name or UUID per line")
-    bulk.add_argument("--matches", type=int, default=20)
-    bulk.add_argument("--range", default="6m")
+    bulk.add_argument("--matches", type=int, default=50)
+    bulk.add_argument("--range")
+    bulk.add_argument("--from", dest="from_", default="2026-01-01")
+    bulk.add_argument("--to")
     bulk.add_argument("--out")
 
     fit = sub.add_parser("fit", help="show or refit the model")
@@ -78,12 +89,27 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def window_label(args):
+    """How the report should describe the slice of history it covers."""
+    start = None if (args.from_ or "none").lower() == "none" else args.from_
+    end = getattr(args, "to", None)
+    if start and end:
+        return "%s to %s" % (start, end)
+    if start:
+        return "%s onwards" % start
+    if end:
+        return "up to %s" % end
+    return "last %s" % args.range if args.range else "all time"
+
+
 def _report_for(client, bundle, player_id, args, cache):
+    start = None if (args.from_ or "none").lower() == "none" else args.from_
     profile, spider, details = fetch_player_data(
         client,
         player_id,
         matches=args.matches,
-        range_=args.range,
+        range_=args.range if not start else None,
+        from_=start,
         to=getattr(args, "to", None),
         channel=getattr(args, "channel", None),
         cache=cache,
@@ -92,7 +118,7 @@ def _report_for(client, bundle, player_id, args, cache):
         "fitted_at": bundle.fitted_at,
         "data_cutoff": bundle.data_cutoff,
         "sample_size": bundle.sample_size,
-        "window": args.range,
+        "window": window_label(args),
         "tier_channels": bundle.tier_channels,
         "tier_source": (", ".join(sorted(bundle.channel_names.values()))
                         if bundle.tier_channels else "all channels"),
@@ -117,7 +143,7 @@ def cmd_player(args) -> int:
     elif args.format == "csv":
         print(to_csv([report]), end="")
     else:
-        print(to_markdown(report), end="")
+        print(to_markdown(report, extremes=args.extremes), end="")
     return 0
 
 
@@ -149,7 +175,6 @@ def cmd_bulk(args) -> int:
     cache = MatchCache(args.cache)
 
     args.channel = None
-    args.to = None
 
     reports = [
         _report_for(client, bundle, player_id, args, cache)

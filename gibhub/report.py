@@ -10,6 +10,25 @@ from .tiers import CROSS_CHANNEL, EXACT, IMPUTED, OVERRIDE, TierIndex
 OVER_UNDER_THRESHOLD = 1.5
 
 
+def nicks_of(match: Dict[str, Any]) -> Dict[str, str]:
+    """player_id -> display nick, from the round entries.
+
+    A detail payload has no `teams` block, so names come from the rounds.
+    """
+    names: Dict[str, str] = {}
+    for round_ in match.get("rounds") or []:
+        for side in ("alpha", "beta"):
+            for entry in round_.get(side) or []:
+                if entry["player_id"] not in names:
+                    names[entry["player_id"]] = (
+                        entry.get("discord_nick") or entry.get("nick") or "")
+    for side in ("alpha", "beta"):
+        for entry in (match.get("teams") or {}).get(side) or []:
+            names.setdefault(
+                entry["player_id"], entry.get("discord_nick") or entry.get("nick") or "")
+    return names
+
+
 def side_of(match: Dict[str, Any], player_id: str) -> Optional[str]:
     alpha, beta = roster_ids(match)
     if player_id in alpha:
@@ -60,6 +79,11 @@ class MatchRow:
     # Team points minus opponent points, from the committee's tier scale.
     # None when the model was fitted without a fixed points scale.
     points: Optional[float] = None
+    # (nick, tier, source) per player, his side first then the opposition.
+    team: List[Any] = dataclasses.field(default_factory=list)
+    opponents: List[Any] = dataclasses.field(default_factory=list)
+    channel: str = ""
+    score: str = ""
 
 
 @dataclasses.dataclass(frozen=True)
@@ -191,6 +215,20 @@ def build_report(
                 elif expected < 0.5:
                     underdog_losses += 1
 
+        names = nicks_of(match)
+        lineup = [
+            [(names.get(p, p[:8]), r.tier, r.source) for p, r in zip(ids, res)]
+            for ids, res in ((alpha, alpha_resolved), (beta, beta_resolved))
+        ]
+        own, other = lineup if side == "alpha" else lineup[::-1]
+
+        # match_score is alpha-beta; show it from his side.
+        a_score, b_score = match.get("alpha_score"), match.get("beta_score")
+        if a_score is None or b_score is None:
+            score = match.get("match_score") or ""
+        else:
+            score = "%d-%d" % ((a_score, b_score) if side == "alpha" else (b_score, a_score))
+
         utro = weighted_utro(match, player_id)
         rows.append(
             MatchRow(
@@ -205,6 +243,10 @@ def build_report(
                 sources=[r.source for r in alpha_resolved + beta_resolved],
                 upset=upset,
                 points=delta_points,
+                team=own,
+                opponents=other,
+                channel=match.get("channel_name") or "",
+                score=score,
             )
         )
 
