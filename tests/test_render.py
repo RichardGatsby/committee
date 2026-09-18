@@ -278,3 +278,60 @@ def test_a_committee_tier_shows_in_the_header_when_the_api_has_none():
 def test_no_tier_anywhere_still_says_so():
     assert "no 3v3 tier held" in to_markdown(
         dataclasses.replace(REPORT, tiers=[], current_tier=None))
+
+
+def _scan_row(**kw):
+    from gibhub.scan import ScanRow
+
+    base = dict(player_id="p1", nick="Baczo", tier="B", games=427, expected=181.6,
+                actual=249, per_100=15.8, tiers_off=1.8, luck=3.4e-12,
+                label="CLEARLY OVER", recommendation="MOVE UP: B → A",
+                top_mate="SkyLine", top_mate_share=0.29, guessed_share=0.05)
+    base.update(kw)
+    return ScanRow(**base)
+
+
+def test_the_scan_table_leads_with_effect_size_and_the_decision():
+    from gibhub.render import to_scan_table
+
+    text = to_scan_table([_scan_row()])
+    assert "Player" in text and "Per 100" in text and "Tiers off" in text
+    assert "Decision" in text and "Read with care because" in text
+    assert "Baczo" in text and "+15.8" in text and "MOVE UP: B → A" in text
+    assert "29% of games with SkyLine" in text
+
+
+def test_the_scan_table_caps_the_confidence_it_shows():
+    from gibhub.render import to_scan_table
+
+    text = to_scan_table([_scan_row()])
+    assert "1 in 10000+" in text
+    assert "2.9" not in text  # no absurd 1-in-billions figure
+
+
+def test_the_scan_table_hides_on_tier_players_unless_asked():
+    from gibhub.render import to_scan_table
+
+    rows = [_scan_row(), _scan_row(player_id="p2", nick="devix", label="ON TIER",
+                                   recommendation="KEEP at E", per_100=1.0)]
+    assert "devix" not in to_scan_table(rows)
+    assert "devix" in to_scan_table(rows, show_all=True)
+    assert "Showing 1 of 2 players scanned" in to_scan_table(rows)
+
+
+def test_an_all_on_tier_scan_says_so():
+    from gibhub.render import to_scan_table
+
+    text = to_scan_table([_scan_row(label="ON TIER")])
+    assert "No player's record differs from their tier by more than luck" in text
+
+
+def test_the_scan_csv_carries_the_raw_numbers():
+    import csv as _csv
+    from gibhub.render import to_scan_csv
+
+    rows = list(_csv.DictReader(io.StringIO(to_scan_csv([_scan_row()]))))
+    assert rows[0]["nick"] == "Baczo"
+    assert rows[0]["tiers_off"] == "1.80"
+    assert rows[0]["top_mate"] == "SkyLine"
+    assert rows[0]["caution"].startswith("29%")

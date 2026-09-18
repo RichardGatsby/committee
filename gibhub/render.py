@@ -225,6 +225,57 @@ def to_markdown(report: PlayerReport, extremes: int = 0) -> str:
     return "\n".join(lines) + "\n"
 
 
+def to_scan_table(rows, show_all: bool = False) -> str:
+    """The population scan as a table, ranked by effect size."""
+    shown = [r for r in rows if show_all or r.label != "ON TIER"]
+    if not shown:
+        return "No player's record differs from their tier by more than luck.\n"
+
+    body = [
+        [r.nick, r.tier, r.games, "%+.1f" % r.per_100, "%+.1f" % r.tiers_off,
+         r.recommendation, "1 in %d%s" % (r.odds, "+" if r.odds >= 10000 else ""),
+         r.caution]
+        for r in shown
+    ]
+    lines = table(
+        ["Player", "Tier", "Games", "Per 100", "Tiers off", "Decision", "Confidence",
+         "Read with care because"],
+        body,
+        ["<", "<", ">", ">", ">", "<", ">", "<"],
+    )
+    lines.append("")
+    lines.append(
+        "  Per 100 = wins per 100 games above or below what their tier predicts.")
+    lines.append(
+        "  Tiers off = how many tier steps that gap is worth. This is the number to")
+    lines.append(
+        "  argue over; Confidence assumes games are independent, which they are not")
+    lines.append(
+        "  when one teammate fills much of a player's sample, so it is capped at")
+    lines.append(
+        "  1 in 10000. Showing %d of %d players scanned." % (len(shown), len(rows)))
+    return "\n".join(lines) + "\n"
+
+
+def to_scan_csv(rows) -> str:
+    columns = ["player_id", "nick", "tier", "games", "expected", "actual", "per_100",
+               "tiers_off", "luck_1_in", "label", "recommendation", "top_mate",
+               "top_mate_share", "guessed_share", "caution"]
+    buffer = io.StringIO()
+    writer = csv.DictWriter(buffer, fieldnames=columns, lineterminator="\n")
+    writer.writeheader()
+    for r in rows:
+        writer.writerow({
+            "player_id": r.player_id, "nick": r.nick, "tier": r.tier, "games": r.games,
+            "expected": "%.1f" % r.expected, "actual": r.actual,
+            "per_100": "%.1f" % r.per_100, "tiers_off": "%.2f" % r.tiers_off,
+            "luck_1_in": r.odds, "label": r.label, "recommendation": r.recommendation,
+            "top_mate": r.top_mate, "top_mate_share": "%.2f" % r.top_mate_share,
+            "guessed_share": "%.2f" % r.guessed_share, "caution": r.caution,
+        })
+    return buffer.getvalue()
+
+
 def _percentile(report: PlayerReport, key: str):
     for name, value in report.percentiles:
         if name == key:

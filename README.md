@@ -16,6 +16,29 @@ Report on one player:
     python3 -m gibhub.cli player devix --only gathers
     python3 -m gibhub.cli player Kredenc --from 2026-01-01 --format json
 
+Scan every tiered player at once and rank the mis-tiered:
+
+    python3 -m gibhub.cli scan                       # last 1y, 50+ games
+    python3 -m gibhub.cli scan --only gathers --min-games 100
+    python3 -m gibhub.cli scan --all --out scan.csv  # every player, as CSV
+
+One sweep of matches scores everyone, so it takes about as long as a single
+player report rather than one report per player. Columns:
+
+- **Per 100** — wins per 100 games above or below what their tier predicts. This
+  is the effect size and the number to argue over.
+- **Tiers off** — how many tier steps that gap is worth.
+- **Decision** — the same wording a player report gives.
+- **Confidence** — 1-in-N that luck alone did this, **capped at 1 in 10000**.
+  Beyond that it stops measuring evidence and starts measuring broken
+  assumptions, chiefly that games are independent, which they are not.
+- **Read with care because** — the reason to discount the row: one teammate
+  filling more than a quarter of the sample, heavy imputation, or too few games
+  to detect a one-tier error.
+
+Only players whose record differs from their tier are listed; `--all` shows
+everyone.
+
 Review a whole tier as a spreadsheet:
 
     python3 -m gibhub.cli bulk --tier A --tier B --out tier-ab.csv

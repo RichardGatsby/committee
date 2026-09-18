@@ -11,8 +11,9 @@ from .cache import MatchCache
 from .categories import parse_selection
 from .fetch import AmbiguousPlayer, PlayerNotFound, fetch_player_data, resolve_player
 from .model import TIERS, TIER_POINTS
-from .render import to_csv, to_json, to_markdown
+from .render import strip_colors, to_csv, to_json, to_markdown, to_scan_csv, to_scan_table
 from .report import build_report
+from .scan import scan
 
 PAGE_SIZE = 100
 
@@ -63,6 +64,20 @@ def build_parser() -> argparse.ArgumentParser:
     bulk.add_argument("--only", action="append")
     bulk.add_argument("--to")
     bulk.add_argument("--out")
+
+    scan_cmd = sub.add_parser(
+        "scan", help="score every tiered player at once and rank the mis-tiered")
+    scan_cmd.add_argument("--range", default="1y")
+    scan_cmd.add_argument("--from", dest="from_", metavar="YYYY-MM-DD")
+    scan_cmd.add_argument("--to", metavar="YYYY-MM-DD")
+    scan_cmd.add_argument(
+        "--min-games", type=int, default=50, dest="min_games",
+        help="ignore players with fewer games in the window (default: 50)")
+    scan_cmd.add_argument("--only", action="append", metavar="TYPE")
+    scan_cmd.add_argument(
+        "--all", action="store_true",
+        help="list every player, not only those whose record differs from their tier")
+    scan_cmd.add_argument("--out", metavar="FILE", help="write the full table as CSV")
 
     fit = sub.add_parser("fit", help="show or refit the model")
     fit.add_argument("--refit", action="store_true")
@@ -255,6 +270,36 @@ def parse_points(spec):
     return points
 
 
+def cmd_scan(args) -> int:
+    bundle = load(args.bundle)
+    client = make_client(args)
+
+    start = None if (getattr(args, "from_", None) or "none").lower() == "none" else args.from_
+    params = {"size": "3v3", "state": "finished",
+              "range": args.range if not start else None,
+              "from": start, "to": args.to}
+
+    matches = []
+    nicks = {}
+    for match in client.paginate("/matches", params, page_size=100):
+        matches.append(match)
+        for side in ("alpha", "beta"):
+            for player in (match.get("teams") or {}).get(side) or []:
+                nicks.setdefault(
+                    player["player_id"],
+                    strip_colors(player.get("discord_nick") or player.get("nick"))[:14])
+
+    rows = scan(matches, bundle.index(), bundle.coefficients, bundle.scale or 1.0,
+                min_games=args.min_games, only=parse_selection(args.only), nicks=nicks)
+
+    print(to_scan_table(rows, show_all=args.all), end="")
+    if args.out:
+        with open(args.out, "w", encoding="utf-8") as handle:
+            handle.write(to_scan_csv(rows))
+        print("\nwrote %d rows to %s" % (len(rows), args.out))
+    return 0
+
+
 def cmd_fit(args) -> int:
     if args.refit:
         bundle = build_bundle(
@@ -305,6 +350,8 @@ def main(argv=None) -> int:
             return cmd_player(args)
         if args.command == "bulk":
             return cmd_bulk(args)
+        if args.command == "scan":
+            return cmd_scan(args)
         return cmd_fit(args)
     except (BundleMissing, PlayerNotFound, AmbiguousPlayer, ApiError, ValueError) as error:
         print(str(error), file=sys.stderr)
