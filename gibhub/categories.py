@@ -1,8 +1,8 @@
 """Classifying a 3v3 match by what kind of game it was.
 
-The API does not carry a single field for this, so it is read off three signals:
-the `gather` tag, the channel the match was reported in, and whether the channel
-is a real Discord channel or a synthetic tournament one.
+The API carries no single field for this, so it is read off three signals: the
+`gather` tag, the channel the match was reported in, and whether that channel is
+a real Discord one or a synthetic tournament one.
 """
 
 from typing import Any, Dict, List, Tuple
@@ -11,20 +11,24 @@ LEGACY = "legacy"
 POLAND = "poland"
 OTHER_GATHER = "other-gather"
 CUP = "cup"
-TEAM = "team"
 
 LABELS = {
     LEGACY: "ET:Legacy gathers",
     POLAND: "Poland gathers",
     OTHER_GATHER: "other gathers",
-    CUP: "cups and tournaments",
-    TEAM: "team games and scrims",
+    CUP: "cups and team games",
 }
-ORDER = (LEGACY, POLAND, OTHER_GATHER, CUP, TEAM)
+ORDER = (LEGACY, POLAND, CUP, OTHER_GATHER)
+
+# The gather channels the committee tiers for. The small one-off channels
+# (subAk, eV!L, Frag Center, PRAWDZIWY) are not part of that and are dropped
+# from reports and from the fit unless asked for by name.
+GATHERS = (LEGACY, POLAND)
+EXCLUDED_BY_DEFAULT = (OTHER_GATHER,)
 
 # Tournament channels carry a synthetic zero-padded id rather than a Discord
-# snowflake, which is the only reliable marker for cups that carry no `cup` tag
-# (Nations Cup and subak's cups among them).
+# snowflake. It is the only reliable marker for cups that carry no `cup` tag,
+# Nations Cup and subak's cups among them.
 TOURNAMENT_ID_PREFIX = "0000"
 
 
@@ -40,16 +44,13 @@ def categorise(match: Dict[str, Any]) -> str:
             return POLAND
         return OTHER_GATHER
 
-    if (channel_id.startswith(TOURNAMENT_ID_PREFIX)
-            or "cup" in tags
-            or any(t.startswith("et:l season") for t in tags)):
-        return CUP
-
-    return TEAM
+    # Everything else is played by named teams rather than picked sides: cups,
+    # league seasons, and the untagged scrims between real teams.
+    return CUP
 
 
 def parse_selection(values) -> List[str]:
-    """Turn --only values into category keys, accepting a few friendly spellings."""
+    """Turn --only values into category keys, accepting friendly spellings."""
     if not values:
         return []
     aliases = {
@@ -58,7 +59,8 @@ def parse_selection(values) -> List[str]:
         "other": OTHER_GATHER, "other-gather": OTHER_GATHER,
         "gather": "ALL_GATHERS", "gathers": "ALL_GATHERS",
         "cup": CUP, "cups": CUP, "tournament": CUP,
-        "team": TEAM, "teams": TEAM, "scrim": TEAM, "internal": TEAM,
+        "team": CUP, "teams": CUP, "scrim": CUP, "internal": CUP,
+        "all": "EVERYTHING",
     }
     chosen: List[str] = []
     for value in values:
@@ -67,15 +69,29 @@ def parse_selection(values) -> List[str]:
             raise ValueError(
                 "unknown category %r; expected one of: %s"
                 % (value, ", ".join(sorted(set(aliases)))))
-        for resolved in ([LEGACY, POLAND, OTHER_GATHER] if key == "ALL_GATHERS" else [key]):
+        if key == "ALL_GATHERS":
+            expanded = list(GATHERS)
+        elif key == "EVERYTHING":
+            expanded = list(ORDER)
+        else:
+            expanded = [key]
+        for resolved in expanded:
             if resolved not in chosen:
                 chosen.append(resolved)
     return chosen
+
+
+def allowed(selection) -> Tuple[str, ...]:
+    """Which categories a report counts: an explicit selection, else everything
+    the committee cares about."""
+    if selection:
+        return tuple(selection)
+    return tuple(key for key in ORDER if key not in EXCLUDED_BY_DEFAULT)
 
 
 def split(rows) -> List[Tuple[str, List[Any]]]:
     """Group rows by category, in a stable order, skipping empty categories."""
     buckets: Dict[str, List[Any]] = {key: [] for key in ORDER}
     for row in rows:
-        buckets.setdefault(row.category or TEAM, []).append(row)
+        buckets.setdefault(row.category or CUP, []).append(row)
     return [(key, buckets[key]) for key in ORDER if buckets.get(key)]

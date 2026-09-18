@@ -357,7 +357,8 @@ def test_the_report_splits_results_by_type_of_game():
     ]
     report = build_report(PROFILE, SPIDER, details, _index(), COEFFICIENTS, {})
     keys = [c[0] for c in report.categories]
-    assert keys == ["legacy", "poland", "team"]
+    # Team games sit under cups: both are played by fixed teams, not picked sides.
+    assert keys == ["legacy", "poland", "cup"]
     assert all(c[1] == 1 for c in report.categories)  # one decided match each
 
 
@@ -379,3 +380,20 @@ def test_a_filtered_out_match_is_not_counted_as_skipped():
                           only=["legacy"])
     assert report.rows == []
     assert report.skipped == 0
+
+
+def test_the_small_gather_channels_are_dropped_from_a_report_by_default():
+    details = [
+        _categorised("m1", "alpha", "ET:Legacy Events: #3vs3", ["gather"]),
+        _categorised("m2", "alpha", "subAk: #3on3", ["gather"]),
+    ]
+    report = build_report(PROFILE, SPIDER, details, _index(), COEFFICIENTS, {})
+    assert [r.category for r in report.rows] == ["legacy"]
+    assert report.skipped == 0
+
+
+def test_they_are_included_when_asked_for_by_name():
+    details = [_categorised("m1", "alpha", "subAk: #3on3", ["gather"])]
+    report = build_report(PROFILE, SPIDER, details, _index(), COEFFICIENTS, {},
+                          only=["other-gather"])
+    assert [r.category for r in report.rows] == ["other-gather"]

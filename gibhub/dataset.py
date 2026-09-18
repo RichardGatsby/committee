@@ -3,6 +3,7 @@
 import dataclasses
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 
+from .categories import allowed, categorise
 from .model import feature_vector
 from .tiers import TierIndex
 
@@ -73,8 +74,14 @@ def winner_of(match: Dict[str, Any]) -> Optional[str]:
     return "alpha" if alpha > beta else "beta"
 
 
-def match_to_sample(match: Dict[str, Any], index: TierIndex) -> Optional[Sample]:
-    """None when the match cannot train the model: a draw, or an odd roster."""
+def match_to_sample(
+    match: Dict[str, Any], index: TierIndex, categories=None
+) -> Optional[Sample]:
+    """None when the match cannot train the model: a draw, an odd roster, or a
+    channel the committee does not tier for."""
+    if categorise(match) not in allowed(categories):
+        return None
+
     winner = winner_of(match)
     if winner is None:
         return None
@@ -98,11 +105,12 @@ def match_to_sample(match: Dict[str, Any], index: TierIndex) -> Optional[Sample]
 
 
 def iter_samples(
-    client, index: TierIndex, to: Optional[str] = None, limit: Optional[int] = None
+    client, index: TierIndex, to: Optional[str] = None, limit: Optional[int] = None,
+    categories=None,
 ) -> Iterator[Sample]:
     """Walk every finished 3v3 match and yield the usable ones as samples."""
     params = {"size": "3v3", "state": "finished", "to": to}
     for match in client.paginate("/matches", params, page_size=PAGE_SIZE, limit=limit):
-        sample = match_to_sample(match, index)
+        sample = match_to_sample(match, index, categories)
         if sample is not None:
             yield sample

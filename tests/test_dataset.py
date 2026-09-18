@@ -145,3 +145,20 @@ def test_winner_of_is_a_draw_when_the_scores_are_level_or_absent():
 def test_an_unsettled_match_with_a_decisive_score_still_trains_the_model():
     match = _match(winner="", alpha_score=0, beta_score=10)
     assert match_to_sample(match, _index()).outcome == 0
+
+
+def test_the_small_gather_channels_do_not_train_the_model():
+    match = _match()
+    match["tags"] = ["gather"]
+    match["channel_name"] = "subAk: #3on3"
+    assert match_to_sample(match, _index()) is None
+
+
+def test_gathers_cups_and_team_games_all_train_the_model():
+    for channel, tags in (("ET:Legacy Events: #3vs3", ["gather"]),
+                          ("Poland ET:Legacy: #3v3", ["gather"]),
+                          ("unsorted", None)):
+        match = _match()
+        match["channel_name"] = channel
+        match["tags"] = tags
+        assert match_to_sample(match, _index()) is not None, channel

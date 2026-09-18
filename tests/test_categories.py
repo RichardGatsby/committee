@@ -1,7 +1,7 @@
 import pytest
 
-from gibhub.categories import (CUP, LEGACY, OTHER_GATHER, POLAND, TEAM, categorise,
-                               parse_selection)
+from gibhub.categories import (CUP, GATHERS, LEGACY, OTHER_GATHER, POLAND, allowed,
+                               categorise, parse_selection)
 
 
 def _match(tags=None, channel="", channel_id="1194582311182807142"):
@@ -17,9 +17,10 @@ def test_a_poland_gather():
     assert categorise(_match(["gather"], "Poland ET:Legacy: #3v3")) == POLAND
 
 
-def test_any_other_gather():
+def test_the_small_gather_channels_are_their_own_category():
     assert categorise(_match(["gather"], "subAk: #3on3")) == OTHER_GATHER
     assert categorise(_match(["gather"], "eV!L Gather: #3v3")) == OTHER_GATHER
+    assert categorise(_match(["gather"], "Frag Center: #3v3")) == OTHER_GATHER
 
 
 def test_a_tagged_cup():
@@ -30,30 +31,35 @@ def test_a_league_season_is_a_cup():
     assert categorise(_match(["et:l season 13"], "whatever")) == CUP
 
 
-def test_an_untagged_tournament_is_caught_by_its_synthetic_channel_id():
-    """Nations Cup and subak's cups carry no cup tag."""
+def test_an_untagged_tournament_is_a_cup():
     assert categorise(_match(None, "Nations Cup 3on3 - 2026", "0000000000000000018")) == CUP
     assert categorise(_match([], "subak: 3on3 CUP #2", "0000000000000000017")) == CUP
 
 
-def test_an_untagged_match_in_a_real_channel_is_a_team_game():
-    assert categorise(_match(None, "unsorted", "")) == TEAM
-    assert categorise(_match([], "ETLAC: #3vs3", "1479851190152855562")) == TEAM
+def test_team_games_between_named_teams_count_as_cups():
+    """Scrims are played by fixed teams, like cups, not by picked sides."""
+    assert categorise(_match(None, "unsorted", "")) == CUP
+    assert categorise(_match([], "ETLAC: #3vs3", "1479851190152855562")) == CUP
 
 
 def test_the_gather_tag_wins_over_a_tournament_id():
     assert categorise(_match(["gather"], "Poland ET:Legacy: #3v3", "0000000001")) == POLAND
 
 
-def test_parse_selection_accepts_friendly_spellings():
-    assert parse_selection(["legacy"]) == [LEGACY]
-    assert parse_selection(["pl"]) == [POLAND]
-    assert parse_selection(["internal"]) == [TEAM]
+def test_gathers_means_legacy_and_poland_only():
+    assert GATHERS == (LEGACY, POLAND)
+    assert parse_selection(["gathers"]) == [LEGACY, POLAND]
+
+
+def test_team_and_cup_select_the_same_category():
+    assert parse_selection(["team"]) == [CUP]
+    assert parse_selection(["internal"]) == [CUP]
     assert parse_selection(["tournament"]) == [CUP]
 
 
-def test_parse_selection_expands_gathers_to_all_three():
-    assert parse_selection(["gathers"]) == [LEGACY, POLAND, OTHER_GATHER]
+def test_parse_selection_accepts_friendly_spellings():
+    assert parse_selection(["legacy"]) == [LEGACY]
+    assert parse_selection(["pl"]) == [POLAND]
 
 
 def test_parse_selection_dedupes_and_keeps_order():
@@ -65,6 +71,11 @@ def test_parse_selection_rejects_nonsense():
         parse_selection(["banana"])
 
 
-def test_no_selection_means_everything():
-    assert parse_selection(None) == []
-    assert parse_selection([]) == []
+def test_by_default_the_small_gather_channels_are_left_out():
+    assert allowed(None) == (LEGACY, POLAND, CUP)
+    assert OTHER_GATHER not in allowed([])
+
+
+def test_they_can_still_be_asked_for_by_name():
+    assert allowed(parse_selection(["other"])) == (OTHER_GATHER,)
+    assert OTHER_GATHER in allowed(parse_selection(["all"]))

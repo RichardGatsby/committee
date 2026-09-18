@@ -3,7 +3,7 @@
 import dataclasses
 from typing import Any, Dict, List, Optional, Sequence
 
-from .categories import categorise, split
+from .categories import allowed, categorise, split
 from .dataset import TEAM_SIZE, roster_ids, winner_of
 from .model import feature_vector, points_delta, predict
 from .tiers import CROSS_CHANNEL, EXACT, IMPUTED, OVERRIDE, TierIndex
@@ -201,8 +201,9 @@ def build_report(
     draws = 0
     skipped = 0
 
+    counted = allowed(only)
     for match in details:
-        if only and categorise(match) not in only:
+        if categorise(match) not in counted:
             continue
         side = side_of(match, player_id)
         alpha, beta = roster_ids(match)
