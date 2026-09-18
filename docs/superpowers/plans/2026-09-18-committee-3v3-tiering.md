@@ -8,6 +8,14 @@
 
 **Tech Stack:** Python 3.9+, standard library only at runtime. pytest for tests. No runtime third-party dependencies.
 
+> **Status: executed.** All 22 tasks are implemented and committed. The plan below
+> is kept as written for the record; it is **not** an accurate description of the
+> finished tool. Six changes were made during and after execution — a `--points`
+> scale, `--tier-channel`, `--impute-max`, `--overrides`, a scoreline fallback for
+> unsettled matches, and the discovery that the tier letters are not an ordered
+> ladder. They are recorded in the spec under "Changes during implementation";
+> read that alongside the README before changing anything here.
+
 ---
 
 ## Background for the implementer

@@ -15,7 +15,7 @@ mAus
 TheAdjuster
 Rg
 Plain
-hevimies
+hevimies -> jussi8030
 Terifire
 dEvix
 ViKO
@@ -24,7 +24,7 @@ eron
 Jinosta
 unbiased moderator
 viSualiNsAne
-jokertay
+jokertay -> takerjay
 Webe
 subak
 s1LENT
@@ -50,7 +50,7 @@ carnage
 Jassi
 MENTAl
 hAkim
-CUPWINNER (vs mental)
+CUPWINNER (vs mental) -> semik
 sappig
 late
 Bl4d3
@@ -84,7 +84,7 @@ winq
 grzesiek
 G4rch4
 Charlie Kirk
-maNic
+maNic -> tw1n
 kiz
 Turki
 mKs
@@ -122,7 +122,7 @@ crs
 Jos0001
 chesty
 t1mmAe
-Gilbey / Mani
+Gilbey / Mani -> Gilbey
 psiquh
 superboyy
 xesa
@@ -135,12 +135,10 @@ P3sWan
 pingrage
 dave
 trnd :<
-Alprax
 NouSs*
 Jonkkeb0b
 CAGA
 ToMfu
-Alprax2
 Wizzard
 eLx
 nigero

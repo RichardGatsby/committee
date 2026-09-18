@@ -1,7 +1,8 @@
 # 3v3 Committee Tiering Tool — Design
 
 Date: 2026-09-18
-Status: Approved
+Status: Implemented. See "Changes during implementation" for where the
+built tool diverges from the design as approved.
 
 ## Purpose
 
@@ -257,3 +258,108 @@ One integration test hits the live API as a contract check, skipped unless
 - 6v6 analysis
 - A web UI or hosted service
 - Automatic tier assignment — the tool presents evidence, people decide
+
+
+---
+
+# Changes during implementation
+
+Everything below was discovered or decided while building the tool. Where it
+contradicts the design above, the tool follows this section.
+
+## Findings that changed the design
+
+**The tier letters are not an alphabetical ladder.** Measured strength is
+**S > E > A > B > C > D**; E is the second strongest tier. Identical in both
+tiered channels, and the freely fitted coefficients agree with the independent
+UTRO bands on all 15 tier pairs. Nothing assumes an order: imputation tie-breaks
+and the imputation cap are applied by measured band strength, never by letter.
+
+**`GET /api/matches/{matchId}` carries no `teams` block.** Only the match *list*
+does. Detail rosters are reconstructed from the union of round participants; where
+a substitute pushes a side past three, the three with the most playtime are kept.
+
+**`winner` is left empty on unsettled matches even when the score is decisive.**
+One observed match reads 0-10 with `state: "unknown match"` and an empty `winner`,
+while the player's own match list correctly calls it a loss. `dataset.winner_of`
+falls back to the scoreline; equal or absent scores are draws. Without this, real
+results were being recorded as draws.
+
+**`/api/leaderboards` rejects `pageSize > 100`** with HTTP 422. All pagination is
+capped at 100.
+
+**`/api/players?size=3v3&tier=X` returns neither the channel nor the tier** on each
+row, so building the tier index needs one profile fetch per tiered player.
+Imputation instead reads `utro_shrunken` from the leaderboard in one sweep, which
+covers every 3v3 player without per-player fetches. `utro_shrunken` rather than raw
+`utro`, whose board is topped by single-round samples.
+
+## Features added beyond the approved design
+
+**`--tier-channel`** restricts the tier index to one channel's assignments, so the
+coefficients and UTRO bands come from a single committee. On the ET:Legacy Events
+tiers alone the model fits slightly better than on the mixed set (62.8% vs 62.4%
+accuracy), so the two channels' scales are not interchangeable.
+
+**`--points`** fixes the tier values instead of fitting six free coefficients,
+leaving one fitted parameter: log-odds per point of team advantage. Default scale
+**S 5, E 4, A 3, B 2, C 1, D 0**, with E above A to match measured strength. Costs
+about 0.6pp of accuracy and makes every prediction checkable by hand. Reports show
+each match's point margin. Caveat: the even 1-point spacing overrates S, which the
+free fit valued at +0.94 log-odds against the +1.76 the 5-point scale implies.
+
+**`--impute-max`** caps the tier an untiered player may be imputed as, default `A`,
+applied by measured strength so it also excludes E. A genuinely elite player would
+already have been tiered. This is a conservative assumption that materially moves
+individual verdicts — see below.
+
+**`--overrides FILE`** takes committee-supplied tiers the API does not carry, as
+`player_id = TIER` lines. Overrides beat every other source and are exempt from the
+imputation cap. `tools/resolve_tierlist.py` turns a Discord tier list into that
+file and refuses to guess: a fuzzy hit is accepted only when the found nick shares
+a substring with the search term, and two list entries resolving to one account are
+both rejected rather than silently one-tiered. A `Display Name -> lookup` syntax
+pins entries whose Discord name is not searchable.
+
+**The four outcome buckets.** Reports split decided matches into won/lost while
+favoured and won/lost as underdog, so a record built entirely on stacked teams is
+visible rather than hidden inside a single delta.
+
+## Corrections to the design above
+
+- The per-player stats line was labelled "3v3 lifetime", but the profile endpoint
+  scopes those stats to `--range`. It now names its window. The UTRO baseline each
+  match is compared against is scoped the same way.
+- Three modules exist that the component table does not list — `bundle.py`,
+  `build.py`, `fetch.py` — to keep `model.py`, `tiers.py` and `report.py` free of
+  I/O as the design requires.
+- `coefficients.json` holds more than coefficients: the tier index, per-player
+  UTRO, bands, overrides, the points scale and the imputation cap.
+- The match cache gives each writer its own temp file; a shared `.tmp` name made
+  two concurrent runs fail with ENOENT.
+
+## How much the assumptions matter
+
+Measured on one player (Lepari) across 240 decided matches, the same record scored
+four ways:
+
+| model | delta | P(>= actual) |
+| --- | --- | --- |
+| free six-coefficient fit | +24.7 | 0.0006 |
+| fixed points, uncapped imputation | +20.2 | 0.004 |
+| fixed points, imputation capped at A | +15.3 | 0.023 |
+| the above plus 124 committee overrides | +10.3 | 0.095 |
+
+The apparent overperformance was substantially an artefact of guessed tiers: with
+79% of inputs coming from the real tier list, it falls below significance. **Any
+report whose inputs are largely imputed should be treated as provisional.** The
+footer counts the four input sources for exactly this reason.
+
+## Known gaps
+
+- 96 players appearing in the last three months of 3v3 hold no tier, filling about
+  30% of all roster slots. The ten most frequent cover 60% of the guessed slots.
+- 22 of 146 names on the committee tier list resolve to no account, or to an
+  ambiguous one, and are listed for a human rather than guessed.
+- Tier history still does not exist, so all-time figures score old matches against
+  today's tiers.

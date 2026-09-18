@@ -15,6 +15,8 @@ from gibhub.api import Client  # noqa: E402
 from gibhub.model import TIERS  # noqa: E402
 from gibhub.render import strip_colors  # noqa: E402
 
+UUID_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.I)
+
 
 def parse(path):
     tier, entries = None, []
@@ -26,7 +28,15 @@ def parse(path):
         if heading:
             tier = heading.group(1)
             continue
-        entries.append((line, tier))
+        # "Display Name -> lookup" pins an entry whose Discord name is not
+        # searchable to the account to actually use (a nick or a UUID).
+        display, arrow, lookup = line.partition("->")
+        # Only an alias when there is real text either side: a player is
+        # literally named "<->", which partition() would otherwise mangle.
+        if arrow and display.strip() and lookup.strip():
+            entries.append((display.strip(), tier, lookup.strip()))
+        else:
+            entries.append((line, tier, None))
     return entries
 
 
@@ -68,13 +78,18 @@ def main(list_path, out_path):
     client = Client()
     resolved, unresolved = [], []
 
-    for name, tier in parse(list_path):
+    for name, tier, lookup in parse(list_path):
         if tier not in TIERS:
             unresolved.append((name, tier, "bad tier heading", []))
             continue
 
+        if lookup and UUID_RE.match(lookup):
+            resolved.append((name, tier, {"player_id": lookup, "discord_nick": name},
+                             lookup, "pinned"))
+            continue
+
         hit = None
-        for form in candidates(name):
+        for form in (["%s" % lookup] if lookup else candidates(name)):
             data = (client.get("/players/search", {"q": form, "limit": 10}) or {}).get("data") or []
             if not data:
                 continue
@@ -129,12 +144,12 @@ def main(list_path, out_path):
             f.write("%s = %s  # %s%s\n" % (
                 player["player_id"], tier,
                 player.get("discord_nick") or strip_colors(player.get("nick")),
-                "" if how == "exact" else "  <- FUZZY, listed as %r" % name))
+                "" if how in ("exact", "pinned") else "  <- FUZZY, listed as %r" % name))
 
     print("resolved %d of %d names -> %s" % (
         len(resolved), len(resolved) + len(unresolved), out_path))
 
-    fuzzy = [r for r in resolved if r[4] != "exact"]
+    fuzzy = [r for r in resolved if r[4] not in ("exact", "pinned")]
     if fuzzy:
         print("\n%d fuzzy match(es) to eyeball:" % len(fuzzy))
         for name, tier, player, form, _ in fuzzy:
