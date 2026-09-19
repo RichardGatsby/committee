@@ -1,5 +1,5 @@
 from gibhub.scan import ScanRow
-from gibhub.site import assign_slugs, slugify
+from gibhub.site import assign_slugs, page, slugify
 
 
 def _row(player_id, nick, **kwargs):
@@ -39,3 +39,21 @@ def test_assign_slugs_is_stable_regardless_of_row_order():
     a = _row("3f2a1b9c-0000-0000-0000-000000000000", "chuCk")
     b = _row("aa11bb22-0000-0000-0000-000000000000", "CHUCK")
     assert assign_slugs([a, b]) == assign_slugs([b, a])
+
+
+def test_page_is_a_complete_document():
+    html = page("Scan", "<p>body</p>")
+    assert html.startswith("<!doctype html>")
+    assert "<title>Scan</title>" in html
+    assert "<p>body</p>" in html
+    assert html.rstrip().endswith("</html>")
+
+
+def test_page_escapes_the_title():
+    assert "<title>a &lt;b&gt;</title>" in page("a <b>", "")
+
+
+def test_page_loads_nothing_from_the_network():
+    html = page("Scan", "")
+    assert "http://" not in html and "https://" not in html
+    assert "<script" not in html
