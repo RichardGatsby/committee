@@ -1079,65 +1079,104 @@ git commit -m "test(tools): fail when the change log and tier list disagree"
 
 ---
 
-## Task 11: Log the first real decision
+## Task 11: Prove the past stops moving
 
-This is the point of the whole feature. Do it as its own commit, after
-everything above is green.
+No tier is changed here. This is the acceptance test for everything above, run
+against a throwaway log entry and a scratch bundle, committing nothing to
+`data/`.
 
-- [ ] **Step 1: Record the pre-promotion evidence**
+- [ ] **Step 1: Record the current scan**
 
 ```bash
-python3 -m gibhub.cli player jussi8030 --range 4m > /tmp/hevimies-before.md
 python3 -m gibhub.cli scan --range 4m --min-games 50 --all --out /tmp/before.csv
 ```
 
-- [ ] **Step 2: Promote him in both files**
+- [ ] **Step 2: Build a scratch bundle with one invented change**
 
-Move `hevimies -> jussi8030` from `[E]` to `[S]` in
-`data/tierlist-events-3v3.txt`, and append to `data/tier-changes.tsv`:
+Pick the player the scan currently ranks first and the tier it recommends. At
+the time of writing that is `jussi8030`, E, recommended `MOVE UP: E -> S`; use
+whoever it actually is when you run it.
 
+```bash
+python3 - <<'EOF'
+import json
+b = json.load(open("coefficients.json"))
+pid = "76903d56-f455-5be9-8c7f-b8d4c11c5b97"   # jussi8030
+was = b["overrides"][pid]
+b["overrides"][pid] = "S"
+b["history"] = [{"date": "2026-09-19", "player": pid,
+                 "previous": was, "tier": "S", "note": "acceptance test"}]
+json.dump(b, open("/tmp/scratch.json", "w"))
+EOF
 ```
-2026-09-19	hevimies	E	S	+22.58 wins over 336 games, 1 in 1000+; tool recommended MOVE UP: E -> S
+
+- [ ] **Step 3: Scan against it**
+
+```bash
+python3 -m gibhub.cli --bundle /tmp/scratch.json scan \
+    --range 4m --min-games 50 --all --out /tmp/after.csv
 ```
 
-- [ ] **Step 3: Resolve, validate, refit**
+- [ ] **Step 4: Assert only the changed player moved**
+
+```bash
+diff <(cut -d, -f2,14,17 /tmp/before.csv) <(cut -d, -f2,14,17 /tmp/after.csv)
+```
+
+Expected: **exactly one differing row, the promoted player's.** Every other
+player must be byte-identical.
+
+Without as-of resolution this diff shows 17 of 18 rows changing and three
+verdicts flipping, which is the behaviour the whole feature exists to remove. If
+anything other than the one row moves, the match date is not reaching
+`resolve()` somewhere - check `dataset.match_to_sample`, `report.build_report`
+and `scan.scan` in that order.
+
+- [ ] **Step 5: Clean up**
+
+```bash
+rm -f /tmp/scratch.json /tmp/before.csv /tmp/after.csv
+```
+
+Nothing to commit. `data/tier-changes.tsv` stays empty.
+
+---
+
+## Task 11b: Runbook for a real decision
+
+Not part of this build. This is the procedure to follow **when the committee
+actually decides something**, recorded here so it is not reinvented.
+
+1. Edit `data/tierlist-events-3v3.txt` to the new tier.
+2. Append one line to `data/tier-changes.tsv` with the decision date, the player
+   token as the tier list spells it, the old tier, the new tier, and a note
+   carrying the evidence.
+3. Resolve and validate:
 
 ```bash
 python3 tools/resolve_tierlist.py data/tierlist-events-3v3.txt overrides.txt \
     data/tier-changes.tsv tier-history.txt
 python3 tools/check_tier_history.py
+```
+
+4. Refit and sanity-check:
+
+```bash
 python3 -m gibhub.cli fit --refit --tier-channel Events --points \
     --impute-max A --overrides overrides.txt --tier-history tier-history.txt
 python3 tools/check_fit.py
 ```
 
-- [ ] **Step 4: Confirm the past did not move**
-
-```bash
-python3 -m gibhub.cli scan --range 4m --min-games 50 --all --out /tmp/after.csv
-diff <(cut -d, -f2,17 /tmp/before.csv) <(cut -d, -f2,17 /tmp/after.csv)
-```
-
-Expected: **only jussi8030's row differs.** tezaXo, Plain and the other 15 must
-be unchanged — that is the whole point, and the measurement that proves it. If
-others moved, the as-of resolution is not being threaded somewhere; find it
-before committing.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add data/ overrides.txt tier-history.txt coefficients.json
-git commit -m "data(tierlist): promote hevimies from E to S"
-```
-
-Body must carry the before/after fit metrics and the diff result from step 4.
+5. Commit as `data(tierlist): <what changed>`, with before/after fit metrics in
+   the body per the `conventional-commits` skill.
 
 ---
 
 ## Task 12: Documentation
 
 - [ ] Update `README.md`: the change log, the era table, `--tier-history`, and
-  the limitation that history begins 2026-09-19.
+  the limitation that history begins at the first logged decision, so until one
+  is logged nothing behaves differently.
 - [ ] Update `CLAUDE.md`: replace the "Tiers have no history" domain fact with
   how as-of resolution works, and note that the 4-month default can now be
   widened.

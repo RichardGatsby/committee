@@ -8,8 +8,11 @@
 Tiers have no history, so every past match is scored against today's tiers. When
 the committee changes a tier, the whole record is retroactively rewritten.
 
-Measured, by promoting hevimies (`jussi8030`, uuid `76903d56-…`) from E to S and
-re-running the 4-month scan:
+Measured by **simulation**: a scratch copy of `coefficients.json` with hevimies
+(`jussi8030`) moved from E to S, and the 4-month scan re-run against it. No tier
+was changed and none is proposed here — he was chosen because the tool already
+reads `MOVE UP: E → S` for him, so he is the most likely first case, not a
+decided one.
 
 | player | before | after | swing | verdict |
 | --- | --- | --- | --- | --- |
@@ -47,8 +50,8 @@ git would record bulk name resolution as committee decisions.
 
 ### 1. A separate `data/tier-changes.tsv`
 
-    # date       player      from  to  note
-    2026-09-19   jussi8030   E     S   +22.58 over 336 games, 1 in 1000+
+    # date       player   from  to  note
+    2026-10-04   somebody   B     A   +9.1 over 412 games, 1 in 300
 
 Tab-separated, one decision per line, append-only, sorted by date.
 
@@ -83,10 +86,10 @@ first commit that changes any output is the first real decision logged.
 comes from the current era
 
 Scoring everything as-of uses the whole sample and stops rewriting the past. But
-the headline then mixes eras: hevimies reads CLEARLY OVER off 336 E-era games
-while holding S, and `recommend()` — which takes the current tier — would print
-`NO HIGHER TIER: already S, and beating it`. True of the E evidence, actively
-misleading about S.
+the headline then mixes eras. Take the simulated case: a player reads CLEARLY
+OVER off 336 E-era games while now holding S, and `recommend()` — which takes the
+current tier — would print `NO HIGHER TIER: already S, and beating it`. True of
+the E evidence, actively misleading about S.
 
 So the recommendation is computed from the **current era only**, the matches
 since the last change. When the tier never changed, that is the whole window and
@@ -95,10 +98,10 @@ nothing differs from today.
 An era table sits under the headline:
 
     Tier era          Games   Expected   Actual   Diff   Verdict
-    E  ..2026-09-19     336      115.4      138  +22.6   CLEARLY OVER
-    S  2026-09-19..      12        7.9        8   +0.1   ON TIER
+    E  ..2026-10-04     336      115.4      138  +22.6   CLEARLY OVER
+    S  2026-10-04..      12        7.9        8   +0.1   ON TIER
 
-This is the payoff: *"we moved him to S in September; after 12 games, is he ON
+This is the payoff: *"we moved him to S in October; after 12 games, is he ON
 TIER?"* is a question the tool cannot answer today.
 
 A current era below `ONE_TIER_GAMES` (250) gets an explicit "too few games to
@@ -117,24 +120,31 @@ per the `conventional-commits` skill.
 
 Rows are scored at as-of tiers, the verdict uses current-era matches, and a
 player whose tier changed inside the window gets a `caution`: `tier changed
-2026-09-19; 12 games at S`. No new column — the existing caution mechanism
+2026-10-04; 12 games at S`. No new column — the existing caution mechanism
 carries it.
 
 ### 6. Validation closes the two-file gap
 
 `tools/check_tier_history.py` fails when:
 
-- a logged `to` disagrees with the current tier list (drift),
-- a player's tier in the list has no log entry explaining how it got there,
-- dates are out of order, duplicated for one player, or unparseable,
-- a `player` token does not resolve.
+- a player **who has log entries** has a last `to` disagreeing with the current
+  tier list (drift),
+- one player's dates are out of order or duplicated,
+- a chain does not join up: an entry leaves tier A but the next starts from B,
+- a date is unparseable, or a `player` token does not resolve.
+
+It deliberately does **not** require every listed player to have a log entry.
+The log starts empty and most players will never appear in it; demanding an
+entry per player would fail on all 140 on day one and be silenced immediately.
 
 Run in CI alongside `tools/check_fit.py`.
 
-### 7. History starts today
+### 7. History starts at the first logged decision
 
-No bootstrap. The log means exactly one thing: the committee changed its mind on
-this date. The cost is a few months of thin data, and that cost only grows if we
+No bootstrap, and the log ships empty. It means exactly one thing: the committee
+changed its mind on this date. Nothing is written to it as part of building the
+feature — the first entry is whatever the committee actually decides, whenever
+that happens. The cost is thin data at the start, and that cost only grows if we
 wait.
 
 ## Out of scope
@@ -148,6 +158,7 @@ wait.
 ## Known limitation to state in the README
 
 History only exists from the first logged change. Everything before the first
-entry for a player resolves to their earliest recorded `from`, which for most
-players is their tier today. This is honest and it is the argument for starting
-now rather than after the next twenty decisions.
+entry for a player resolves to their earliest recorded `from`, which for a player
+with no entries at all is simply their tier today — identical to current
+behaviour. This is honest, and it is the argument for having the log in place
+before the next decision rather than after the next twenty.
