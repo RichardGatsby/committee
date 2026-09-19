@@ -5,6 +5,7 @@ passed in, so two builds of the same inputs produce identical bytes.
 """
 
 import html as html_module
+import json
 import re
 from typing import Dict, Sequence
 
@@ -227,3 +228,92 @@ def about_page(
                      fitted_at=fitted_at, sample_size=sample_size),
     ]
     return page("How this works", "\n".join(body))
+
+
+def _dump(payload) -> str:
+    """Stable bytes: an unchanged scan must not churn the deploy."""
+    return json.dumps(payload, sort_keys=True, indent=1) + "\n"
+
+
+def scan_json(
+    rows: Sequence[ScanRow],
+    coverage: Coverage,
+    slugs: Dict[str, str],
+    *,
+    window: str,
+    built_at: str,
+    fitted_at: str,
+    sample_size: int,
+) -> str:
+    return _dump({
+        "built_at": built_at,
+        "window": window,
+        "fitted_at": fitted_at,
+        "sample_size": sample_size,
+        "coverage": {
+            "players_seen": coverage.players_seen,
+            "players_guessed": coverage.players_guessed,
+            "guessed_share": round(coverage.guessed_share, 4),
+            "warning": coverage.warning,
+        },
+        "rows": [{
+            "player_id": r.player_id,
+            "slug": slugs.get(r.player_id, ""),
+            "nick": r.nick,
+            "tier": r.tier,
+            "games": r.games,
+            "expected": round(r.expected, 2),
+            "actual": r.actual,
+            "per_100": round(r.per_100, 2),
+            "tiers_off": round(r.tiers_off, 3),
+            "odds_1_in": r.odds,
+            "label": r.label,
+            "recommendation": r.recommendation,
+            "top_mate": r.top_mate,
+            "top_mate_share": round(r.top_mate_share, 3),
+            "guessed_share": round(r.guessed_share, 3),
+            "caution": r.caution,
+        } for r in rows],
+    })
+
+
+def model_json(
+    tier_points: Dict[str, float],
+    scale: float,
+    fit_metrics: Dict[str, float],
+    *,
+    fitted_at: str,
+    sample_size: int,
+) -> str:
+    return _dump({
+        "tier_order": list(TIER_ORDER),
+        "tier_points": tier_points,
+        "scale": scale,
+        "intercept": 0.0,
+        "fit_metrics": fit_metrics,
+        "fitted_at": fitted_at,
+        "sample_size": sample_size,
+    })
+
+
+def index_json(
+    rows: Sequence[ScanRow],
+    slugs: Dict[str, str],
+    *,
+    window: str,
+    built_at: str,
+    fitted_at: str,
+    sample_size: int,
+) -> str:
+    players = sorted(
+        ({"slug": slugs[r.player_id], "player_id": r.player_id,
+          "nick": r.nick, "tier": r.tier}
+         for r in rows if r.player_id in slugs),
+        key=lambda p: p["slug"])
+    return _dump({
+        "built_at": built_at,
+        "window": window,
+        "fitted_at": fitted_at,
+        "sample_size": sample_size,
+        "players": players,
+    })
