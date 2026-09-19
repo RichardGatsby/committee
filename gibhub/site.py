@@ -317,3 +317,40 @@ def index_json(
         "sample_size": sample_size,
         "players": players,
     })
+
+
+# Cloudflare Pages sends no CORS header unless told. Without this the published
+# JSON is readable in a browser tab and unusable from anyone else's page.
+HEADERS = "/api/*\n  Access-Control-Allow-Origin: *\n"
+
+
+def headers() -> str:
+    return HEADERS
+
+
+def build_site(
+    rows: Sequence[ScanRow],
+    coverage: Coverage,
+    tier_points: Dict[str, float],
+    scale: float,
+    fit_metrics: Dict[str, float],
+    *,
+    window: str,
+    built_at: str,
+    fitted_at: str,
+    sample_size: int,
+) -> Dict[str, bytes]:
+    """Every file the published site is made of. Paths are relative, no leading slash."""
+    stamp = dict(window=window, built_at=built_at, fitted_at=fitted_at,
+                 sample_size=sample_size)
+    slugs = assign_slugs(rows)
+    files = {
+        "index.html": index_page(rows, coverage, {}, **stamp),
+        "about/index.html": about_page(tier_points, scale, fit_metrics, **stamp),
+        "_headers": headers(),
+        "api/scan.json": scan_json(rows, coverage, slugs, **stamp),
+        "api/model.json": model_json(tier_points, scale, fit_metrics,
+                                     fitted_at=fitted_at, sample_size=sample_size),
+        "api/index.json": index_json(rows, slugs, **stamp),
+    }
+    return {path: text.encode("utf-8") for path, text in files.items()}

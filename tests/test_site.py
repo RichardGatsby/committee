@@ -1,8 +1,10 @@
 import json
+import re
 
 from gibhub.scan import Coverage, ScanRow
-from gibhub.site import (about_page, assign_slugs, caveat_block, index_json,
-                         index_page, model_json, page, scan_json, slugify)
+from gibhub.site import (about_page, assign_slugs, build_site, caveat_block,
+                         index_json, index_page, model_json, page, scan_json,
+                         slugify)
 
 CLEAN = Coverage(players_seen=100, players_guessed=2, guessed_share=0.02)
 HEAVY = Coverage(players_seen=100, players_guessed=46, guessed_share=0.46)
@@ -212,3 +214,64 @@ def test_index_json_sorts_players_by_slug():
     rows = [_row("p2", "zed", tier="B"), _row("p1", "alf")]
     payload = json.loads(index_json(rows, {"p1": "alf", "p2": "zed"}, **STAMP))
     assert [p["slug"] for p in payload["players"]] == ["alf", "zed"]
+
+
+def _site(rows=(), coverage=CLEAN):
+    return build_site(list(rows), coverage, POINTS, 0.4385, METRICS, **STAMP)
+
+
+def test_build_site_writes_the_phase_one_paths():
+    assert set(_site().keys()) == {
+        "index.html", "about/index.html", "_headers",
+        "api/scan.json", "api/model.json", "api/index.json"}
+
+
+def test_build_site_returns_bytes_for_every_path():
+    assert all(isinstance(v, bytes) for v in _site().values())
+
+
+def test_headers_open_the_api_to_cross_origin_reads():
+    headers = _site()["_headers"].decode("utf-8")
+    assert "/api/*" in headers
+    assert "Access-Control-Allow-Origin: *" in headers
+
+
+def test_build_site_does_not_link_players_in_phase_one():
+    site = _site([_row("p1", "Lepari")])
+    assert "/players/" not in site["index.html"].decode("utf-8")
+
+
+def test_build_site_is_byte_identical_for_identical_input():
+    rows = [_row("p1", "Lepari")]
+    assert _site(rows) == _site(rows)
+
+
+def _html_pages(site):
+    return {p: b.decode("utf-8") for p, b in site.items() if p.endswith(".html")}
+
+
+def test_every_html_page_carries_the_caveats():
+    site = _site([_row("p1", "Lepari")])
+    missing = [p for p, html in _html_pages(site).items()
+               if "too few games to call" not in html]
+    assert missing == [], "pages published without the caveat block: %s" % missing
+
+
+def test_every_internal_link_resolves_to_a_published_path():
+    site = _site([_row("p1", "Lepari")])
+    broken = []
+    for path, html in _html_pages(site).items():
+        for href in re.findall(r'href="([^"]+)"', html):
+            target = href.lstrip("/") or "index.html"
+            if target.endswith("/"):
+                target += "index.html"
+            if target not in site:
+                broken.append((path, href))
+    assert broken == [], "links to nothing: %s" % broken
+
+
+def test_every_published_json_file_parses():
+    site = _site([_row("p1", "Lepari")])
+    for path, blob in site.items():
+        if path.endswith(".json"):
+            json.loads(blob.decode("utf-8"))
