@@ -52,3 +52,46 @@ def test_coefficients_are_saved_by_tier_name_not_position(tmp_path):
     save(_bundle(), path)
     payload = json.loads(path.read_text(encoding="utf-8"))
     assert isinstance(payload["coefficients"], dict)
+
+
+def test_save_leaves_no_temp_file_behind(tmp_path):
+    path = tmp_path / "coefficients.json"
+    save(_bundle(), str(path))
+    assert [p.name for p in tmp_path.iterdir()] == ["coefficients.json"]
+
+
+def test_save_does_not_collide_with_a_concurrent_writer(tmp_path, monkeypatch):
+    """Two writers must not share one temp name.
+
+    cache.py had this bug: the loser's os.replace fired after the winner had
+    already renamed the shared .tmp away, and failed with ENOENT. Simulate the
+    interleaving by saving again from inside the first save's json.dump.
+    """
+    path = tmp_path / "coefficients.json"
+    real_dump = json.dump
+    nested = []
+
+    def dump_then_interleave(payload, handle, **kwargs):
+        real_dump(payload, handle, **kwargs)
+        if not nested:
+            nested.append(True)
+            monkeypatch.setattr(json, "dump", real_dump)
+            save(_bundle(), str(path))
+
+    monkeypatch.setattr(json, "dump", dump_then_interleave)
+    save(_bundle(), str(path))
+
+    assert json.loads(path.read_text())["sample_size"] == 4200
+    assert [p.name for p in tmp_path.iterdir()] == ["coefficients.json"]
+
+
+def test_save_removes_the_temp_file_when_serialisation_fails(tmp_path, monkeypatch):
+    path = tmp_path / "coefficients.json"
+
+    def explode(*args, **kwargs):
+        raise ValueError("boom")
+
+    monkeypatch.setattr(json, "dump", explode)
+    with pytest.raises(ValueError, match="boom"):
+        save(_bundle(), str(path))
+    assert list(tmp_path.iterdir()) == []

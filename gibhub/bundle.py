@@ -3,6 +3,7 @@
 import dataclasses
 import json
 import os
+import tempfile
 from typing import Dict, List, Optional, Tuple
 
 from .model import TIERS
@@ -65,16 +66,27 @@ def save(bundle: Bundle, path=DEFAULT_PATH) -> None:
         "impute_max": bundle.impute_max,
         "overrides": bundle.overrides,
     }
-    temporary = str(path) + ".tmp"
-    with open(temporary, "w", encoding="utf-8") as handle:
-        json.dump(payload, handle, indent=1, sort_keys=True)
-    os.replace(temporary, str(path))
+    destination = str(path)
+    directory = os.path.dirname(destination) or "."
+    os.makedirs(directory, exist_ok=True)
+    # A unique temp name per writer, and the same rename dance cache.py uses:
+    # a shared ".tmp" lets two concurrent refits clobber each other, and the
+    # loser's os.replace then fails with ENOENT.
+    handle_fd, temporary = tempfile.mkstemp(dir=directory, suffix=".tmp")
+    try:
+        with os.fdopen(handle_fd, "w", encoding="utf-8") as handle:
+            json.dump(payload, handle, indent=1, sort_keys=True)
+        os.replace(temporary, destination)
+    except BaseException:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+        raise
 
 
 def load(path=DEFAULT_PATH) -> Bundle:
     if not os.path.exists(str(path)):
         raise BundleMissing(
-            "no model bundle at %s — run: python3 -m gibhub.cli fit --refit" % path
+            "no model bundle at %s - run: python3 -m gibhub.cli fit --refit" % path
         )
     with open(str(path), "r", encoding="utf-8") as handle:
         payload = json.load(handle)
