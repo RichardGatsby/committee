@@ -77,6 +77,23 @@ player's 339 matches reported OVER where the full window was ON TIER.
 
     ### → MOVE DOWN: A → B
 
+If a lot of the tiers behind a verdict had to be guessed, the report says so
+above the headline, where a cropped screenshot still catches it:
+
+    > **UNRELIABLE: 46% of the tiers behind this verdict were guessed rather
+    > than set by the committee. Tier those players before acting on it.
+    > 18 of the 39 players in this window had no committee tier.**
+
+`CAUTION` at 20% of tier inputs guessed, `UNRELIABLE` at 40%. Only imputed tiers
+count as guesses; a tier held in another channel is a real committee decision.
+Imputation error, not luck, is the largest source of false signal here, so this
+is the first thing to check before arguing over a number.
+
+The scan prints the same warning for the population it just swept. That one
+matters more than it looks: the scan scores only committee-tiered players and
+drops the rest silently, so a short, clean-looking table can mean the list is
+thin rather than that everyone is correctly placed.
+
 The headline sums each match's win probability into expected wins and compares it
 to what happened. The label says how likely that gap is to be luck:
 

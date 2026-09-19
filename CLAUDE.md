@@ -62,7 +62,8 @@ and no clock.
   in every 3v3 match sampled. Do not wire them in.
 - **Imputation is the main source of false signal.** A player with no committee
   tier gets one from their shrunken UTRO, capped at A by measured strength.
-  Before trusting a surprising verdict, check the footer's provenance counts.
+  `report.guess_warning` raises this above the headline at 20% and 40% of tier
+  inputs guessed; the footer carries the exact counts either way.
 - **`GET /api/matches/{id}` has no `teams` block.** Rosters come from the rounds,
   top three by playtime.
 - **The API 403s without a User-Agent** and caps `pageSize` at 100.
