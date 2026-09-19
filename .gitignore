@@ -13,7 +13,8 @@ scan.json
 # the rendered site. Built by the workflow, never committed.
 _site/
 # the one-off placeholder uploaded to Cloudflare to seed the project.
-cloudflare-placeholder.html
+cloudflare-placeholder/
+cloudflare-placeholder.zip
 
 # macOS, editors, envs
 .DS_Store
