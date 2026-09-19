@@ -122,9 +122,11 @@ def caveat_block(
             "Few games and a big gap still reads as <code>KEEP</code>, because "
             "the evidence is thin - not because the tier is right.</p>")
         parts.append(
-            "<p>Tiers have no history here. Every match above is scored "
-            "against the tier held today, so someone promoted recently looks "
-            "like they were beating the new tier all year.</p>")
+            "<p>Tier changes are dated only from the day they started being "
+            "recorded. A match played after a logged change is scored against "
+            "the tier held then; before that, it is scored against the tier "
+            "held today - so an old promotion can still make someone look "
+            "like they were beating their new tier all along.</p>")
     else:
         parts.append(
             "<p><code>KEEP</code> means too few games to call, not correctly "

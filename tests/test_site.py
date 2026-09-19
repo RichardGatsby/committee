@@ -579,8 +579,11 @@ def test_player_page_does_not_talk_about_a_table():
     assert "this table" not in player_page(_report(), **STAMP)
 
 
-def test_player_page_warns_that_tiers_have_no_history():
-    assert "no history" in player_page(_report(), **STAMP)
+def test_player_page_is_honest_about_how_far_tier_history_reaches():
+    """Tier history exists, but only from the change log forward."""
+    html = player_page(_report(), **STAMP)
+    assert "no history" not in html
+    assert "before that" in html
 
 
 def test_player_page_still_puts_the_guess_alarm_first():
