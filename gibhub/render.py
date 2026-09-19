@@ -8,7 +8,7 @@ import re
 from typing import Any, List, Optional, Sequence
 
 from .categories import LABELS
-from .report import PlayerReport, guess_warning
+from .report import ONE_TIER_GAMES, PlayerReport, guess_warning
 from .scan import ScanRow
 
 # Quake 3 colour codes: a caret followed by any single character.
@@ -158,6 +158,28 @@ def to_markdown(report: PlayerReport, extremes: int = 0) -> str:
         lines.append("")
         lines.append("### → %s" % report.recommendation
         )
+
+        # Only worth a table when the tier actually moved; one era is the
+        # ordinary case and the headline already covers it.
+        if len(report.eras) > 1:
+            lines.append("")
+            lines.append("**By tier held**")
+            lines.extend(table(
+                ["Tier era", "Games", "Expected wins", "Actual wins", "Difference",
+                 "Verdict"],
+                [["%-3s %s..%s" % (era.tier or "-", era.start or "", era.end or ""),
+                  era.games, "%.1f" % era.expected, era.actual,
+                  "%+.1f" % ((era.actual - era.expected) or 0.0), era.label]
+                 for era in report.eras],
+                aligns=["<", ">", ">", ">", ">", "<"]))
+            if report.current_era_is_thin:
+                current = report.eras[-1]
+                lines.append("")
+                lines.append(
+                    "_Too few games to judge %s yet: %d played, about %d needed "
+                    "for a one-tier call._"
+                    % (current.tier or "the current tier", current.games,
+                       ONE_TIER_GAMES))
         lines.append("")
         favoured = report.stack_wins + report.upset_losses
         underdog = report.upset_wins + report.underdog_losses

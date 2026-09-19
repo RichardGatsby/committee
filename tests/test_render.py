@@ -375,3 +375,61 @@ def test_markdown_names_how_many_players_were_guessed():
                                      "cross_channel": 0, "imputed": 50},
                                     players_seen=40, players_guessed=22))
     assert "22 of the 40 players" in text
+
+
+# --- tier eras --------------------------------------------------------------
+
+from gibhub.report import ONE_TIER_GAMES, TierEra  # noqa: E402
+
+ERAS = [
+    TierEra("E", None, "2026-09-19", 336, 115.42, 138, 0.0004, "CLEARLY OVER"),
+    TierEra("S", "2026-09-19", None, 12, 7.9, 8, 0.5, "ON TIER"),
+]
+
+
+def test_the_era_table_appears_when_the_tier_changed():
+    text = to_markdown(dataclasses.replace(REPORT, eras=ERAS))
+    assert "Tier era" in text
+
+
+def test_the_era_table_shows_an_open_start_and_an_open_end():
+    text = to_markdown(dataclasses.replace(REPORT, eras=ERAS))
+    assert "E   ..2026-09-19" in text
+    assert "S   2026-09-19.." in text
+
+
+def test_the_era_table_carries_each_span_s_verdict():
+    text = to_markdown(dataclasses.replace(REPORT, eras=ERAS))
+    assert "CLEARLY OVER" in text
+    assert "+22.6" in text
+
+
+def test_no_era_table_when_the_tier_never_changed():
+    text = to_markdown(dataclasses.replace(REPORT, eras=ERAS[:1]))
+    assert "Tier era" not in text
+
+
+def test_no_era_table_when_there_are_no_eras_at_all():
+    assert "Tier era" not in to_markdown(REPORT)
+
+
+def test_a_thin_current_era_says_so():
+    text = to_markdown(dataclasses.replace(
+        REPORT, eras=ERAS, current_era_is_thin=True))
+    assert "Too few games to judge S yet" in text
+    assert str(ONE_TIER_GAMES) in text
+
+
+def test_a_healthy_current_era_says_nothing():
+    text = to_markdown(dataclasses.replace(REPORT, eras=ERAS))
+    assert "Too few games" not in text
+
+
+def test_the_era_table_sits_under_the_headline():
+    text = to_markdown(dataclasses.replace(REPORT, eras=ERAS))
+    assert text.index("**Expected") < text.index("Tier era")
+
+
+def test_an_untiered_era_renders_as_a_dash():
+    eras = [TierEra(None, None, "2026-09-19", 40, 20.0, 18, 0.5, "ON TIER"), ERAS[1]]
+    assert "-   ..2026-09-19" in to_markdown(dataclasses.replace(REPORT, eras=eras))
