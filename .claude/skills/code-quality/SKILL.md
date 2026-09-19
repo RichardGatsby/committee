@@ -39,7 +39,9 @@ wrong: E really is the second strongest tier. Investigate before you edit.
 
 - Named for the behaviour: `test_mirrored_rosters_give_a_zero_vector`, not
   `test_feature_vector_2`.
-- One behaviour per test. If the name needs "and", split it.
+- One behaviour per test. If the name needs "and" to join two *assertions*,
+  split it; "and" joining two nouns (`..._excludes_both_s_and_e`) is just
+  English.
 - Asserts on values, not on "it didn't raise".
 - Exercises the boundary: empty input, a single sample, an unknown tier, a
   match with no winner.
@@ -85,16 +87,22 @@ Practical consequences:
 - **`@dataclasses.dataclass` for records**, with defaults that make an empty
   instance meaningful. `frozen=True` unless something genuinely needs to change.
 
-I/O lives in `api.py`, `cache.py`, `build.py`, `fetch.py` and `cli.py`. That is
-the whole list. Adding a sixth is a design change worth stating out loud.
+I/O lives in `api.py`, `cache.py`, `build.py`, `fetch.py`, `cli.py` and
+`bundle.py`. That is the whole list. Adding a seventh is a design change worth
+stating out loud.
+
+`bundle.py` is the awkward one: its `Bundle` record and `index()` are pure, and
+only `save()` and `load()` touch disk. Keep the split that way round.
 
 ## Python conventions in this repo
 
 - **Python 3.9, standard library only.** No third-party runtime dependency, ever.
   pytest is a dev dependency and nothing in `gibhub/` may import it.
-- **Type hints on every public function.** `typing.Dict`, `typing.Optional`,
-  `typing.Sequence` — not `dict[str, float]` or `str | None`, which 3.9 rejects
-  at runtime in annotations that get evaluated.
+- **Type hints on every public function in the pure core.** `typing.Dict`,
+  `typing.Optional`, `typing.Sequence` — not `dict[str, float]` or `str | None`,
+  which 3.9 rejects at runtime in annotations that get evaluated. The shell is
+  looser by deliberate exception: `cli.py` passes `argparse.Namespace` around and
+  annotating every `args` adds noise without catching anything.
 - **Accept the widest type, return the narrowest.** Parameters take `Mapping` /
   `Sequence` / `Iterable`; returns are concrete `Dict` / `List`.
 - **Keyword-only for anything optional.** `def fit(samples, *, iterations=2000)`.

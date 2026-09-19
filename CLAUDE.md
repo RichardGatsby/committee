@@ -30,7 +30,7 @@ One direction of dependency: I/O at the edges, pure functions in the middle.
     fetch.py        match iteration over the API       -- network
     api.py          HTTP, retries, pagination          -- network, ONLY module
     cache.py        finished matches on disk           -- filesystem
-    bundle.py       coefficients.json (de)serialisation
+    bundle.py       coefficients.json (de)serialisation  -- filesystem
     dataset.py      matches -> training samples
     categories.py   which kind of game is this
     tiers.py        override -> exact -> cross-channel -> imputed

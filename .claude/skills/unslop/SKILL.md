@@ -65,9 +65,13 @@ helps*, *Let me know if you'd like me to*.
 - Vague quantities where a number exists: *significantly more accurate* when you
   know it is 63.9% against 63.0%.
 - Emoji as section decoration.
-- Curly quotes, em-dashes and ellipses pasted into code, commit messages or
-  plain-text output. Prose in Markdown may use them; anything a terminal or a
-  compiler reads gets ASCII.
+- Curly quotes and ellipses in code, error strings or commit messages. Keep
+  those ASCII: a `—` in an exception message is a machine fingerprint, and smart
+  quotes break shell snippets people copy.
+
+  The report output is the exception. `—` and `→` in the verdict line and the
+  `MOVE DOWN: A → B` heading are deliberate, approved, and carry meaning the
+  committee reads at a glance. Do not "fix" them.
 
 ## Pass 2: rewrite
 
