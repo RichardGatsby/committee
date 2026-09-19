@@ -27,31 +27,61 @@ them:
 - **GitHub Actions on a cron.** Free minutes are unmetered on public repos, and
   the build does not depend on anyone's laptop being on.
 - **Player URLs key off the nick**, with the UUID in the JSON.
+- **Served from Cloudflare Pages**, built by Actions.
 
-## Host: GitHub Pages
+## Host: Cloudflare Pages
 
-Free for public repos, deploys from Actions with no second account and no
-deploy token in repo secrets — which matters in a repo whose rule is that no
-token belongs in any committed file. HTTPS and a custom domain are included.
-Static files are served with `Access-Control-Allow-Origin: *`, so the published
-JSON works as a cross-origin API without any further work.
+The site is served from a `*.pages.dev` subdomain. The free tier covers
+unlimited bandwidth and 500 deployments a month against a daily build's 30.
+A custom domain can go in front of it later without changing anything else.
 
-Limits, as advertised at time of writing and worth re-checking before relying on
-them: roughly 1 GB of site and a 100 GB/month soft bandwidth cap. A committee-
-sized audience is three orders of magnitude short of that.
+Three things decided it over GitHub Pages, which was the other candidate:
 
-Cloudflare Pages is the migration if bandwidth ever matters or if the live
-report service is ever wanted, since Workers sit next to it. It costs a second
-account and an API token in repo secrets, so it is not the starting point.
+- **`_redirects`.** Cloudflare reads one; GitHub Pages has no equivalent. Player
+  URLs key off the nick, so a rename needs a redirect or it leaves a dead link.
+- **The host does not care whether the repo is public.** GitHub Pages serves
+  from a public repo only, unless you pay. Decoupling the two leaves repo
+  visibility a free choice rather than a consequence of where the site lives.
+- **Workers sit next to it**, which is the cheapest path to a live report
+  endpoint if the pre-generated site ever stops being enough.
 
-Netlify offers nothing either of them does not.
+The repo is public today, which costs nothing either way: Actions minutes are
+unmetered on public repos and 2,000 a month free on private ones, and a daily
+build uses a fraction of either.
+
+Deployment is `wrangler pages deploy` from the Actions runner, with
+`CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` in repo secrets. That does
+not bend the repo's rule against committed tokens: a repo secret is not a
+committed file. The deploy step runs only on `main` and on manual dispatch,
+never on a pull request, so a fork cannot reach the secrets.
+
+Netlify offers nothing Cloudflare does not.
+
+### CORS is not automatic
+
+Cloudflare Pages sends no `Access-Control-Allow-Origin` header unless told, so
+the build must emit a `_headers` file:
+
+    /api/*
+      Access-Control-Allow-Origin: *
+
+Without it the published JSON is readable in a browser tab but unusable from
+anyone else's page, which is most of the point of publishing it. A test asserts
+the file is in the build output.
+
+### Redirects for renamed nicks
+
+The build compares the slugs it is emitting against the previous `index.json`
+and writes a `_redirects` line for any slug that has gone, rather than leaving a
+dead URL behind. Phase 2 work, alongside the player pages that make slugs
+matter.
 
 ## The API is the same build
 
-`/api/*.json` written next to the HTML *is* the read-only public API: CORS-open,
-CDN-cached, versioned by git, free, and impossible to knock over. It cannot
-answer for a player the build did not cover, which is the whole cost of not
-running a server.
+`/api/*.json` written next to the HTML *is* the read-only public API: CORS-open
+via `_headers`, CDN-cached, versioned by git, free, and impossible to knock
+over. It cannot answer for a player the build did not cover, which is the whole
+cost of not running a server.
 
 ## Architecture
 
@@ -67,39 +97,55 @@ the build date is passed in. `cli.py` writes the dict to disk under `--out`.
 This keeps the one-direction dependency rule: `site.py` imports from `model`,
 `report`, `scan` and `bundle`, and nothing imports `site.py` except `cli.py`.
 
-Rejected: markdown dumped into Jekyll, which Pages renders for free. It drags
-Ruby config into a stdlib-only repo and hands committee-facing prose to a theme
-nobody chose. Rejected too: a JavaScript app fetching the JSON client-side. The
-pages would stop working with JavaScript off, and the HTML would become a second
-implementation of the same rendering.
+Rejected: markdown dumped into a static site generator. It drags a second
+language's toolchain into a stdlib-only repo and hands committee-facing prose to
+a theme nobody chose. Rejected too: a JavaScript app fetching the JSON
+client-side. The pages would stop working with JavaScript off, and the HTML
+would become a second implementation of the same rendering.
 
 ### Output layout
 
     /                        the scan table, ranked by effect size
     /about/                  the model, the tier order, the limitations
+    /_headers                CORS for /api/*
     /api/scan.json           the scan
     /api/model.json          coefficients, fit metrics, fit date
     /api/index.json          manifest: build time, window, players, slug -> UUID
     /players/<slug>/         one player's verdict            (phase 2)
     /api/players/<slug>.json                                 (phase 2)
+    /_redirects              retired slugs -> current ones    (phase 2)
 
 Slugs are the nick, lowercased, with anything outside `[a-z0-9-]` collapsed to a
-hyphen. A rename breaks the old URL; `index.json` carries both slug and UUID, so
-redirect stubs for old slugs can be generated later if it becomes a real
-problem. Two nicks slugging to the same string is resolved by appending the
-first six characters of the UUID, and a test covers it.
+hyphen. Two nicks slugging to the same string is resolved by appending the first
+six characters of the UUID, and a test covers it. A rename would otherwise
+break the old URL, so in phase 2 the build reads the previous `index.json`,
+which carries both slug and UUID, and writes a `_redirects` line for every slug
+that has moved.
 
 ## The build
 
 One workflow, `.github/workflows/site.yml`, on a cron and on
 `workflow_dispatch`.
 
-    restore cache -> python3 -m gibhub.cli site --out _site -> upload -> deploy
+    restore cache -> python3 -m gibhub.cli site --out _site
+                  -> wrangler pages deploy _site -> save cache
 
-**Cadence: daily, 05:00 UTC.** Not weekly. `actions/cache` evicts an entry after
-seven days without a hit, so a weekly cron sits exactly on the eviction line and
-would periodically re-fetch every match. Daily keeps it warm and costs little,
-since a warm cache means the build reads only new matches.
+Deployment needs `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` from repo
+secrets, and runs only on `main` and on dispatch.
+
+**Cadence: daily, 05:00 UTC, plus the manual button.** The site shows nothing
+that the last build did not produce. Tiers move rarely, but the verdict is
+expected wins against actual wins, and matches land every day, so the actual
+side drifts whether or not anyone runs the build.
+
+A single day of 3v3 matches against a four-month window moves almost nothing on
+its own. The reason the interval has to be short anyway is the cache:
+`actions/cache` evicts an entry after seven days without a hit, so anything
+looser than about five days means re-fetching all 262 MB every run. Daily keeps
+it warm, and a warm cache means each build reads only the new matches.
+
+Manual dispatch stays available and the build is idempotent, so a run between
+crons costs nothing.
 
 **The cache key must roll.** Cache entries are immutable once written, so a
 fixed key would freeze the cache at its first contents. Write to a key carrying
@@ -139,22 +185,25 @@ month apart can be told apart.
 ## Testing
 
 `site.py` is pure, so it tests like `render.py`: golden files, no network, no
-clock. Beyond the golden files, three assertions earn their place:
+clock. Beyond the golden files, four assertions earn their place:
 
 1. Every generated HTML page contains the caveat block. This is the same shape
    of guard as the fixture test that fails if `ip` or `pw` reappears.
 2. Every internal link resolves to a path the build actually emitted.
 3. Every JSON file parses, and `index.json` lists exactly the player files
    written.
+4. `_headers` is present and opens `/api/*` to cross-origin reads. It is one
+   line of text nobody would notice going missing until someone else's page
+   broke.
 
 ## Phasing
 
-**Phase 1** — the scan index, the about page, `scan.json`, `model.json`,
-`index.json`, and the workflow. No player pages. This is the smallest thing that
-is useful to the committee and to anyone arguing with it.
+**Phase 1** — the scan index, the about page, `_headers`, `scan.json`,
+`model.json`, `index.json`, and the workflow. No player pages. This is the
+smallest thing that is useful to the committee and to anyone arguing with it.
 
-**Phase 2** — per-player pages and their JSON, once the build cost and the URL
-scheme have been watched working for a while.
+**Phase 2** — per-player pages, their JSON, and `_redirects` for retired slugs,
+once the build cost and the URL scheme have been watched working for a while.
 
 ## Known limitations of the published form
 
@@ -163,5 +212,5 @@ scheme have been watched working for a while.
 - The site inherits every limitation of the tool, including that the approach is
   partly circular by design and that the alpha side wins 52.5% of matches with
   no way for the model to say so.
-- A player who changes nick gets a new URL and the old one 404s until a redirect
-  stub is generated.
+- A player who changes nick gets a new URL, and the old one 404s until phase 2
+  writes the `_redirects` line.
