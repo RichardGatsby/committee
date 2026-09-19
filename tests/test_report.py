@@ -640,3 +640,10 @@ def test_an_era_with_no_matches_in_the_window_is_dropped():
 
 def test_one_tier_games_is_importable_from_report():
     assert ONE_TIER_GAMES > 0
+
+
+def test_even_matches_record_their_wins_too():
+    """even_matches was a bare count, so the player page could not split it."""
+    from gibhub.report import PlayerReport
+
+    assert "even_wins" in PlayerReport.__dataclass_fields__

@@ -135,6 +135,7 @@ class PlayerReport:
     stack_wins: int        # favoured (expected > 50%) and won
     underdog_losses: int   # underdog (expected < 50%) and lost
     even_matches: int      # expected exactly 50%, neither favoured nor underdog
+    even_wins: int         # how many of those were won
     draws: int
     skipped: int
     source_counts: Dict[str, int]
@@ -335,6 +336,7 @@ def build_report(
     stack_wins = 0
     underdog_losses = 0
     even_matches = 0
+    even_wins = 0
     draws = 0
     skipped = 0
 
@@ -399,6 +401,8 @@ def build_report(
             expected_wins += expected
             if expected == 0.5:
                 even_matches += 1
+                if result == "W":
+                    even_wins += 1
             if result == "W":
                 actual_wins += 1
                 upset = expected < 0.5
@@ -499,6 +503,7 @@ def build_report(
         stack_wins=stack_wins,
         underdog_losses=underdog_losses,
         even_matches=even_matches,
+        even_wins=even_wins,
         draws=draws,
         skipped=skipped,
         source_counts=counts,

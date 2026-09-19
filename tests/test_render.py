@@ -38,7 +38,7 @@ REPORT = PlayerReport(
     upset_losses=1,
     stack_wins=1,
     underdog_losses=0,
-    even_matches=0,
+    even_matches=0, even_wins=0,
     draws=1,
     skipped=0,
     source_counts={"exact": 23, "cross_channel": 0, "imputed": 1, "override": 0},

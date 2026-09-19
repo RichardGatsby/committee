@@ -719,7 +719,7 @@ def _site_report(player_id, nick):
         percentiles=[], rows=[], expected_wins=13.33, actual_wins=7, delta=-6.33,
         label="CLEARLY UNDER", luck=0.004, per_100=-31.7, decided=20,
         current_tier="A", recommendation="MOVE DOWN: A → B", upset_wins=1,
-        upset_losses=2, stack_wins=5, underdog_losses=4, even_matches=0, draws=0,
+        upset_losses=2, stack_wins=5, underdog_losses=4, even_matches=0, even_wins=0, draws=0,
         skipped=0, source_counts={"override": 100}, provenance={}, categories=[],
         players_seen=39, players_guessed=2,
     )

@@ -255,11 +255,22 @@ def _html_pages(site):
     return {p: b.decode("utf-8") for p, b in site.items() if p.endswith(".html")}
 
 
-def test_every_html_page_carries_the_caveats():
+def test_every_html_page_carries_its_provenance():
+    """A screenshot of any page must be datable."""
     site = _site([_row("p1", "Lepari")])
     missing = [p for p, html in _html_pages(site).items()
-               if "evidence is thin" not in html]
-    assert missing == [], "pages published without the caveat block: %s" % missing
+               if STAMP["built_at"] not in html or STAMP["window"] not in html]
+    assert missing == [], "pages published without a build stamp: %s" % missing
+
+
+def test_every_listing_page_carries_the_caveats():
+    """The pages that name several players must explain what KEEP means."""
+    site = _site([_row("p1", "Lepari")])
+    listings = ["index.html", "gaps/index.html", "players/index.html",
+                "about/index.html"]
+    missing = [p for p in listings
+               if "evidence is thin" not in site[p].decode("utf-8")]
+    assert missing == [], "listing pages without the caveat block: %s" % missing
 
 
 def test_every_internal_link_resolves_to_a_published_path():
@@ -288,7 +299,7 @@ def _report(**kwargs):
         lifetime={}, percentiles=[], rows=[], expected_wins=13.33, actual_wins=7,
         delta=-6.33, label="CLEARLY UNDER", luck=0.004, per_100=-31.7, decided=20,
         current_tier="A", recommendation="MOVE DOWN: A → B", upset_wins=1,
-        upset_losses=2, stack_wins=5, underdog_losses=4, even_matches=0, draws=0,
+        upset_losses=2, stack_wins=5, underdog_losses=4, even_matches=0, even_wins=0, draws=0,
         skipped=0, source_counts={"override": 80, "imputed": 40},
         provenance={}, categories=[], players_seen=39, players_guessed=18,
     )
@@ -306,10 +317,6 @@ def test_player_page_raises_the_guessed_tier_alarm_above_the_headline():
     html = player_page(_report(), **STAMP)
     assert html.index("guessed") < html.index("Won 7 of 20"), \
         "the alarm must survive a cropped screenshot"
-
-
-def test_player_page_carries_the_caveats():
-    assert "evidence is thin" in player_page(_report(), **STAMP)
 
 
 def test_player_page_escapes_the_nick():
@@ -389,11 +396,11 @@ def test_build_site_writes_redirects_only_when_a_slug_moved():
         moved["_redirects"].decode("utf-8")
 
 
-def test_every_html_page_still_carries_the_caveats_with_player_pages():
+def test_every_page_still_carries_provenance_with_player_pages():
     site = build_site([_row("p1", "Lepari")], CLEAN, POINTS, 0.4385, METRICS,
                       reports={"p1": _report()}, previous_index=None, **STAMP)
     missing = [p for p, html in _html_pages(site).items()
-               if "evidence is thin" not in html]
+               if STAMP["built_at"] not in html]
     assert missing == []
 
 
@@ -579,13 +586,37 @@ def test_player_page_does_not_talk_about_a_table():
     assert "this table" not in player_page(_report(), **STAMP)
 
 
-def test_player_page_is_honest_about_how_far_tier_history_reaches():
-    """Tier history exists, but only from the change log forward."""
-    html = player_page(_report(), **STAMP)
-    assert "no history" not in html
-    assert "before that" in html
-
-
 def test_player_page_still_puts_the_guess_alarm_first():
     html = player_page(_report(), **STAMP)
     assert html.index("guessed") < html.index("Won 7 of 20")
+
+
+def test_player_page_splits_the_evenly_matched_games():
+    html = player_page(_report(even_matches=8, even_wins=3), **STAMP)
+    row = html[html.index("Evenly matched"):]
+    assert ">8<" in row and ">3<" in row and ">5<" in row
+
+
+def test_player_page_keeps_the_build_stamp():
+    html = player_page(_report(), **STAMP)
+    assert "2026-09-19T05:00:00+00:00" in html
+    assert "last 1y" in html
+
+
+def test_player_page_drops_the_generic_lecture():
+    html = player_page(_report(), **STAMP)
+    assert "evidence is thin" not in html
+    assert "before that" not in html
+
+
+def test_player_page_warns_when_the_sample_is_too_thin_to_call():
+    """KEEP on 20 games is 'not proven', and the page has to say which."""
+    html = player_page(_report(label="ON TIER", recommendation="KEEP at A",
+                               decided=20), **STAMP)
+    assert "not proven" in html
+
+
+def test_player_page_does_not_warn_when_the_sample_is_large():
+    html = player_page(_report(label="ON TIER", recommendation="KEEP at A",
+                               decided=400), **STAMP)
+    assert "not proven" not in html

@@ -10,7 +10,7 @@ import re
 from typing import Dict, Sequence, Tuple
 
 from .render import strip_colors
-from .report import PlayerReport, guess_warning
+from .report import ONE_TIER_GAMES, PlayerReport, guess_warning
 from .scan import Coverage, ScanRow, UntieredRow
 
 _UNSAFE = re.compile(r"[^a-z0-9]+")
@@ -107,7 +107,6 @@ def caveat_block(
     built_at: str,
     fitted_at: str,
     sample_size: int,
-    scope: str = "table",
 ) -> str:
     """What a stranger has to know before reading a verdict as a fact."""
     parts = ['<section class="caveats">']
@@ -116,27 +115,15 @@ def caveat_block(
                      "had no committee tier.</p>"
                      % (escape(coverage.warning), coverage.players_guessed,
                         coverage.players_seen))
-    if scope == "player":
-        parts.append(
-            "<p>A verdict is only as good as the number of matches behind it. "
-            "Few games and a big gap still reads as <code>KEEP</code>, because "
-            "the evidence is thin - not because the tier is right.</p>")
-        parts.append(
-            "<p>Tier changes are dated only from the day they started being "
-            "recorded. A match played after a logged change is scored against "
-            "the tier held then; before that, it is scored against the tier "
-            "held today - so an old promotion can still make someone look "
-            "like they were beating their new tier all along.</p>")
-    else:
-        parts.append(
-            "<p><code>KEEP</code> means too few games to call, not correctly "
-            "tiered. A row with few games and a large effect reads as "
-            "<code>KEEP</code> because the evidence is thin, not because the "
-            "tier is right.</p>")
-        parts.append(
-            "<p>Some committee names still have no account mapped, mostly C "
-            "and D, so a player missing from this table has not been cleared - "
-            "they have not been checked.</p>")
+    parts.append(
+        "<p><code>KEEP</code> means too few games to call, not correctly "
+        "tiered. A row with few games and a large effect reads as "
+        "<code>KEEP</code> because the evidence is thin, not because the tier "
+        "is right.</p>")
+    parts.append(
+        "<p>Some committee names still have no account mapped, mostly C and D, "
+        "so a player missing from this table has not been cleared - they have "
+        "not been checked.</p>")
     parts.append(
         '<p class="stamp">Window %s. Built %s from a model fitted %s on %d '
         "matches.</p>" % (escape(window), escape(built_at), escape(fitted_at),
@@ -520,25 +507,27 @@ def player_page(
         '<th class="num">Won<th class="num">Lost</thead><tbody>'
         '<tr><td>Favoured<td class="num">%d<td class="num">%d<td class="num">%d'
         '<tr><td>Underdog<td class="num">%d<td class="num">%d<td class="num">%d'
-        '<tr><td>Evenly matched<td class="num">%d<td class="num">-'
-        '<td class="num">-'
+        '<tr><td>Evenly matched<td class="num">%d<td class="num">%d'
+        '<td class="num">%d'
         "</tbody></table>"
         % (favoured, report.stack_wins, report.upset_losses,
-           underdog, report.upset_wins, report.underdog_losses, other))
+           underdog, report.upset_wins, report.underdog_losses,
+           other, report.even_wins, other - report.even_wins))
     body.append(
         "<p>Favoured means the model gave their team better than an even "
-        "chance before the match. Evenly matched games are not split here "
-        "because neither side was favoured. This split is worth reading "
-        "alongside the verdict: a record built on favoured games is not the "
-        "same as one built against the odds, and the totals above hide the "
+        "chance before the match. A record built on favoured games is not the "
+        "same as one built against the odds, and the totals hide the "
         "difference.</p>")
 
-    body.append(caveat_block(
-        Coverage(report.players_seen, report.players_guessed,
-                 (report.players_guessed / report.players_seen)
-                 if report.players_seen else 0.0),
-        window=window, built_at=built_at, fitted_at=fitted_at,
-        sample_size=sample_size, scope="player"))
+    if report.label == "ON TIER" and report.decided < ONE_TIER_GAMES:
+        body.append(
+            '<p class="caveats">%d matches is under the %d it takes to detect '
+            "a one-tier error, so this reads as not proven rather than "
+            "confirmed.</p>" % (report.decided, ONE_TIER_GAMES))
+    body.append(
+        '<p class="stamp">Window %s. Built %s from a model fitted %s on %d '
+        "matches.</p>" % (escape(window), escape(built_at), escape(fitted_at),
+                          sample_size))
     return page("%s - 3v3 tiering evidence" % nick, "\n".join(body), players)
 
 
