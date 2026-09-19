@@ -320,7 +320,7 @@ def test_load_overrides_reads_names_and_tiers(tmp_path):
     from gibhub.cli import load_overrides
 
     path = tmp_path / "overrides.txt"
-    path.write_text("# committee knowledge\nJassi = A\n\nroltzz=B  # a comment\n",
+    path.write_text("# tier list\nJassi = A\n\nroltzz=B  # a comment\n",
                     encoding="utf-8")
 
     class C:
@@ -568,10 +568,10 @@ def test_scan_asks_the_api_only_for_finished_3v3_matches(
     assert params["state"] == "finished"
 
 
-def test_scan_says_so_when_the_bundle_carries_no_committee_tiers(
+def test_scan_says_so_when_the_bundle_carries_no_tier_list(
     monkeypatch, capsys, tmp_path
 ):
-    """scan() scores only players holding a committee override.
+    """scan() scores only players holding an override.
 
     With no tier list in the bundle it has nobody to score, which is not the
     same as everybody being correctly tiered - and the empty table says the
@@ -599,7 +599,7 @@ def test_scan_says_so_when_the_bundle_carries_no_committee_tiers(
 
     captured = capsys.readouterr()
     assert code != 0
-    assert "no committee tier list" in captured.err
+    assert "no tier list" in captured.err
     assert "No player's record differs" not in captured.out
 
 
@@ -609,7 +609,7 @@ def test_scan_warns_when_most_of_the_population_has_no_tier(
     """Only p1 is tiered anywhere; the other five have to be guessed.
 
     Holdings are deliberately omitted for the rest: a holding elsewhere would
-    resolve cross-channel, which counts as a real committee decision.
+    resolve cross-channel, which counts as a real decision.
     """
     path = tmp_path / "coefficients.json"
     save(
@@ -714,14 +714,14 @@ def test_site_command_writes_the_files(monkeypatch, tmp_path, scan_bundle_path):
     assert "Me" in (out / "index.html").read_text(encoding="utf-8")
 
 
-def test_site_command_refuses_a_bundle_with_no_committee_tiers(
+def test_site_command_refuses_a_bundle_with_no_tier_list(
     monkeypatch, tmp_path, capsys, fake_bundle_path
 ):
     monkeypatch.setattr("gibhub.cli.make_client", lambda args: FAKE_CLIENT)
     code = main(["--bundle", fake_bundle_path, "site",
                  "--out", str(tmp_path / "_site")])
     assert code == 1
-    assert "no committee tier list" in capsys.readouterr().err
+    assert "no tier list" in capsys.readouterr().err
 
 
 def test_site_command_clears_stale_files_from_a_previous_build(

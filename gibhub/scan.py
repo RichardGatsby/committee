@@ -40,7 +40,7 @@ class ScanRow:
     top_mate: str
     top_mate_share: float
     guessed_share: float
-    # The last in-window date the committee changed this player's tier, and how
+    # The last in-window date this player's tier changed, and how
     # many of `games` fall after it. Equal to `games` when nothing changed.
     changed_on: str = ""
     games_at_tier: int = 0
@@ -70,7 +70,7 @@ class ScanRow:
 
 @dataclasses.dataclass(frozen=True)
 class UntieredRow:
-    """A player the model had to guess a tier for. The work list for the committee."""
+    """A player the model had to guess a tier for. The work list."""
 
     player_id: str
     nick: str
@@ -86,7 +86,7 @@ def untiered(
     only: Optional[List[str]] = None,
     nicks: Optional[Dict[str, str]] = None,
 ) -> List["UntieredRow"]:
-    """Everyone in the window with no committee tier, busiest first.
+    """Everyone in the window with no assigned tier, busiest first.
 
     tier_coverage says how many there are; this says who they are. Sorted by
     games because an untiered regular distorts far more verdicts than an
@@ -130,7 +130,7 @@ def untiered(
 
 @dataclasses.dataclass(frozen=True)
 class Coverage:
-    """How much of the scanned population the committee has actually tiered."""
+    """How much of the scanned population has an assigned tier."""
 
     players_seen: int
     players_guessed: int

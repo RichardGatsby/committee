@@ -473,7 +473,7 @@ def test_gaps_page_survives_a_player_with_no_utro():
 
 
 def test_gaps_page_keeps_the_account_id_off_the_page():
-    """Readable to a committee member, not a wall of UUIDs. The id stays in the JSON."""
+    """Readable to a person, not a wall of UUIDs. The id stays in the JSON."""
     assert "q1" not in gaps_page(GAPS, CLEAN, **STAMP)
 
 

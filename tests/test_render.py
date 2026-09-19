@@ -65,7 +65,7 @@ def test_the_headline_is_one_compact_line():
     headline = [l for l in text.splitlines() if l.startswith("**Expected")]
     assert len(headline) == 1
     assert "Expected 1.73 wins, actual 2 — +0.27 → ON TIER" in headline[0]
-    # No z-scores or p-values in the committee-facing text.
+    # No z-scores or p-values in the published text.
     assert "z-score" not in text and "p =" not in text
 
 
@@ -189,7 +189,7 @@ def test_csv_reads_the_utro_percentile_from_the_spider_metrics():
     assert rows[0]["utro_percentile"] == "87.5"
 
 
-def test_csv_falls_back_to_the_committee_tier_when_the_api_has_none():
+def test_csv_falls_back_to_the_assigned_tier_when_the_api_has_none():
     rows = list(csv.DictReader(io.StringIO(
         to_csv([dataclasses.replace(REPORT, tiers=[], current_tier="A")]))))
     assert rows[0]["tier"] == "A"
@@ -271,11 +271,11 @@ def test_the_recommendation_is_its_own_heading():
     assert "### → KEEP at A" in text
 
 
-def test_a_committee_tier_shows_in_the_header_when_the_api_has_none():
+def test_an_assigned_tier_shows_in_the_header_when_the_api_has_none():
     """Overrides live only in the tier list, so the API reports no tier at all."""
     only_override = dataclasses.replace(REPORT, tiers=[], current_tier="A")
     text = to_markdown(only_override)
-    assert "current tier: **A**  _(committee list)_" in text
+    assert "current tier: **A**  _(tier list)_" in text
     assert "no 3v3 tier held" not in text
 
 

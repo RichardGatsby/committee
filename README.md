@@ -1,6 +1,6 @@
 # committee
 
-Evidence generator for the ET:Legacy 3v3 tiering committee. For each player it
+Evidence generator for ET:Legacy 3v3 tiering. For each player it
 works out what their team's tier composition said should happen in every recent
 match, compares that to what actually happened, and states plainly whether the
 tier they hold should change.
@@ -37,7 +37,7 @@ player report rather than one report per player. Columns:
   to detect a one-tier error.
 
 Only players whose record differs from their tier are listed; `--all` shows
-everyone. The scan scores only players carrying a **committee tier**, so a
+everyone. The scan scores only players carrying an **assigned tier**, so a
 bundle fitted without `--overrides` has nobody to score and the command says
 so rather than printing an empty table.
 
@@ -85,16 +85,16 @@ If a lot of the tiers behind a verdict had to be guessed, the report says so
 above the headline, where a cropped screenshot still catches it:
 
     > **UNRELIABLE: 46% of the tiers behind this verdict were guessed rather
-    > than set by the committee. Tier those players before acting on it.
-    > 18 of the 39 players in this window had no committee tier.**
+    > than assigned. Tier those players before acting on it.
+    > 18 of the 39 players in this window had no assigned tier.**
 
 `CAUTION` at 20% of tier inputs guessed, `UNRELIABLE` at 40%. Only imputed tiers
-count as guesses; a tier held in another channel is a real committee decision.
+count as guesses; a tier held in another channel is a real decision.
 Imputation error, not luck, is the largest source of false signal here, so this
 is the first thing to check before arguing over a number.
 
 The scan prints the same warning for the population it just swept. That one
-matters more than it looks: the scan scores only committee-tiered players and
+matters more than it looks: the scan scores only players with an assigned tier and
 drops the rest silently, so a short, clean-looking table can mean the list is
 thin rather than that everyone is correctly placed.
 
@@ -147,7 +147,7 @@ browser:
 | `/api/scan.json` | every scanned player, including the ones reading `ON TIER` |
 | `/api/model.json` | tier points, the fitted scale, the fit metrics |
 | `/api/index.json` | the build stamp and the slug-to-UUID map |
-| `/api/gaps.json` | every player in the window with no committee tier |
+| `/api/gaps.json` | every player in the window with no assigned tier |
 | `/api/players/<slug>.json` | one player's verdict |
 
 `/players/` lists everyone scored, agreeing with their tier or not. The scan
@@ -157,7 +157,7 @@ falls out of reach the moment their verdict settles to `KEEP`.
 `/gaps/` is the work list: every player the model had to guess a tier for,
 busiest first, with their account id and the UTRO the guess came from. The top
 of that list is where a guess distorts the most verdicts, so it is where a
-committee decision buys the most.
+a decision buys the most.
 
 Each player also gets a page at `/players/<slug>/`, keyed off their nick. A
 rename moves the URL, and the build writes a redirect from the old one by
@@ -204,7 +204,7 @@ channel apart from a Discord one.
 
 ## The tier list
 
-The API's own tiers are incomplete, so the committee's list is the source of
+The API's own tiers are incomplete, so the tier list is the source of
 truth. It lives in `data/tierlist-events-3v3.txt`, one name per line under its
 tier heading:
 
@@ -240,7 +240,7 @@ So decisions are dated, in `data/tier-changes.tsv`:
     # date       player   from  to  note
     2026-10-04   somebody   B     A   +9.1 over 412 games, 1 in 300
 
-`from` is `-` when the player held no committee tier before. Resolve it with the
+`from` is `-` when the player held no assigned tier before. Resolve it with the
 tier list and refit:
 
     python3 tools/resolve_tierlist.py data/tierlist-events-3v3.txt overrides.txt \
@@ -320,7 +320,7 @@ their tier elsewhere; a player with none anywhere gets one imputed from their 3v
 genuinely elite player would already have been tiered, and is applied by measured
 strength, so capping at A also excludes E.
 
-This matters more than it sounds: before the committee list was loaded, only 8 of
+This matters more than it sounds: before the tier list was loaded, only 8 of
 the 40 most recent 3v3 matches had all six players tiered in their own channel. It
 also moves verdicts. The same player's record, scored four ways:
 
@@ -329,11 +329,11 @@ also moves verdicts. The same player's record, scored four ways:
 | free six-coefficient fit | +24.7 | 1 in 1667 |
 | fixed points, uncapped imputation | +20.2 | 1 in 250 |
 | fixed points, imputation capped at A | +15.3 | 1 in 43 |
-| the above plus the committee tier list | +10.3 | 1 in 11 |
+| the above plus the tier list | +10.3 | 1 in 11 |
 
 Most of that player's apparent overperformance was imputation error. **Treat a
 report whose inputs are largely imputed as provisional** — the footer counts the
-four sources (committee override, exact channel tier, cross-channel, imputed).
+four sources (tier-list override, exact channel tier, cross-channel, imputed).
 
 ## Reproducibility
 
@@ -377,5 +377,5 @@ trip people up. Conventions live in `.claude/skills/`:
 | skill | covers |
 | --- | --- |
 | `code-quality` | test-first, functional core with I/O at the edges, stdlib-only Python 3.9 |
-| `unslop` | prose in docs, commits and committee-facing output |
+| `unslop` | prose in docs, commits and published output |
 | `conventional-commits` | commit format, and what a refit must record |

@@ -451,7 +451,7 @@ def test_the_recommendation_handles_the_ends_of_the_ladder():
 
 
 def test_the_ends_of_the_ladder_never_say_no_tier_above_of_it():
-    """The old wording was ungrammatical and reached the committee's headline.
+    """The old wording was ungrammatical and reached the headline.
 
     Nine players hold S, and the top of them reads CLEARLY OVER.
     """
@@ -470,7 +470,7 @@ def test_the_recommendation_without_a_known_tier():
     assert recommend("CLEARLY UNDER", None) == "MOVE DOWN"
 
 
-def test_a_committee_override_is_the_tier_the_verdict_is_about():
+def test_an_override_is_the_tier_the_verdict_is_about():
     index = TierIndex(holdings={}, bands=BANDS, utro={}, overrides={"me": "A"})
     report = build_report(dict(PROFILE, tiers=[]), SPIDER, [], index, COEFFICIENTS, {})
     assert report.current_tier == "A"
@@ -513,7 +513,7 @@ def test_two_fifths_guessed_earns_an_unreliable_verdict():
 
 
 def test_cross_channel_tiers_count_as_known():
-    """A tier from another channel is a real committee decision, not a guess."""
+    """A tier from another channel is a real decision, not a guess."""
     from gibhub.report import guess_warning
 
     assert guess_warning({"override": 0, "exact": 0, "cross_channel": 100,
@@ -528,7 +528,7 @@ def test_no_warning_when_nothing_was_scored():
 
 
 def test_the_report_counts_distinct_players_it_had_to_guess():
-    """Six players a match, one of whom the committee has tiered."""
+    """Six players a match, one of whom has an assigned tier."""
     index = TierIndex(holdings={}, bands={"A": 1.1, "D": 0.8}, utro={},
                       impute_max="A", overrides={"me": "A"})
     report = build_report(PROFILE, SPIDER, [_detail("m1", "alpha", 1.3)], index,

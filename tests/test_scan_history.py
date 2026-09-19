@@ -1,4 +1,4 @@
-"""Scan behaviour once the committee has changed somebody's tier."""
+"""Scan behaviour once somebody's tier has changed."""
 
 import csv
 import io

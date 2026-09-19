@@ -197,7 +197,7 @@ def test_untiered_lists_the_players_the_model_had_to_guess_for():
     assert all(r.games == 4 for r in rows)
 
 
-def test_untiered_leaves_out_everyone_the_committee_has_tiered():
+def test_untiered_leaves_out_everyone_with_an_assigned_tier():
     from gibhub.scan import untiered
 
     overrides = {p: "B" for p in ("x", "y", "z", "q", "r", "s")}

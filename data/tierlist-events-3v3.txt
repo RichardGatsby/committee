@@ -1,4 +1,4 @@
-# ET:Legacy Events #3vs3 tier list, supplied by the committee 2026-09-18.
+# ET:Legacy Events #3vs3 tier list, as of 2026-09-18.
 # One name per line under its tier heading; names are verbatim from Discord.
 
 [S]

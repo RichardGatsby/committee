@@ -201,7 +201,7 @@ def test_a_match_on_the_change_date_sees_the_new_tier():
     assert _dated_index().resolve("p1", "c1", on_date="2026-09-19").tier == "S"
 
 
-def test_a_historical_tier_is_still_a_committee_decision():
+def test_a_historical_tier_is_still_a_real_decision():
     assert _dated_index().resolve("p1", "c1", on_date="2026-05-01").source == OVERRIDE
 
 
@@ -217,7 +217,7 @@ def test_before_a_first_tiering_the_player_falls_back_to_imputation():
 
 
 def test_before_a_first_tiering_a_channel_holding_still_wins():
-    """Untiered by the committee then does not mean untiered entirely."""
+    """Untiered then does not mean untiered entirely."""
     index = TierIndex(
         holdings={"p2": (Holding("c1", "C", "2026-01-01"),)},
         bands={"A": 1.05, "B": 1.0}, utro={}, overrides={"p2": "A"},

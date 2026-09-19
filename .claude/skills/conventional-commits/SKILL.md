@@ -35,7 +35,7 @@ Rules the spec fixes and this repo does not bend:
 | `docs` | README, CLAUDE.md, skills, docs/ |
 | `chore` | tooling, .gitignore, housekeeping |
 | `perf` | measurably faster, with the measurement in the body |
-| `data` | the committee tier list, overrides, or a refit of `coefficients.json` |
+| `data` | the tier list, overrides, or a refit of `coefficients.json` |
 
 `data` is local to this project. Model and tier-list state is committed, so a
 change to it is neither a feature nor a fix, and burying a refit under `chore`
@@ -62,7 +62,7 @@ person can see whether the model got better or worse:
     log loss 0.6304 (was 0.6304), scale 0.4385 (was 0.3525)
 
 **Any change to a player's tier**, naming who decided and on what basis. These
-are committee decisions and the log is the record of them.
+are tiering decisions and the log is the record of them.
 
 **Any behaviour change that moves a published verdict.** Say which verdict moved
 and by how much. A silent change to the scoring path is the one thing here that
@@ -83,7 +83,7 @@ alternative was rejected.
 
 Bad, and why:
 
-    Resolve seven more committee tier-list names     -- no type
+    Resolve seven more tier-list names               -- no type
     fix: bug                                          -- says nothing
     feat: Added new scanning feature.                 -- tense, caps, full stop
     chore: refit                                      -- wrong type, no metrics

@@ -138,7 +138,7 @@ def caveat_block(
     parts = ['<section class="caveats">']
     if coverage.warning:
         parts.append("<p><strong>%s</strong> %d of the %d players in this window "
-                     "had no committee tier.</p>"
+                     "had no assigned tier.</p>"
                      % (escape(coverage.warning), coverage.players_guessed,
                         coverage.players_seen))
     parts.append(
@@ -262,7 +262,7 @@ LIMITATIONS = (
     "intercept, cannot express that.",
     "A roster is the three players with the most playtime on each side. A "
     "match where four people played a side is still scored as three.",
-    "A player with no committee tier gets one imputed from their shrunken "
+    "A player with no assigned tier gets one imputed from their shrunken "
     "UTRO, capped at A. Imputation error, not luck, is the largest source of "
     "false signal here.",
 )
@@ -288,7 +288,7 @@ def about_page(
     body = [
         "<h1>How this works</h1>",
         covered(window, covering),
-        "<p>Each tier is worth fixed points set by the committee. A team's "
+        "<p>Each tier is worth a fixed number of points. A team's "
         "strength is the sum of its three players' points, and the only fitted "
         "parameter is what one point of advantage is worth:</p>",
         "<p><code>P(win) = sigmoid(%.2f &times; (my team's points &minus; "
@@ -502,7 +502,7 @@ def player_page(
     if warning:
         body.append(
             '<p class="caveats"><strong>%s</strong> %d of the %d players in '
-            "these matches had no committee tier.</p>"
+            "these matches had no assigned tier.</p>"
             % (escape(warning), report.players_guessed, report.players_seen))
 
     body.append(
@@ -626,12 +626,12 @@ def gaps_page(
     covering: str = "",
     trained_from: str = "",
     players: Sequence[Tuple[str, str]] = ()) -> str:
-    """The work list: who has no committee tier, busiest first."""
-    body = ["<h1>Players with no committee tier</h1>",
+    """The work list: who has no assigned tier, busiest first."""
+    body = ["<h1>Players with no assigned tier</h1>",
             covered(window, covering)]
     body.append(
         "<p>Every one of these had a tier guessed for them from their shrunken "
-        "UTRO, capped at A. A guess is not a committee decision, and guesses "
+        "UTRO, capped at A. A guess is not an assigned tier, and guesses "
         "are the largest source of false signal in the scan - so the players "
         "at the top of this list are the ones whose tiers would improve the "
         "verdicts most.</p>")
@@ -640,7 +640,7 @@ def gaps_page(
                              trained_from=trained_from))
 
     if not rows:
-        body.append("<p>Every player in this window holds a committee tier. "
+        body.append("<p>Every player in this window holds an assigned tier. "
                     "Nothing to fill in.</p>")
     else:
         cells = []
@@ -663,7 +663,7 @@ def gaps_page(
             "leaderboard's round floor and got the median band instead.</p>\n"
             '<p class="stamp">Account ids for recording a decision are in '
             '<a href="/api/gaps.json">gaps.json</a>.</p>')
-    return page("Players with no committee tier", "\n".join(body), players)
+    return page("Players with no assigned tier", "\n".join(body), players)
 
 
 def gaps_json(

@@ -1,4 +1,4 @@
-"""Resolve a committee tier list into an overrides file.
+"""Resolve a tier list into an overrides file.
 
     python3 tools/resolve_tierlist.py data/tierlist-events-3v3.txt overrides.txt
 

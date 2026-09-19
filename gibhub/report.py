@@ -82,7 +82,7 @@ class MatchRow:
     utro_delta: Optional[float]
     sources: List[str]
     upset: bool
-    # Team points minus opponent points, from the committee's tier scale.
+    # Team points minus opponent points, from the tier scale.
     # None when the model was fitted without a fixed points scale.
     points: Optional[float] = None
     # (nick, tier, source) per player, his side first then the opposition.
@@ -142,7 +142,7 @@ class PlayerReport:
     provenance: Dict[str, Any]
     # Per-category splits: (key, decided, expected, actual, luck, verdict).
     categories: List[Any] = dataclasses.field(default_factory=list)
-    # Distinct people in the window, and how many had no committee tier.
+    # Distinct people in the window, and how many had no assigned tier.
     players_seen: int = 0
     players_guessed: int = 0
     # The spans the subject held each tier in this window, oldest first. One
@@ -170,7 +170,7 @@ def guess_warning(
 ) -> str:
     """How loudly to disclaim a verdict built on imputed tiers.
 
-    Only IMPUTED counts as a guess. A cross-channel tier is a real committee
+    Only IMPUTED counts as a guess. A cross-channel tier is a real
     decision made in another channel, not an invention.
     """
     total = sum(source_counts.values())
@@ -179,11 +179,11 @@ def guess_warning(
     share = source_counts.get(IMPUTED, 0) / total
     if share >= UNRELIABLE_GUESS_SHARE:
         return ("UNRELIABLE: %.0f%% of the tiers behind %s were guessed rather "
-                "than set by the committee. Tier those players before acting "
+                "than assigned. Tier those players before acting "
                 "on it." % (100 * share, subject))
     if share >= CAUTION_GUESS_SHARE:
         return ("CAUTION: %.0f%% of the tiers behind %s were guessed rather "
-                "than set by the committee." % (100 * share, subject))
+                "than assigned." % (100 * share, subject))
     return ""
 
 
@@ -242,14 +242,14 @@ def recommend(label: str, tier: Optional[str]) -> str:
         # outright rather than issuing a move with nowhere to move to.
         if direction == "UP":
             # No tier above S exists, so the verdict names the one the
-            # committee would need to invent.
+            # ladder would need to grow.
             return "SS TIER: already %s, and beating it" % tier
         return "NO LOWER TIER: already %s, and losing below it" % tier
     return "%s %s" % (strength, direction)
 
 
 def classify(delta: float, probability: float) -> str:
-    """The committee-facing verdict.
+    """The verdict.
 
     Reads off how likely the gap is to be luck, not off a raw win count: a
     +4 win gap is decisive over 20 matches and meaningless over 400.
@@ -340,7 +340,7 @@ def build_report(
     draws = 0
     skipped = 0
 
-    # The tier the verdict is about: a committee override first, since the API
+    # The tier the verdict is about: a tier-list override first, since the API
     # does not carry those, then whatever the profile lists for the scored channel.
     profile_tiers = [
         t for t in (profile.get("tiers") or [])

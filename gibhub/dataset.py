@@ -79,7 +79,7 @@ def match_to_sample(
     match: Dict[str, Any], index: TierIndex, categories=None
 ) -> Optional[Sample]:
     """None when the match cannot train the model: a draw, an odd roster, or a
-    channel the committee does not tier for."""
+    channel the tier list does not cover."""
     if categorise(match) not in allowed(categories, TRAINING_DEFAULT):
         return None
 

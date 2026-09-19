@@ -1,6 +1,6 @@
 # committee
 
-Evidence generator for the ET:Legacy 3v3 tiering committee. Given a player, it
+Evidence generator for ET:Legacy 3v3 tiering. Given a player, it
 reconstructs what each recent match's tier composition predicted, compares that
 to the result, and states whether the tier they hold should change.
 
@@ -10,7 +10,7 @@ to work on it.
 ## Non-negotiables
 
 - **Python 3.9, standard library only.** No numpy, no requests, no pandas. The
-  committee runs this on whatever machine is to hand; a pip install is a reason
+  tool runs on whatever machine is to hand; a pip install is a reason
   not to run it. Type hints use `typing.Dict` / `typing.List`, not the 3.10+
   builtin generics.
 - **TDD.** Test first, watch it fail, then implement. See the `code-quality`
@@ -19,7 +19,7 @@ to work on it.
   recorded responses. `tests/test_integration.py` is the only exception and is
   skipped unless `GIBHUB_INTEGRATION=1`.
 - **Conventional commits.** See the `conventional-commits` skill.
-- **Prose is for the committee, not for a model.** See the `unslop` skill.
+- **Prose is for people, not for a model.** See the `unslop` skill.
 
 ## Shape of the code
 
@@ -49,9 +49,9 @@ and no clock.
 - **The tier order is S > E > A > B > C > D.** E is the second *strongest* tier,
   not the weakest. Never sort tiers alphabetically, never assume "the tier above
   A" is S. Read neighbours off `TIER_POINTS` or off the fitted bands.
-- **Tier points are fixed by the committee** (S 5, E 4, A 3, B 2, C 1, D 0). The
+- **Tier points are fixed** (S 5, E 4, A 3, B 2, C 1, D 0). The
   only fitted parameter is the scale: one point of roster advantage is worth
-  ~0.44 log-odds. Changing the points is a committee decision, not a modelling
+  ~0.44 log-odds. Changing the points is a tiering decision, not a modelling
   one.
 - **There is no intercept, by design.** Two mirrored rosters must score exactly
   0.5. A test asserts this; do not "improve" the fit by adding a bias term
@@ -65,7 +65,7 @@ and no clock.
   match date or the answer is "today".
 - **The API's betting odds are unusable** — a pari-mutuel joke-money pool, null
   in every 3v3 match sampled. Do not wire them in.
-- **Imputation is the main source of false signal.** A player with no committee
+- **Imputation is the main source of false signal.** A player with no assigned
   tier gets one from their shrunken UTRO, capped at A by measured strength.
   `report.guess_warning` raises this above the headline at 20% and 40% of tier
   inputs guessed; the footer carries the exact counts either way.
@@ -103,4 +103,4 @@ need no authentication at all.
 - The alpha side wins 52.5% of matches and the model cannot express that.
 - A row with few games and a large effect reads as `KEEP`, which means "too few
   games to call", not "correctly tiered".
-- 15 of 155 committee names still have no account mapped, mostly C and D.
+- 15 of 155 names on the tier list still have no account mapped, mostly C and D.

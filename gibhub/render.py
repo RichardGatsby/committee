@@ -112,8 +112,8 @@ def to_markdown(report: PlayerReport, extremes: int = 0) -> str:
                    tier["tier"], (tier.get("updated_at") or "")[:10])
             )
     elif report.current_tier:
-        # Held via the committee tier list, which the API does not carry.
-        lines.append("- current tier: **%s**  _(committee list)_" % report.current_tier)
+        # Held via the tier list, which the API does not carry.
+        lines.append("- current tier: **%s**  _(tier list)_" % report.current_tier)
     else:
         lines.append("- no 3v3 tier held")
 
@@ -141,12 +141,12 @@ def to_markdown(report: PlayerReport, extremes: int = 0) -> str:
         lines.append("_no 3v3 matches in this window_")
         lines.append("")
     else:
-        # Above the headline on purpose: the committee screenshots the verdict,
+        # Above the headline on purpose: people screenshot the verdict,
         # and a disclaimer in the footer does not make it into the crop.
         alarm = guess_warning(report.source_counts)
         if alarm:
             if report.players_seen:
-                alarm += "  %d of the %d players in this window had no committee tier." % (
+                alarm += "  %d of the %d players in this window had no assigned tier." % (
                     report.players_guessed, report.players_seen)
             lines.append("> **%s**" % alarm)
             lines.append("")
@@ -249,7 +249,7 @@ def to_markdown(report: PlayerReport, extremes: int = 0) -> str:
     lines.append("")
     lines.append(
         "_%d of %d tier inputs imputed (capped at %s), %d cross-channel, "
-        "%d committee override(s). Tiers from: %s. "
+        "%d tier-list override(s). Tiers from: %s. "
         "Model fitted %s on %s matches, cutoff %s, window %s._"
         % (
             counts["imputed"], total, report.provenance.get("impute_max") or "none",

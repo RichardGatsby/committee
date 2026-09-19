@@ -92,10 +92,10 @@ class TierIndex:
     utro: Mapping[str, float]
     # Strongest tier imputation may assign to an untiered player. None = no cap.
     impute_max: Optional[str] = None
-    # Committee-supplied tiers for players the API does not have, or has wrong.
+    # Tier-list tiers for players the API does not have, or has wrong.
     # Checked before everything else, and never capped.
     overrides: Mapping[str, str] = dataclasses.field(default_factory=dict)
-    # Dated committee decisions. Empty means every lookup answers as it does
+    # Dated tier decisions. Empty means every lookup answers as it does
     # today, so the whole feature is inert until something is logged.
     history: TierHistory = dataclasses.field(
         default_factory=lambda: TierHistory.build([])
@@ -106,7 +106,7 @@ class TierIndex:
     ) -> ResolvedTier:
         override = self.overrides.get(player_id)
         if on_date is not None:
-            # What the committee had decided by that date, which may be nothing
+            # What had been decided by that date, which may be nothing
             # yet -- in which case fall through to holdings and imputation.
             override = self.history.tier_at(player_id, on_date, current=override)
         if override:

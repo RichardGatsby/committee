@@ -30,19 +30,19 @@ class Bundle:
     channel_names: Dict[str, str]
     # Channels the tier index was restricted to at fit time; empty means all.
     tier_channels: List[str] = dataclasses.field(default_factory=list)
-    # Fixed committee points per tier, when the fit was constrained to them.
+    # Fixed tier points per tier, when the fit was constrained to them.
     # Empty means the six coefficients were fitted freely.
     tier_points: Dict[str, float] = dataclasses.field(default_factory=dict)
     # Log-odds per point of team advantage; only meaningful with tier_points.
     scale: Optional[float] = None
     # Strongest tier imputation may assign; None means uncapped.
     impute_max: Optional[str] = None
-    # player_id -> tier, supplied by the committee rather than the API.
+    # player_id -> tier, supplied on the tier list rather than the API.
     overrides: Dict[str, str] = dataclasses.field(default_factory=dict)
     # Earliest match in the training set. None on bundles fitted before this
     # was recorded; sample_size alone says nothing about how far back it goes.
     data_start: Optional[str] = None
-    # Dated committee decisions, oldest first. Empty until one is logged.
+    # Dated tier decisions, oldest first. Empty until one is logged.
     history: List[TierChange] = dataclasses.field(default_factory=list)
 
     def index(self) -> TierIndex:

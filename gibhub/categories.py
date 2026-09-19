@@ -20,12 +20,12 @@ LABELS = {
 }
 ORDER = (LEGACY, POLAND, CUP, OTHER_GATHER)
 
-# The gather channels the committee tiers for. The small one-off channels
+# The gather channels the assigned tiers for. The small one-off channels
 # (subAk, eV!L, Frag Center, PRAWDZIWY) are not part of that and are dropped
 # everywhere unless asked for by name.
 GATHERS = (LEGACY, POLAND)
 
-# What a report counts unless told otherwise. Poland is left out: the committee
+# What a report counts unless told otherwise. Poland is left out: the tier list
 # reads ET:Legacy gathers and team play, and Poland is over half the match volume,
 # so including it quietly dominates every verdict.
 REPORT_DEFAULT = (LEGACY, CUP)

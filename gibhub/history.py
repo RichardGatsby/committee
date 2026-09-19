@@ -1,7 +1,7 @@
-"""The committee's tier change log. Pure: parsing and lookup, no I/O.
+"""The tier change log. Pure: parsing and lookup, no I/O.
 
 Tiers have no history in the API, so a tier change would otherwise rewrite every
-past match a player appears in. This module records what the committee decided
+past match a player appears in. This module records what was decided
 and when, so a match can be scored against the tiers in force on its own day.
 """
 
@@ -12,17 +12,17 @@ from typing import Dict, List, Mapping, Optional, Sequence, Tuple
 
 from .model import TIER_POINTS
 
-# Written in the `from` column when a player held no committee tier before.
+# Written in the `from` column when a player held no assigned tier before.
 UNTIERED = "-"
 
 
 @dataclasses.dataclass(frozen=True)
 class TierChange:
-    """One committee decision, on one date, about one player."""
+    """One tier decision, on one date, about one player."""
 
     date: str
     player: str
-    previous: Optional[str]  # None when the player held no committee tier
+    previous: Optional[str]  # None when the player held no assigned tier
     tier: Optional[str]
     note: str = ""
 
@@ -69,7 +69,7 @@ Era = Tuple[Optional[str], Optional[str], Optional[str]]
 class TierHistory:
     """Per-player change lists, sorted by date, ready for bisect.
 
-    Empty by construction until the committee logs something, and an empty
+    Empty by construction until something is logged, and an empty
     history answers every question with the current tier, so the whole feature
     is inert until the first decision is recorded.
     """
@@ -93,7 +93,7 @@ class TierHistory:
     def tier_at(
         self, player: str, on_date: Optional[str], *, current: Optional[str]
     ) -> Optional[str]:
-        """The committee tier in force for `player` on `on_date`.
+        """The assigned tier in force for `player` on `on_date`.
 
         The tier that day is the `from` of the earliest change dated after it;
         with no later change, the current tier stands. A change dated exactly

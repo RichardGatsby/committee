@@ -131,7 +131,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     fit.add_argument(
         "--overrides", metavar="FILE",
-        help="committee-supplied tiers the API does not have, one 'name = TIER' "
+        help="tiers the API does not have, one 'name = TIER' "
              "per line (# comments allowed). Names are resolved through player "
              "search; UUIDs are used as-is. Overrides beat every other source and "
              "are never capped.",
@@ -371,12 +371,12 @@ def _sweep(client, args, cache=None):
 
 def cmd_scan(args) -> int:
     bundle = load(args.bundle)
-    # scan() scores only players holding a committee tier. Without one there is
+    # scan() scores only players holding a assigned tier. Without one there is
     # nobody to score, and an empty table would read as "everybody is correctly
     # tiered" rather than "nothing was checked".
     if not bundle.overrides:
         sys.stderr.write(
-            "this bundle carries no committee tier list, so scan has nobody to "
+            "this bundle carries no tier list, so scan has nobody to "
             "score.\nRefit with --overrides, for example:\n"
             "  python3 tools/resolve_tierlist.py "
             "data/tierlist-events-3v3.txt overrides.txt\n"
@@ -395,7 +395,7 @@ def cmd_scan(args) -> int:
     found = tier_coverage(matches, bundle.index(), only=categories_for(args))
     if found.warning:
         print("> %s" % found.warning)
-        print("> %d of the %d players in these matches had no committee tier."
+        print("> %d of the %d players in these matches had no assigned tier."
               % (found.players_guessed, found.players_seen))
         print("")
 
@@ -421,11 +421,11 @@ def write_site(files, out) -> int:
 
 def cmd_site(args) -> int:
     bundle = load(args.bundle)
-    # Same reason cmd_scan refuses: with no committee tier list there is nobody
+    # Same reason cmd_scan refuses: with no tier list there is nobody
     # to score, and an empty page would read as "everybody is correctly tiered".
     if not bundle.overrides:
         sys.stderr.write(
-            "this bundle carries no committee tier list, so the site would have "
+            "this bundle carries no tier list, so the site would have "
             "nobody to score.\nRefit with --overrides first.\n")
         return 1
 
@@ -504,7 +504,7 @@ def cmd_fit(args) -> int:
                                if bundle.tier_channels else "all channels"))
     print("impute cap:  %s" % (bundle.impute_max or "none"))
     if bundle.overrides:
-        print("overrides:   %d committee-supplied tier(s)" % len(bundle.overrides))
+        print("overrides:   %d tier-list override(s)" % len(bundle.overrides))
     print("metrics:     " + "  ".join(
         "%s=%.4f" % (key, value)
         for key, value in sorted(bundle.fit_metrics.items())
