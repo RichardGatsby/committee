@@ -339,3 +339,39 @@ def test_the_scan_csv_carries_the_raw_numbers():
     assert rows[0]["tiers_off"] == "1.80"
     assert rows[0]["top_mate"] == "SkyLine"
     assert rows[0]["caution"].startswith("29%")
+
+
+# --- tier-coverage alarm ----------------------------------------------------
+
+
+def _report_with(source_counts, **extra):
+    return dataclasses.replace(REPORT, source_counts=source_counts, **extra)
+
+
+def test_markdown_shows_no_alarm_when_tiers_are_known():
+    text = to_markdown(_report_with({"override": 100, "exact": 0,
+                                     "cross_channel": 0, "imputed": 0}))
+    assert "CAUTION" not in text
+    assert "UNRELIABLE" not in text
+
+
+def test_markdown_raises_the_alarm_above_the_verdict():
+    text = to_markdown(_report_with({"override": 50, "exact": 0,
+                                     "cross_channel": 0, "imputed": 50}))
+    assert "UNRELIABLE" in text
+    # Above the headline, so a screenshot cropped to the verdict still has it.
+    assert text.index("UNRELIABLE") < text.index("**Expected")
+
+
+def test_markdown_caution_sits_between_the_thresholds():
+    text = to_markdown(_report_with({"override": 75, "exact": 0,
+                                     "cross_channel": 0, "imputed": 25}))
+    assert "CAUTION" in text
+    assert "UNRELIABLE" not in text
+
+
+def test_markdown_names_how_many_players_were_guessed():
+    text = to_markdown(_report_with({"override": 50, "exact": 0,
+                                     "cross_channel": 0, "imputed": 50},
+                                    players_seen=40, players_guessed=22))
+    assert "22 of the 40 players" in text

@@ -8,7 +8,7 @@ import re
 from typing import Any, List, Optional, Sequence
 
 from .categories import LABELS
-from .report import PlayerReport
+from .report import PlayerReport, guess_warning
 from .scan import ScanRow
 
 # Quake 3 colour codes: a caret followed by any single character.
@@ -141,6 +141,16 @@ def to_markdown(report: PlayerReport, extremes: int = 0) -> str:
         lines.append("_no 3v3 matches in this window_")
         lines.append("")
     else:
+        # Above the headline on purpose: the committee screenshots the verdict,
+        # and a disclaimer in the footer does not make it into the crop.
+        alarm = guess_warning(report.source_counts)
+        if alarm:
+            if report.players_seen:
+                alarm += "  %d of the %d players in this window had no committee tier." % (
+                    report.players_guessed, report.players_seen)
+            lines.append("> **%s**" % alarm)
+            lines.append("")
+
         lines.append(
             "**Expected %.2f wins, actual %d — %+.2f → %s**"
             % (report.expected_wins, report.actual_wins, report.delta, report.label)

@@ -475,3 +475,75 @@ def test_a_committee_override_is_the_tier_the_verdict_is_about():
     report = build_report(dict(PROFILE, tiers=[]), SPIDER, [], index, COEFFICIENTS, {})
     assert report.current_tier == "A"
     assert report.recommendation == "KEEP at A"
+
+
+# --- tier-coverage alarm ----------------------------------------------------
+
+
+def test_no_warning_when_every_tier_is_known():
+    from gibhub.report import guess_warning
+
+    assert guess_warning({"override": 90, "exact": 10, "cross_channel": 0,
+                          "imputed": 0}) == ""
+
+
+def test_no_warning_just_below_the_caution_threshold():
+    from gibhub.report import guess_warning
+
+    assert guess_warning({"override": 81, "exact": 0, "cross_channel": 0,
+                          "imputed": 19}) == ""
+
+
+def test_a_fifth_guessed_earns_a_caution():
+    from gibhub.report import guess_warning
+
+    text = guess_warning({"override": 80, "exact": 0, "cross_channel": 0,
+                          "imputed": 20})
+    assert text.startswith("CAUTION")
+    assert "20%" in text
+
+
+def test_two_fifths_guessed_earns_an_unreliable_verdict():
+    from gibhub.report import guess_warning
+
+    text = guess_warning({"override": 50, "exact": 0, "cross_channel": 0,
+                          "imputed": 50})
+    assert text.startswith("UNRELIABLE")
+    assert "50%" in text
+
+
+def test_cross_channel_tiers_count_as_known():
+    """A tier from another channel is a real committee decision, not a guess."""
+    from gibhub.report import guess_warning
+
+    assert guess_warning({"override": 0, "exact": 0, "cross_channel": 100,
+                          "imputed": 0}) == ""
+
+
+def test_no_warning_when_nothing_was_scored():
+    from gibhub.report import guess_warning
+
+    assert guess_warning({"override": 0, "exact": 0, "cross_channel": 0,
+                          "imputed": 0}) == ""
+
+
+def test_the_report_counts_distinct_players_it_had_to_guess():
+    """Six players a match, one of whom the committee has tiered."""
+    index = TierIndex(holdings={}, bands={"A": 1.1, "D": 0.8}, utro={},
+                      impute_max="A", overrides={"me": "A"})
+    report = build_report(PROFILE, SPIDER, [_detail("m1", "alpha", 1.3)], index,
+                          COEFFICIENTS, {})
+
+    assert report.players_seen == 6
+    assert report.players_guessed == 5
+
+
+def test_a_player_seen_in_many_matches_is_counted_once():
+    index = TierIndex(holdings={}, bands={"A": 1.1, "D": 0.8}, utro={},
+                      impute_max="A", overrides={"me": "A"})
+    details = [_detail("m1", "alpha", 1.3), _detail("m2", "alpha", 1.2),
+               _detail("m3", "beta", 0.7)]
+    report = build_report(PROFILE, SPIDER, details, index, COEFFICIENTS, {})
+
+    assert report.players_seen == 6
+    assert report.players_guessed == 5

@@ -1,7 +1,7 @@
 """Pure assembly of a player's evidence report. No I/O."""
 
 import dataclasses
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from .categories import allowed, categorise, split
 from .dataset import TEAM_SIZE, roster_ids, winner_of
@@ -124,6 +124,39 @@ class PlayerReport:
     provenance: Dict[str, Any]
     # Per-category splits: (key, decided, expected, actual, luck, verdict).
     categories: List[Any] = dataclasses.field(default_factory=list)
+    # Distinct people in the window, and how many had no committee tier.
+    players_seen: int = 0
+    players_guessed: int = 0
+
+
+# Share of tier inputs that had to be guessed before the verdict stops being
+# worth much. Imputation error, not luck, is the dominant source of false signal
+# here: one player's apparent overperformance fell from +24.7 to +10.3 as the
+# guessing was tightened.
+CAUTION_GUESS_SHARE = 0.20
+UNRELIABLE_GUESS_SHARE = 0.40
+
+
+def guess_warning(
+    source_counts: Mapping[str, int], *, subject: str = "this verdict"
+) -> str:
+    """How loudly to disclaim a verdict built on imputed tiers.
+
+    Only IMPUTED counts as a guess. A cross-channel tier is a real committee
+    decision made in another channel, not an invention.
+    """
+    total = sum(source_counts.values())
+    if not total:
+        return ""
+    share = source_counts.get(IMPUTED, 0) / total
+    if share >= UNRELIABLE_GUESS_SHARE:
+        return ("UNRELIABLE: %.0f%% of the tiers behind %s were guessed rather "
+                "than set by the committee. Tier those players before acting "
+                "on it." % (100 * share, subject))
+    if share >= CAUTION_GUESS_SHARE:
+        return ("CAUTION: %.0f%% of the tiers behind %s were guessed rather "
+                "than set by the committee." % (100 * share, subject))
+    return ""
 
 
 def luck_probability(probabilities: Sequence[float], actual: int) -> float:
@@ -232,6 +265,8 @@ def build_report(
 
     rows: List[MatchRow] = []
     counts = {OVERRIDE: 0, EXACT: 0, CROSS_CHANNEL: 0, IMPUTED: 0}
+    seen: set = set()
+    guessed_players: set = set()
     expected_wins = 0.0
     actual_wins = 0
     upset_wins = 0
@@ -265,8 +300,11 @@ def build_report(
         channel_id = match.get("channel_id")
         alpha_resolved = index.resolve_all(alpha, channel_id)
         beta_resolved = index.resolve_all(beta, channel_id)
-        for resolved in alpha_resolved + beta_resolved:
+        for player, resolved in zip(alpha + beta, alpha_resolved + beta_resolved):
             counts[resolved.source] += 1
+            seen.add(player)
+            if resolved.source == IMPUTED:
+                guessed_players.add(player)
 
         features = feature_vector(
             [r.tier for r in alpha_resolved], [r.tier for r in beta_resolved]
@@ -387,6 +425,8 @@ def build_report(
         draws=draws,
         skipped=skipped,
         source_counts=counts,
+        players_seen=len(seen),
+        players_guessed=len(guessed_players),
         provenance=provenance,
         categories=categories,
     )
