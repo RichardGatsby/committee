@@ -135,8 +135,9 @@ is computed from every match in the window. `--format json` has them all.
 
 ## The published site
 
-The scan is published at <https://truetier.pages.dev>, rebuilt daily at 05:00
-UTC and on demand from the Actions tab. Every page stamps the build time, the
+The scan is published at <https://truetier.pages.dev>, rebuilt on demand from
+the Actions tab. There is no schedule: the site is as old as the last build,
+and every page stamps when that was. Every page stamps the build time, the
 window and the model it was fitted from, so a screenshot can be dated.
 
 The same build writes a JSON API, CORS-open so anything can read it from a

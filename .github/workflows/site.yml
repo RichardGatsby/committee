@@ -1,8 +1,10 @@
 name: site
 
 on:
-  schedule:
-    - cron: "0 5 * * *"
+  # Manual only. The cache is the thing to watch: actions/cache evicts an
+  # entry after seven days without a hit, so a gap longer than that means the
+  # next run re-fetches every match detail and takes half an hour instead of
+  # five minutes.
   workflow_dispatch:
 
 # The job reads the repo and deploys to Cloudflare. It never writes back to
