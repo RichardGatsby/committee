@@ -59,3 +59,75 @@ def parse_changes(text: str) -> List[TierChange]:
         )
     # Stable sort: two decisions on one date keep the order they were written.
     return sorted(changes, key=lambda change: change.date)
+
+
+# (start, end, tier). `end` is exclusive; None at either side means open-ended.
+Era = Tuple[Optional[str], Optional[str], Optional[str]]
+
+
+@dataclasses.dataclass(frozen=True)
+class TierHistory:
+    """Per-player change lists, sorted by date, ready for bisect.
+
+    Empty by construction until the committee logs something, and an empty
+    history answers every question with the current tier, so the whole feature
+    is inert until the first decision is recorded.
+    """
+
+    dates: Mapping[str, Sequence[str]]
+    previous: Mapping[str, Sequence[Optional[str]]]
+
+    @classmethod
+    def build(cls, changes: Sequence[TierChange]) -> "TierHistory":
+        dates: Dict[str, List[str]] = {}
+        previous: Dict[str, List[Optional[str]]] = {}
+        for change in sorted(changes, key=lambda c: c.date):
+            dates.setdefault(change.player, []).append(change.date)
+            previous.setdefault(change.player, []).append(change.previous)
+        return cls(dates=dates, previous=previous)
+
+    def players(self) -> List[str]:
+        """Everyone with at least one recorded decision."""
+        return list(self.dates)
+
+    def tier_at(
+        self, player: str, on_date: Optional[str], *, current: Optional[str]
+    ) -> Optional[str]:
+        """The committee tier in force for `player` on `on_date`.
+
+        The tier that day is the `from` of the earliest change dated after it;
+        with no later change, the current tier stands. A change dated exactly
+        on_date has already taken effect.
+        """
+        if on_date is None:
+            return current
+        dates = self.dates.get(player)
+        if not dates:
+            return current
+        position = bisect.bisect_right(dates, on_date)
+        if position >= len(dates):
+            return current
+        return self.previous[player][position]
+
+    def eras(self, player: str, *, current: Optional[str]) -> List[Era]:
+        """Every span the player held one tier, oldest first."""
+        dates = self.dates.get(player)
+        if not dates:
+            return [(None, None, current)]
+        spans: List[Era] = []
+        start: Optional[str] = None
+        for index, date in enumerate(dates):
+            spans.append((start, date, self.previous[player][index]))
+            start = date
+        spans.append((start, None, current))
+        return spans
+
+    def changes_in(
+        self, player: str, start: Optional[str], end: Optional[str]
+    ) -> List[str]:
+        """Dates this player's tier changed within [start, end)."""
+        return [
+            date
+            for date in self.dates.get(player, ())
+            if (start is None or date >= start) and (end is None or date < end)
+        ]

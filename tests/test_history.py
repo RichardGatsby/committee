@@ -1,6 +1,6 @@
 import pytest
 
-from gibhub.history import TierChange, parse_changes
+from gibhub.history import TierChange, TierHistory, parse_changes
 
 SAMPLE = """\
 # date\tplayer\tfrom\tto\tnote
@@ -65,3 +65,90 @@ def test_changes_come_back_sorted_by_date():
 def test_two_changes_on_one_date_keep_the_order_they_were_written():
     text = "2026-09-19\tp\tE\tA\tfirst\n2026-09-19\tp\tA\tS\tsecond\n"
     assert [c.note for c in parse_changes(text)] == ["first", "second"]
+
+
+# --- lookup ----------------------------------------------------------------
+
+def _history():
+    return TierHistory.build([
+        TierChange("2026-03-01", "p1", "B", "A", ""),
+        TierChange("2026-09-19", "p1", "A", "S", ""),
+        TierChange("2026-05-01", "p2", None, "C", ""),
+    ])
+
+
+def test_a_player_with_no_changes_keeps_their_current_tier():
+    assert _history().tier_at("stranger", "2026-06-01", current="B") == "B"
+
+
+def test_before_every_change_gives_the_earliest_previous_tier():
+    assert _history().tier_at("p1", "2026-01-01", current="S") == "B"
+
+
+def test_between_two_changes_gives_the_middle_tier():
+    assert _history().tier_at("p1", "2026-06-01", current="S") == "A"
+
+
+def test_the_day_before_a_change_still_has_the_old_tier():
+    assert _history().tier_at("p1", "2026-09-18", current="S") == "A"
+
+
+def test_on_the_day_of_a_change_the_new_tier_applies():
+    assert _history().tier_at("p1", "2026-09-19", current="S") == "S"
+
+
+def test_after_the_last_change_gives_the_current_tier():
+    assert _history().tier_at("p1", "2026-12-01", current="S") == "S"
+
+
+def test_before_a_first_tiering_there_is_no_tier():
+    assert _history().tier_at("p2", "2026-01-01", current="C") is None
+
+
+def test_no_date_means_the_current_tier():
+    assert _history().tier_at("p1", None, current="S") == "S"
+
+
+def test_eras_lists_each_span_the_player_held():
+    assert _history().eras("p1", current="S") == [
+        (None, "2026-03-01", "B"),
+        ("2026-03-01", "2026-09-19", "A"),
+        ("2026-09-19", None, "S"),
+    ]
+
+
+def test_eras_of_an_unchanged_player_is_one_open_span():
+    assert _history().eras("stranger", current="B") == [(None, None, "B")]
+
+
+def test_eras_can_start_untiered():
+    assert _history().eras("p2", current="C") == [
+        (None, "2026-05-01", None),
+        ("2026-05-01", None, "C"),
+    ]
+
+
+def test_an_empty_history_never_changes_an_answer():
+    empty = TierHistory.build([])
+    assert empty.tier_at("p1", "2020-01-01", current="S") == "S"
+    assert empty.eras("p1", current="S") == [(None, None, "S")]
+
+
+def test_build_sorts_changes_it_is_handed_out_of_order():
+    history = TierHistory.build([
+        TierChange("2026-09-19", "p1", "A", "S", ""),
+        TierChange("2026-03-01", "p1", "B", "A", ""),
+    ])
+    assert history.tier_at("p1", "2026-01-01", current="S") == "B"
+
+
+def test_players_lists_everyone_with_a_recorded_change():
+    assert sorted(_history().players()) == ["p1", "p2"]
+
+
+def test_changes_in_returns_the_dates_inside_a_window():
+    assert _history().changes_in("p1", "2026-04-01", "2026-12-01") == ["2026-09-19"]
+
+
+def test_changes_in_excludes_dates_outside_the_window():
+    assert _history().changes_in("p1", "2026-10-01", "2026-12-01") == []
