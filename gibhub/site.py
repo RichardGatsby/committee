@@ -396,3 +396,54 @@ def player_page(
         window=window, built_at=built_at, fitted_at=fitted_at,
         sample_size=sample_size))
     return page("%s - 3v3 tiering evidence" % report.nick, "\n".join(body))
+
+
+def player_json(
+    report: PlayerReport,
+    *,
+    slug: str,
+    window: str,
+    built_at: str,
+    fitted_at: str,
+    sample_size: int,
+) -> str:
+    return _dump({
+        "built_at": built_at,
+        "window": window,
+        "fitted_at": fitted_at,
+        "sample_size": sample_size,
+        "slug": slug,
+        "player_id": report.player_id,
+        "nick": report.nick,
+        "tier": report.current_tier,
+        "decided": report.decided,
+        "expected_wins": round(report.expected_wins, 2),
+        "actual_wins": report.actual_wins,
+        "delta": round(report.delta, 2),
+        "per_100": round(report.per_100, 2),
+        "label": report.label,
+        "recommendation": report.recommendation,
+        "luck": report.luck,
+        "stack_wins": report.stack_wins,
+        "underdog_losses": report.underdog_losses,
+        "upset_wins": report.upset_wins,
+        "upset_losses": report.upset_losses,
+        "source_counts": report.source_counts,
+        "players_seen": report.players_seen,
+        "players_guessed": report.players_guessed,
+    })
+
+
+def redirects(previous, slugs: Dict[str, str]) -> str:
+    """_redirects lines for slugs that moved since the last build.
+
+    A player who left the scan gets no line: the old page is gone, and a
+    redirect to nothing is worse than a 404.
+    """
+    lines = []
+    for entry in (previous or {}).get("players", []):
+        current = slugs.get(entry.get("player_id"))
+        if current and current != entry.get("slug"):
+            lines.append("/players/%s/ /players/%s/ 301"
+                         % (entry["slug"], current))
+    return "\n".join(sorted(lines)) + ("\n" if lines else "")

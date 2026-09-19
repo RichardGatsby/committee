@@ -4,8 +4,9 @@ import re
 from gibhub.scan import Coverage, ScanRow
 from gibhub.report import PlayerReport
 from gibhub.site import (about_page, assign_slugs, build_site, caveat_block,
-                         index_json, index_page, model_json, page, player_page,
-                         scan_json, slugify)
+                         index_json, index_page, model_json, page, player_json,
+                         player_page,
+                         redirects, scan_json, slugify)
 
 CLEAN = Coverage(players_seen=100, players_guessed=2, guessed_share=0.02)
 HEAVY = Coverage(players_seen=100, players_guessed=46, guessed_share=0.46)
@@ -318,3 +319,41 @@ def test_player_page_escapes_the_nick():
 def test_player_page_shows_the_stacked_and_underdog_split():
     html = player_page(_report(), **STAMP)
     assert "favoured" in html.lower() and "underdog" in html.lower()
+
+
+def test_player_json_carries_the_verdict_and_its_provenance():
+    payload = json.loads(player_json(_report(), slug="lepari", **STAMP))
+    assert payload["slug"] == "lepari"
+    assert payload["nick"] == "Lepari"
+    assert payload["label"] == "CLEARLY UNDER"
+    assert payload["expected_wins"] == 13.33
+    assert payload["source_counts"]["imputed"] == 40
+
+
+def test_player_json_stamps_the_build():
+    payload = json.loads(player_json(_report(), slug="lepari", **STAMP))
+    assert payload["built_at"] == "2026-09-19T05:00:00+00:00"
+
+
+PREVIOUS = {"players": [
+    {"slug": "chuck", "player_id": "p1", "nick": "chuCk", "tier": "A"},
+    {"slug": "jassi", "player_id": "p2", "nick": "Jassi", "tier": "A"},
+]}
+
+
+def test_redirects_point_a_retired_slug_at_the_current_one():
+    lines = redirects(PREVIOUS, {"p1": "czkk", "p2": "jassi"})
+    assert "/players/chuck/ /players/czkk/ 301" in lines
+
+
+def test_redirects_leave_unchanged_slugs_alone():
+    assert redirects(PREVIOUS, {"p1": "chuck", "p2": "jassi"}) == ""
+
+
+def test_redirects_ignore_a_player_who_has_left_the_scan():
+    assert redirects(PREVIOUS, {"p2": "jassi"}) == ""
+
+
+def test_redirects_survive_a_missing_previous_build():
+    assert redirects(None, {"p1": "chuck"}) == ""
+    assert redirects({}, {"p1": "chuck"}) == ""
