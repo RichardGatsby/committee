@@ -92,6 +92,7 @@ def page(title: str, body: str, players: Sequence[Tuple[str, str]] = ()) -> str:
         "<title>%s</title>\n"
         "<style>%s</style>\n"
         '<nav><a href="/">Scan</a>'
+        '<a href="/players/">Players</a>'
         '<a href="/gaps/">Missing tiers</a>'
         '<a href="/about/">How this works</a>%s</nav>\n'
         "%s\n"
@@ -425,6 +426,10 @@ def build_site(
         # is missing" is itself worth stating.
         "gaps/index.html": gaps_page(untiered_rows, coverage,
                                      players=picker, **stamp),
+        # Always published, like gaps: the nav links to it, and a build with no
+        # player pages should say so rather than 404.
+        "players/index.html": players_page(rows, linked, coverage,
+                                           players=picker, **stamp),
         "api/gaps.json": gaps_json(untiered_rows, coverage, **stamp),
     }
     for player_id, report in reports.items():
@@ -612,3 +617,47 @@ def gaps_json(
             "utro": round(r.utro, 4) if r.utro is not None else None,
         } for r in rows],
     })
+
+
+def players_page(
+    rows: Sequence[ScanRow],
+    slugs: Dict[str, str],
+    coverage: Coverage,
+    *,
+    window: str,
+    built_at: str,
+    fitted_at: str,
+    sample_size: int,
+    players: Sequence[Tuple[str, str]] = (),
+) -> str:
+    """Every player with a page of their own.
+
+    The scan index lists only the players whose record disagrees with their
+    tier, so without this one a player drops out of reach the moment their
+    verdict settles to ON TIER.
+    """
+    listed = sorted((r for r in rows if r.player_id in slugs),
+                    key=lambda r: slugs[r.player_id])
+    body = ["<h1>Every player scored</h1>"]
+    body.append(
+        "<p>The scan lists only the records that disagree with the tier held. "
+        "This is all of them, agreeing or not.</p>")
+    body.append(caveat_block(coverage, window=window, built_at=built_at,
+                             fitted_at=fitted_at, sample_size=sample_size))
+
+    if not listed:
+        body.append("<p>This site was built without player pages. Run the "
+                    "build with <code>--players</code> to publish them.</p>")
+    else:
+        cells = "".join(
+            '<tr><td><a href="/players/%s/">%s</a><td>%s'
+            '<td class="num">%d<td class="num">%+.1f<td>%s'
+            % (escape(slugs[r.player_id]), escape(r.nick), escape(r.tier),
+               r.games, r.per_100, escape(r.recommendation))
+            for r in listed)
+        body.append(
+            '<table><thead><tr><th>Player<th>Tier<th class="num">Games'
+            '<th class="num">Per 100<th>Decision</thead><tbody>%s</tbody>'
+            "</table>" % cells)
+        body.append("<p>%d players, alphabetically.</p>" % len(listed))
+    return page("Every player scored", "\n".join(body), players)

@@ -150,6 +150,10 @@ browser:
 | `/api/gaps.json` | every player in the window with no committee tier |
 | `/api/players/<slug>.json` | one player's verdict |
 
+`/players/` lists everyone scored, agreeing with their tier or not. The scan
+on the front page shows only the disagreements, so without that index a player
+falls out of reach the moment their verdict settles to `KEEP`.
+
 `/gaps/` is the work list: every player the model had to guess a tier for,
 busiest first, with their account id and the UTRO the guess came from. The top
 of that list is where a guess distorts the most verdicts, so it is where a

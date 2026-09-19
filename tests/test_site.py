@@ -6,7 +6,8 @@ from gibhub.report import PlayerReport
 from gibhub.site import (about_page, assign_slugs, build_site, caveat_block,
                          index_json, index_page, model_json, page, player_json,
                          player_page,
-                         gaps_json, gaps_page, redirects, scan_json, slugify)
+                         gaps_json, gaps_page, players_page, redirects,
+                         scan_json, slugify)
 
 CLEAN = Coverage(players_seen=100, players_guessed=2, guessed_share=0.02)
 HEAVY = Coverage(players_seen=100, players_guessed=46, guessed_share=0.46)
@@ -224,8 +225,9 @@ def _site(rows=(), coverage=CLEAN):
 
 def test_build_site_writes_the_expected_paths():
     assert set(_site().keys()) == {
-        "index.html", "about/index.html", "gaps/index.html", "_headers",
-        "api/scan.json", "api/model.json", "api/index.json", "api/gaps.json"}
+        "index.html", "about/index.html", "gaps/index.html",
+        "players/index.html", "_headers", "api/scan.json", "api/model.json",
+        "api/index.json", "api/gaps.json"}
 
 
 def test_build_site_returns_bytes_for_every_path():
@@ -238,9 +240,10 @@ def test_headers_open_the_api_to_cross_origin_reads():
     assert "Access-Control-Allow-Origin: *" in headers
 
 
-def test_build_site_does_not_link_players_in_phase_one():
+def test_the_scan_table_does_not_link_a_player_with_no_page():
+    """The nav always points at /players/; a row must not point at a 404."""
     site = _site([_row("p1", "Lepari")])
-    assert "/players/" not in site["index.html"].decode("utf-8")
+    assert '<a href="/players/lepari/"' not in site["index.html"].decode("utf-8")
 
 
 def test_build_site_is_byte_identical_for_identical_input():
@@ -501,3 +504,49 @@ def test_build_site_publishes_a_gaps_page_even_with_no_gaps():
     site = build_site([_row("p1", "Lepari")], CLEAN, POINTS, 0.4385, METRICS,
                       **STAMP)
     assert "gaps/index.html" in site
+
+
+def test_players_page_lists_everyone_with_a_page_alphabetically():
+    rows = [_row("p2", "zed", tier="B"), _row("p1", "alf")]
+    html = players_page(rows, {"p1": "alf", "p2": "zed"}, CLEAN, **STAMP)
+    assert html.index("alf") < html.index("zed")
+
+
+def test_players_page_links_each_name_to_its_page():
+    rows = [_row("p1", "Lepari")]
+    html = players_page(rows, {"p1": "lepari"}, CLEAN, **STAMP)
+    assert '<a href="/players/lepari/">Lepari</a>' in html
+
+
+def test_players_page_includes_players_the_scan_table_leaves_out():
+    """The index shows only disagreements; this page must show everyone."""
+    rows = [_row("p1", "Lepari", label="ON TIER", recommendation="KEEP at A")]
+    html = players_page(rows, {"p1": "lepari"}, CLEAN, **STAMP)
+    assert "Lepari" in html and "KEEP at A" in html
+
+
+def test_players_page_omits_a_player_with_no_page():
+    rows = [_row("p1", "Lepari"), _row("p2", "Ghost")]
+    html = players_page(rows, {"p1": "lepari"}, CLEAN, **STAMP)
+    assert "Ghost" not in html
+
+
+def test_players_page_says_so_when_the_build_has_no_player_pages():
+    html = players_page([_row("p1", "Lepari")], {}, CLEAN, **STAMP)
+    assert "built without" in html
+
+
+def test_players_page_carries_the_caveats():
+    assert "too few games to call" in players_page(
+        [_row("p1", "Lepari")], {"p1": "lepari"}, CLEAN, **STAMP)
+
+
+def test_build_site_always_publishes_the_player_index():
+    assert "players/index.html" in _site([_row("p1", "Lepari")])
+
+
+def test_build_site_player_index_links_the_pages_it_wrote():
+    site = build_site([_row("p1", "Lepari")], CLEAN, POINTS, 0.4385, METRICS,
+                      reports={"p1": _report()}, **STAMP)
+    assert '<a href="/players/lepari/">' in \
+        site["players/index.html"].decode("utf-8")
