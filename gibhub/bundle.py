@@ -6,6 +6,7 @@ import os
 import tempfile
 from typing import Dict, List, Optional, Tuple
 
+from .history import TierChange, TierHistory
 from .model import TIERS
 from .tiers import Holding, TierIndex
 
@@ -38,10 +39,13 @@ class Bundle:
     impute_max: Optional[str] = None
     # player_id -> tier, supplied by the committee rather than the API.
     overrides: Dict[str, str] = dataclasses.field(default_factory=dict)
+    # Dated committee decisions, oldest first. Empty until one is logged.
+    history: List[TierChange] = dataclasses.field(default_factory=list)
 
     def index(self) -> TierIndex:
         return TierIndex(holdings=self.holdings, bands=self.bands, utro=self.utro,
-                         impute_max=self.impute_max, overrides=self.overrides)
+                         impute_max=self.impute_max, overrides=self.overrides,
+                         history=TierHistory.build(self.history))
 
 
 def save(bundle: Bundle, path=DEFAULT_PATH) -> None:
@@ -65,6 +69,7 @@ def save(bundle: Bundle, path=DEFAULT_PATH) -> None:
         "scale": bundle.scale,
         "impute_max": bundle.impute_max,
         "overrides": bundle.overrides,
+        "history": [dataclasses.asdict(change) for change in bundle.history],
     }
     destination = str(path)
     directory = os.path.dirname(destination) or "."
@@ -109,4 +114,5 @@ def load(path=DEFAULT_PATH) -> Bundle:
         scale=payload.get("scale"),
         impute_max=payload.get("impute_max"),
         overrides=payload.get("overrides", {}),
+        history=[TierChange(**entry) for entry in payload.get("history") or []],
     )

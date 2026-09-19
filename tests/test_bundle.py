@@ -1,8 +1,10 @@
+import dataclasses
 import json
 
 import pytest
 
 from gibhub.bundle import Bundle, BundleMissing, load, save
+from gibhub.history import TierChange
 from gibhub.tiers import Holding
 
 
@@ -95,3 +97,50 @@ def test_save_removes_the_temp_file_when_serialisation_fails(tmp_path, monkeypat
     with pytest.raises(ValueError, match="boom"):
         save(_bundle(), str(path))
     assert list(tmp_path.iterdir()) == []
+
+
+# --- tier history -----------------------------------------------------------
+
+
+def test_history_round_trips(tmp_path):
+    path = tmp_path / "coefficients.json"
+    bundle = dataclasses.replace(
+        _bundle(), history=[TierChange("2026-09-19", "p1", "E", "S", "why")]
+    )
+    save(bundle, str(path))
+    assert load(str(path)).history == bundle.history
+
+
+def test_a_first_tiering_round_trips_with_a_null_previous(tmp_path):
+    path = tmp_path / "coefficients.json"
+    bundle = dataclasses.replace(
+        _bundle(), history=[TierChange("2026-09-19", "p1", None, "B", "")]
+    )
+    save(bundle, str(path))
+    assert load(str(path)).history[0].previous is None
+
+
+def test_a_bundle_without_history_loads_as_empty(tmp_path):
+    path = tmp_path / "coefficients.json"
+    save(_bundle(), str(path))
+    payload = json.loads(path.read_text())
+    del payload["history"]
+    path.write_text(json.dumps(payload))
+    assert load(str(path)).history == []
+
+
+def test_a_fresh_bundle_has_no_history():
+    assert _bundle().history == []
+
+
+def test_the_index_carries_the_history():
+    bundle = dataclasses.replace(
+        _bundle(), overrides={"p1": "S"},
+        history=[TierChange("2026-09-19", "p1", "E", "S", "")],
+    )
+    assert bundle.index().resolve("p1", "x", on_date="2026-01-01").tier == "E"
+
+
+def test_an_index_from_a_bundle_without_history_is_unaffected():
+    bundle = dataclasses.replace(_bundle(), overrides={"p1": "S"})
+    assert bundle.index().resolve("p1", "x", on_date="2026-01-01").tier == "S"
