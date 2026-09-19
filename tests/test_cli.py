@@ -546,3 +546,52 @@ def test_scan_says_so_when_the_bundle_carries_no_committee_tiers(
     assert code != 0
     assert "no committee tier list" in captured.err
     assert "No player's record differs" not in captured.out
+
+
+def test_scan_warns_when_most_of_the_population_has_no_tier(
+    monkeypatch, capsys, tmp_path
+):
+    """Only p1 is tiered anywhere; the other five have to be guessed.
+
+    Holdings are deliberately omitted for the rest: a holding elsewhere would
+    resolve cross-channel, which counts as a real committee decision.
+    """
+    path = tmp_path / "coefficients.json"
+    save(
+        Bundle(
+            fitted_at="2026-09-18T00:00:00+00:00",
+            data_cutoff="2026-09-18",
+            sample_size=100,
+            coefficients=[0.9, 0.6, 0.3, 0.0, -0.4, -0.8],
+            fit_metrics={"log_loss": 0.6, "brier": 0.2, "accuracy": 0.7, "samples": 100},
+            bands={"S": 1.3, "E": 1.2, "A": 1.15, "B": 1.0, "C": 0.9, "D": 0.8},
+            utro={},
+            holdings={"p1": (Holding("legacy", "A", "2026-09-01"),)},
+            channel_names={"legacy": "ET:Legacy Events: #3vs3"},
+            overrides={"p1": "A"},
+        ),
+        path,
+    )
+    monkeypatch.setattr(
+        "gibhub.cli.make_client",
+        lambda args: _ScanClient([_scan_match(i) for i in range(60)]))
+
+    main(["--bundle", str(path), "scan", "--min-games", "50"])
+
+    out = capsys.readouterr().out
+    assert "UNRELIABLE" in out
+    assert "5 of the 6 players" in out
+
+
+def test_scan_stays_quiet_when_the_population_is_tiered(
+    monkeypatch, capsys, scan_bundle_path
+):
+    monkeypatch.setattr(
+        "gibhub.cli.make_client",
+        lambda args: _ScanClient([_scan_match(i) for i in range(60)]))
+
+    main(["--bundle", scan_bundle_path, "scan", "--min-games", "50"])
+
+    out = capsys.readouterr().out
+    assert "UNRELIABLE" not in out
+    assert "CAUTION" not in out

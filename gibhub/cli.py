@@ -13,7 +13,7 @@ from .fetch import AmbiguousPlayer, PlayerNotFound, fetch_player_data, resolve_p
 from .model import TIERS, TIER_POINTS
 from .render import strip_colors, to_csv, to_json, to_markdown, to_scan_csv, to_scan_table
 from .report import build_report
-from .scan import scan
+from .scan import scan, tier_coverage
 
 PAGE_SIZE = 100
 
@@ -322,6 +322,15 @@ def cmd_scan(args) -> int:
 
     rows = scan(matches, bundle.index(), bundle.coefficients, bundle.scale or 1.0,
                 min_games=args.min_games, only=categories_for(args), nicks=nicks)
+
+    # Above the table: the scan silently drops players it cannot tier, so a
+    # clean-looking result may just mean most of the population went unscored.
+    found = tier_coverage(matches, bundle.index(), only=categories_for(args))
+    if found.warning:
+        print("> %s" % found.warning)
+        print("> %d of the %d players in these matches had no committee tier."
+              % (found.players_guessed, found.players_seen))
+        print("")
 
     print(to_scan_table(rows, show_all=args.all), end="")
     if args.out:

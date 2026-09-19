@@ -12,8 +12,8 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence
 from .categories import allowed, categorise
 from .dataset import TEAM_SIZE, roster_ids, winner_of
 from .model import feature_vector, predict
-from .report import classify, luck_probability, recommend
-from .tiers import IMPUTED, TierIndex
+from .report import classify, guess_warning, luck_probability, recommend
+from .tiers import IMPUTED, OVERRIDE, TierIndex
 
 # Above this the odds stop measuring evidence and start measuring broken
 # assumptions — chiefly that games are independent, which they are not when a
@@ -59,6 +59,59 @@ class ScanRow:
         if self.games < ONE_TIER_GAMES and abs(self.tiers_off) < 1.0:
             return "only %d games; too few for a 1-tier call" % self.games
         return ""
+
+
+@dataclasses.dataclass(frozen=True)
+class Coverage:
+    """How much of the scanned population the committee has actually tiered."""
+
+    players_seen: int
+    players_guessed: int
+    guessed_share: float
+
+    @property
+    def warning(self) -> str:
+        return guess_warning(
+            {OVERRIDE: self.players_seen - self.players_guessed,
+             IMPUTED: self.players_guessed},
+            subject="this scan")
+
+
+def tier_coverage(
+    matches: Iterable[Dict[str, Any]],
+    index: TierIndex,
+    *,
+    only: Optional[List[str]] = None,
+) -> Coverage:
+    """Who turned up, and how many of them the model had to guess a tier for.
+
+    Reported apart from the rows because scan() drops untiered players before
+    forming any verdict: a scan can look clean purely because most of the
+    population was never scored.
+    """
+    counted = allowed(only)
+    seen: set = set()
+    guessed: set = set()
+
+    for match in matches:
+        if categorise(match) not in counted:
+            continue
+        alpha, beta = roster_ids(match)
+        if len(alpha) != TEAM_SIZE or len(beta) != TEAM_SIZE:
+            continue
+        channel = match.get("channel_id")
+        for player, resolved in zip(alpha + beta,
+                                    index.resolve_all(alpha, channel)
+                                    + index.resolve_all(beta, channel)):
+            seen.add(player)
+            if resolved.source == IMPUTED:
+                guessed.add(player)
+
+    return Coverage(
+        players_seen=len(seen),
+        players_guessed=len(guessed),
+        guessed_share=(len(guessed) / len(seen)) if seen else 0.0,
+    )
 
 
 def _logit(p: float) -> float:

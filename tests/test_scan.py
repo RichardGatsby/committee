@@ -1,6 +1,6 @@
 import pytest
 
-from gibhub.scan import ODDS_CEILING, ScanRow, scan
+from gibhub.scan import ODDS_CEILING, ScanRow, scan, tier_coverage
 from gibhub.tiers import Holding, TierIndex
 
 BANDS = {"S": 1.30, "E": 1.10, "A": 1.05, "B": 1.00, "C": 0.90, "D": 0.80}
@@ -118,3 +118,68 @@ def test_nicks_are_used_when_supplied():
     row = _row(rows, "x")
     assert row.nick == "Baczo"
     assert row.top_mate == "SkyLine"
+
+
+# --- population tier coverage ----------------------------------------------
+#
+# Reported separately from the rows: a scan can look clean simply because the
+# players it could not tier were dropped before any verdict was formed.
+
+SIX = ("x", "y", "z", "q", "r", "s")
+
+
+def _sixty():
+    return [_match(["x", "y", "z"], ["q", "r", "s"], "alpha") for _ in range(60)]
+
+
+def test_coverage_of_a_fully_tiered_population_is_clean():
+    overrides = {p: "B" for p in SIX}
+    found = tier_coverage(_sixty(), _index(overrides))
+
+    assert found.players_seen == 6
+    assert found.players_guessed == 0
+    assert found.guessed_share == 0.0
+    assert found.warning == ""
+
+
+def test_coverage_counts_distinct_players_not_appearances():
+    overrides = {p: "B" for p in SIX}
+    found = tier_coverage(_sixty(), _index(overrides))
+
+    assert found.players_seen == 6
+
+
+def test_coverage_share_is_the_fraction_of_guessed_tier_inputs():
+    overrides = {"x": "B", "y": "B", "z": "B"}
+    found = tier_coverage(_sixty(), _index(overrides))
+
+    assert found.players_guessed == 3
+    assert found.guessed_share == pytest.approx(0.5)
+
+
+def test_a_half_guessed_population_is_unreliable():
+    overrides = {"x": "B", "y": "B", "z": "B"}
+    assert tier_coverage(_sixty(), _index(overrides)).warning.startswith("UNRELIABLE")
+
+
+def test_a_quarter_guessed_population_earns_a_caution():
+    overrides = {p: "B" for p in ("x", "y", "z", "q")}
+    found = tier_coverage(_sixty(), _index(overrides))
+
+    assert found.guessed_share == pytest.approx(1 / 3.0)
+    assert found.warning.startswith("CAUTION")
+
+
+def test_coverage_ignores_matches_outside_the_counted_categories():
+    overrides = {p: "B" for p in SIX}
+    poland = [_match(["x", "y", "z"], ["q", "r", "s"], "alpha",
+                     channel="Poland ET:Legacy: #3v3") for _ in range(60)]
+    assert tier_coverage(poland, _index(overrides)).players_seen == 0
+
+
+def test_coverage_of_no_matches_is_empty_rather_than_a_division_by_zero():
+    found = tier_coverage([], _index({}))
+
+    assert found.players_seen == 0
+    assert found.guessed_share == 0.0
+    assert found.warning == ""
