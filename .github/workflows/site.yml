@@ -28,7 +28,7 @@ jobs:
       # are immutable once written, hence the run id in the key and the prefix
       # restore. Entries are evicted after seven days unused, which is why this
       # runs daily rather than weekly.
-      - uses: actions/cache@v4
+      - uses: actions/cache/restore@v4
         with:
           path: .cache
           key: matches-${{ github.run_id }}
@@ -43,6 +43,16 @@ jobs:
       # --players adds a page per scanned player: one profile, spider and
       # match listing fetch each. Drop the flag if the build gets too slow.
       - run: python3 -m gibhub.cli site --out _site --range 1y --players
+
+      # Saved with if: always(), and deliberately not in the combined cache
+      # action, whose post step is skipped when the job fails. A cold build
+      # fetches thousands of match details; losing them to one failed deploy
+      # would mean starting cold again tomorrow.
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: .cache
+          key: matches-${{ github.run_id }}
 
       - uses: cloudflare/wrangler-action@v3
         with:
