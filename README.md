@@ -183,6 +183,56 @@ for `maNic` and `juissi` for `poshtat` — and two list entries resolving to one
 account are both rejected rather than silently one-tiered. Anything it cannot
 place is printed for a human to resolve by UUID.
 
+### When a tier changes
+
+Scoring every match against today's tiers means a promotion rewrites the past.
+Measured by simulation on a 4-month window: moving one active player up a tier
+shifted **17 of 18** scanned players and flipped **three verdicts**, none of them
+from anybody's play. The promoted player's own `+22.58 CLEARLY OVER` became
+`+0.39 ON TIER` over the same 336 matches — the evidence for the promotion
+deleted by the promotion.
+
+So decisions are dated, in `data/tier-changes.tsv`:
+
+    # date       player   from  to  note
+    2026-10-04   somebody   B     A   +9.1 over 412 games, 1 in 300
+
+`from` is `-` when the player held no committee tier before. Resolve it with the
+tier list and refit:
+
+    python3 tools/resolve_tierlist.py data/tierlist-events-3v3.txt overrides.txt \
+        data/tier-changes.tsv tier-history.txt
+    python3 tools/check_tier_history.py
+    python3 -m gibhub.cli fit --refit --tier-channel Events --points \
+        --impute-max A --overrides overrides.txt --tier-history tier-history.txt
+
+Every match is then scored against the tier in force on its own day. On the same
+simulation, logging the change cut other players' movement by **52%** and
+removed one of the two spurious verdict flips; dated today, with no matches after
+it, **nothing moved at all**. The residual movement is real — after the change
+date that player genuinely is the new tier.
+
+A report whose subject changed tier shows a **By tier held** table, and the
+recommendation is computed from the current era alone, because only games since
+the change test the tier they now hold:
+
+    **By tier held**
+      Tier era           Games   Expected wins   Actual wins   Difference   Verdict
+      ---------------------------------------------------------------------------
+      E   ..2026-10-04     336           115.4           138        +22.6   CLEARLY OVER
+      S   2026-10-04..      12             7.9             8         +0.1   ON TIER
+
+    _Too few games to judge S yet: 12 played, about 250 needed for a one-tier call._
+
+In the scan the same split appears as `tier changed 2026-10-04; 12 games at S`
+under **Read with care because**, with `changed_on` and `games_at_tier` columns
+in the CSV.
+
+`tools/check_tier_history.py` guards the two files against drift: a last entry
+disagreeing with the tier list, a logged player missing from it, duplicate or
+out-of-order dates, or a chain that does not join up. It does not demand a log
+entry per listed player — most players will never have one.
+
 ## How the model works
 
 Each tier is worth fixed points — **S 5, E 4, A 3, B 2, C 1, D 0** — and a team's
@@ -253,9 +303,10 @@ shown to be incomparable.
 
 ## Known limitations
 
-- **Tiers have no history**, so past matches are scored against today's tiers. A
-  recently promoted player looks like they were overperforming all year. Hence the
-  4-month default window.
+- **Tier history starts when it is recorded.** Matches are scored against the
+  tier in force on the day, but only back to a player's first entry in
+  `data/tier-changes.tsv`. Before that they resolve to their current tier, which
+  for anyone never logged is the whole record.
 - **Tiers are per channel**, so a player active in several may be scored against
   another channel's assignment; those inputs are counted as "cross-channel".
 - **The approach is partly circular** by design: it asks whether a record is

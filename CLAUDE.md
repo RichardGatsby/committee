@@ -56,8 +56,13 @@ and no clock.
 - **There is no intercept, by design.** Two mirrored rosters must score exactly
   0.5. A test asserts this; do not "improve" the fit by adding a bias term
   without raising it as a decision first.
-- **Tiers have no history.** Past matches are scored against today's tiers,
-  which is why the default window is 4 months.
+- **Tiers are dated, from `data/tier-changes.tsv` forward.** Every match is
+  scored against the tier in force on the day it was played, so a promotion no
+  longer rewrites the past. Anything before a player's first logged change
+  resolves to their current tier, which for most players is every match there
+  is — history only exists from the moment it starts being recorded.
+  `TierIndex.resolve(player, channel, on_date)` is the whole mechanism; pass the
+  match date or the answer is "today".
 - **The API's betting odds are unusable** — a pari-mutuel joke-money pool, null
   in every 3v3 match sampled. Do not wire them in.
 - **Imputation is the main source of false signal.** A player with no committee
