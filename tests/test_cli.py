@@ -725,13 +725,34 @@ def _site_report(player_id, nick):
     )
 
 
+class _SiteClient(_ScanClient):
+    """Serves the scan sweep and the per-player endpoints a report needs."""
+
+    def get(self, path, params=None):
+        # Every scanned player needs a profile and a spider, not just p1.
+        if path.endswith("/spider"):
+            return {"metrics": [{"key": "utro", "value": 1.1, "avg": 1.0,
+                                 "percentile": 70}]}
+        if path.endswith("/matches") and (params or {}).get("pageSize") == 1:
+            return {"total": 1}
+        if path.startswith("/players/") and path.count("/") == 2:
+            player_id = path.rsplit("/", 1)[1]
+            return {"player_id": player_id, "nick": player_id,
+                    "discord_nick": player_id, "tiers": [],
+                    "lifetime": {"matches": 10, "match_wins": 6, "match_losses": 4,
+                                 "match_draws": 0, "utro": 1.1, "kdr": 1.0}}
+        return FAKE_CLIENT.get(path, params)
+
+    def paginate(self, path, params=None, page_size=100, limit=None):
+        if path == "/matches":
+            return _ScanClient.paginate(self, path, params, page_size, limit)
+        return iter([{"match_id": "m1"}])
+
+
 def test_site_command_writes_a_page_per_player(monkeypatch, tmp_path,
                                                scan_bundle_path):
-    client = _ScanClient([_scan_match(i) for i in range(60)])
+    client = _SiteClient([_scan_match(i) for i in range(60)])
     monkeypatch.setattr("gibhub.cli.make_client", lambda args: client)
-    monkeypatch.setattr(
-        "gibhub.cli._report_for",
-        lambda client, bundle, player_id, args, cache: _site_report(player_id, "Me"))
     out = tmp_path / "_site"
 
     code = main(["--bundle", scan_bundle_path, "site", "--out", str(out),
@@ -747,11 +768,8 @@ def test_site_command_writes_a_page_per_player(monkeypatch, tmp_path,
 def test_site_command_redirects_a_slug_that_moved_since_the_last_build(
     monkeypatch, tmp_path, scan_bundle_path
 ):
-    client = _ScanClient([_scan_match(i) for i in range(60)])
+    client = _SiteClient([_scan_match(i) for i in range(60)])
     monkeypatch.setattr("gibhub.cli.make_client", lambda args: client)
-    monkeypatch.setattr(
-        "gibhub.cli._report_for",
-        lambda client, bundle, player_id, args, cache: _site_report(player_id, "Me"))
     out = tmp_path / "_site"
     (out / "api").mkdir(parents=True)
     (out / "api" / "index.json").write_text(

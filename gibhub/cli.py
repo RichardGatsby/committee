@@ -99,6 +99,9 @@ def build_parser() -> argparse.ArgumentParser:
     site_cmd.add_argument("--from", dest="from_", metavar="YYYY-MM-DD")
     site_cmd.add_argument("--to", metavar="YYYY-MM-DD")
     site_cmd.add_argument("--min-games", type=int, default=50, dest="min_games")
+    # _report_for reads args.matches; 0 means every match in the window, which
+    # is what a published verdict should be built from.
+    site_cmd.add_argument("--matches", type=int, default=0, metavar="N")
     site_cmd.add_argument("--only", action="append", metavar="TYPE")
     site_cmd.add_argument("--with-poland", action="store_true", dest="with_poland")
     site_cmd.add_argument(

@@ -9,6 +9,7 @@ import json
 import re
 from typing import Dict, Sequence
 
+from .render import strip_colors
 from .report import PlayerReport, guess_warning
 from .scan import Coverage, ScanRow
 
@@ -372,6 +373,11 @@ def build_site(
     return {path: text.encode("utf-8") for path, text in files.items()}
 
 
+def _display_nick(report: PlayerReport) -> str:
+    """The name to show. Same rule to_markdown uses, so the two agree."""
+    return strip_colors(report.nick) or report.discord_nick
+
+
 def player_page(
     report: PlayerReport,
     *,
@@ -380,7 +386,8 @@ def player_page(
     fitted_at: str,
     sample_size: int,
 ) -> str:
-    body = ["<h1>%s</h1>" % escape(report.nick)]
+    nick = _display_nick(report)
+    body = ["<h1>%s</h1>" % escape(nick)]
 
     # Above the headline, where a cropped screenshot still catches it.
     warning = guess_warning(report.source_counts)
@@ -410,7 +417,7 @@ def player_page(
                  if report.players_seen else 0.0),
         window=window, built_at=built_at, fitted_at=fitted_at,
         sample_size=sample_size))
-    return page("%s - 3v3 tiering evidence" % report.nick, "\n".join(body))
+    return page("%s - 3v3 tiering evidence" % nick, "\n".join(body))
 
 
 def player_json(
@@ -429,7 +436,7 @@ def player_json(
         "sample_size": sample_size,
         "slug": slug,
         "player_id": report.player_id,
-        "nick": report.nick,
+        "nick": _display_nick(report),
         "tier": report.current_tier,
         "decided": report.decided,
         "expected_wins": round(report.expected_wins, 2),

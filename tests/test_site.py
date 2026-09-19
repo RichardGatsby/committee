@@ -394,3 +394,19 @@ def test_every_html_page_still_carries_the_caveats_with_player_pages():
     missing = [p for p, html in _html_pages(site).items()
                if "too few games to call" not in html]
     assert missing == []
+
+
+def test_player_page_strips_the_colour_codes_from_the_nick():
+    html = player_page(_report(nick="^1agsor"), **STAMP)
+    assert "^1agsor" not in html
+    assert "agsor" in html
+
+
+def test_player_page_falls_back_to_the_discord_nick_when_the_nick_is_all_colour():
+    html = player_page(_report(nick="^1^2", discord_nick="lepari"), **STAMP)
+    assert "lepari" in html
+
+
+def test_player_json_strips_the_colour_codes_too():
+    payload = json.loads(player_json(_report(nick="^1agsor"), slug="agsor", **STAMP))
+    assert payload["nick"] == "agsor"
