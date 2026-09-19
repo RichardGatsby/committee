@@ -40,6 +40,10 @@ class ScanRow:
     top_mate: str
     top_mate_share: float
     guessed_share: float
+    # The last in-window date the committee changed this player's tier, and how
+    # many of `games` fall after it. Equal to `games` when nothing changed.
+    changed_on: str = ""
+    games_at_tier: int = 0
 
     @property
     def odds(self) -> int:
@@ -51,6 +55,10 @@ class ScanRow:
     @property
     def caution(self) -> str:
         """The reason not to take this row at face value, if there is one."""
+        # First, because it says the verdict rests on part of the sample.
+        if self.changed_on:
+            return "tier changed %s; %d games at %s" % (
+                self.changed_on, self.games_at_tier, self.tier)
         if self.top_mate_share >= DOMINANT_MATE_SHARE:
             return "%.0f%% of games with %s" % (100 * self.top_mate_share, self.top_mate)
         if self.guessed_share >= HEAVY_GUESS_SHARE:
@@ -142,8 +150,10 @@ def scan(
             continue
 
         channel = match.get("channel_id")
-        alpha_r = index.resolve_all(alpha, channel)
-        beta_r = index.resolve_all(beta, channel)
+        # Score against the tiers in force on the day, not today's.
+        on_date = (match.get("start_time") or "")[:10] or None
+        alpha_r = index.resolve_all(alpha, channel, on_date)
+        beta_r = index.resolve_all(beta, channel, on_date)
         p_alpha = predict(coefficients, feature_vector(
             [r.tier for r in alpha_r], [r.tier for r in beta_r]))
         n_guessed = sum(1 for r in alpha_r + beta_r if r.source == IMPUTED)
@@ -151,25 +161,36 @@ def scan(
         for side, probability in ((alpha, p_alpha), (beta, 1.0 - p_alpha)):
             won = (winner == "alpha") if side is alpha else (winner == "beta")
             for player_id in side:
-                played[player_id].append((probability, won))
+                played[player_id].append((probability, won, on_date))
                 guessed[player_id] += n_guessed
                 for other in side:
                     if other != player_id:
                         mates[player_id][other] += 1
 
     nicks = nicks or {}
+    window = [date for entries in played.values() for _, _, date in entries if date]
+    first, last = (min(window), max(window)) if window else (None, None)
+
     rows = []
     for player_id, games in played.items():
         tier = index.overrides.get(player_id)
         if not tier or len(games) < min_games:
             continue
 
-        probabilities = [p for p, _ in games]
-        actual = sum(1 for _, won in games if won)
+        count = len(games)
+        # A tier change inside the window splits the record: only the games
+        # since it test the tier the player holds now.
+        inside = index.history.changes_in(player_id, first, last)
+        changed_on = max(inside) if inside else ""
+        current = [g for g in games
+                   if not changed_on or (g[2] or "") >= changed_on]
+
+        probabilities = [p for p, _, _ in current]
+        actual = sum(1 for _, won, _ in current if won)
         expected = sum(probabilities)
         luck = luck_probability(probabilities, actual)
         label = classify(actual - expected, luck)
-        count = len(games)
+        scored = len(current)
 
         mate, shared = mates[player_id].most_common(1)[0] if mates[player_id] else ("", 0)
         rows.append(ScanRow(
@@ -179,14 +200,16 @@ def scan(
             games=count,
             expected=expected,
             actual=actual,
-            per_100=100.0 * (actual - expected) / count,
-            tiers_off=(_logit(actual / count) - _logit(expected / count)) / scale,
+            per_100=100.0 * (actual - expected) / scored,
+            tiers_off=(_logit(actual / scored) - _logit(expected / scored)) / scale,
             luck=luck,
             label=label,
             recommendation=recommend(label, tier),
             top_mate=nicks.get(mate, mate[:8] if mate else ""),
             top_mate_share=shared / count if count else 0.0,
             guessed_share=guessed[player_id] / (2 * TEAM_SIZE * count) if count else 0.0,
+            changed_on=changed_on,
+            games_at_tier=scored,
         ))
 
     # Effect size first: the odds are the least trustworthy number here.
