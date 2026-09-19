@@ -357,3 +357,40 @@ def test_redirects_ignore_a_player_who_has_left_the_scan():
 def test_redirects_survive_a_missing_previous_build():
     assert redirects(None, {"p1": "chuck"}) == ""
     assert redirects({}, {"p1": "chuck"}) == ""
+
+
+def test_build_site_writes_a_page_and_json_per_report():
+    site = build_site([_row("p1", "Lepari")], CLEAN, POINTS, 0.4385, METRICS,
+                      reports={"p1": _report()}, previous_index=None, **STAMP)
+    assert "players/lepari/index.html" in site
+    assert "api/players/lepari.json" in site
+
+
+def test_build_site_links_players_once_pages_exist():
+    site = build_site([_row("p1", "Lepari")], CLEAN, POINTS, 0.4385, METRICS,
+                      reports={"p1": _report()}, previous_index=None, **STAMP)
+    assert '<a href="/players/lepari/">' in site["index.html"].decode("utf-8")
+
+
+def test_build_site_writes_redirects_only_when_a_slug_moved():
+    rows = [_row("p1", "Lepari")]
+    without = build_site(rows, CLEAN, POINTS, 0.4385, METRICS,
+                         reports={"p1": _report()},
+                         previous_index={"players": [
+                             {"slug": "lepari", "player_id": "p1"}]}, **STAMP)
+    assert "_redirects" not in without
+
+    moved = build_site(rows, CLEAN, POINTS, 0.4385, METRICS,
+                       reports={"p1": _report()},
+                       previous_index={"players": [
+                           {"slug": "old-name", "player_id": "p1"}]}, **STAMP)
+    assert "/players/old-name/ /players/lepari/ 301" in \
+        moved["_redirects"].decode("utf-8")
+
+
+def test_every_html_page_still_carries_the_caveats_with_player_pages():
+    site = build_site([_row("p1", "Lepari")], CLEAN, POINTS, 0.4385, METRICS,
+                      reports={"p1": _report()}, previous_index=None, **STAMP)
+    missing = [p for p, html in _html_pages(site).items()
+               if "too few games to call" not in html]
+    assert missing == []

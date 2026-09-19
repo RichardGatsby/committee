@@ -340,13 +340,19 @@ def build_site(
     built_at: str,
     fitted_at: str,
     sample_size: int,
+    reports=None,
+    previous_index=None,
 ) -> Dict[str, bytes]:
     """Every file the published site is made of. Paths are relative, no leading slash."""
     stamp = dict(window=window, built_at=built_at, fitted_at=fitted_at,
                  sample_size=sample_size)
     slugs = assign_slugs(rows)
+    reports = reports or {}
+    # Only link a player whose page this build actually writes.
+    linked = {pid: slug for pid, slug in slugs.items() if pid in reports}
+
     files = {
-        "index.html": index_page(rows, coverage, {}, **stamp),
+        "index.html": index_page(rows, coverage, linked, **stamp),
         "about/index.html": about_page(tier_points, scale, fit_metrics, **stamp),
         "_headers": headers(),
         "api/scan.json": scan_json(rows, coverage, slugs, **stamp),
@@ -354,6 +360,15 @@ def build_site(
                                      fitted_at=fitted_at, sample_size=sample_size),
         "api/index.json": index_json(rows, slugs, **stamp),
     }
+    for player_id, report in reports.items():
+        slug = slugs.get(player_id) or slugify(report.nick)
+        files["players/%s/index.html" % slug] = player_page(report, **stamp)
+        files["api/players/%s.json" % slug] = player_json(report, slug=slug, **stamp)
+
+    moved = redirects(previous_index, slugs)
+    if moved:
+        files["_redirects"] = moved
+
     return {path: text.encode("utf-8") for path, text in files.items()}
 
 
