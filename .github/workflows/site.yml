@@ -5,6 +5,11 @@ on:
     - cron: "0 5 * * *"
   workflow_dispatch:
 
+# The job reads the repo and deploys to Cloudflare. It never writes back to
+# GitHub, so the automatic GITHUB_TOKEN needs nothing beyond checkout.
+permissions:
+  contents: read
+
 concurrency:
   group: site
   cancel-in-progress: false
