@@ -166,3 +166,64 @@ def index_page(
             "is capped at 1 in 10000. Showing %d of %d players scanned.</p>"
             % (len(shown), len(rows)))
     return page("3v3 tiering evidence", "\n".join(body))
+
+
+TIER_ORDER = ("S", "E", "A", "B", "C", "D")
+
+LIMITATIONS = (
+    "The approach is partly circular by design: it asks whether a record is "
+    "consistent with the tier held, not what tier a player deserves in the "
+    "absolute.",
+    "Tiers have no history, so past matches are scored against today's tiers. "
+    "A recently promoted player looks like they were overperforming all year.",
+    "The alpha side wins 52.5% of matches and the model cannot express that.",
+    "A player with no committee tier gets one imputed from their shrunken "
+    "UTRO, capped at A. Imputation error, not luck, is the largest source of "
+    "false signal here.",
+)
+
+
+def about_page(
+    tier_points: Dict[str, float],
+    scale: float,
+    fit_metrics: Dict[str, float],
+    *,
+    window: str,
+    built_at: str,
+    fitted_at: str,
+    sample_size: int,
+) -> str:
+    rows = "".join(
+        '<tr><td>%s<td class="num">%g<td class="num">%+.2f'
+        % (escape(tier), tier_points.get(tier, 0.0),
+           scale * tier_points.get(tier, 0.0))
+        for tier in TIER_ORDER)
+    body = [
+        "<h1>How this works</h1>",
+        "<p>Each tier is worth fixed points set by the committee. A team's "
+        "strength is the sum of its three players' points, and the only fitted "
+        "parameter is what one point of advantage is worth:</p>",
+        "<p><code>P(win) = sigmoid(%.2f &times; (my team's points &minus; "
+        "theirs))</code></p>" % scale,
+        "<p>There is <strong>no intercept</strong>, by design: two mirrored "
+        "rosters score exactly 0.5.</p>",
+        "<h2>The tier letters are not an A-to-E ladder</h2>",
+        "<p>The strength order is <strong>S &gt; E &gt; A &gt; B &gt; C &gt; "
+        "D</strong>. Tier E is the second strongest, not the weakest. Every "
+        'place that needs "the next tier up" reads it off the points, never '
+        "the alphabet.</p>",
+        '<table><thead><tr><th>Tier<th class="num">Points'
+        '<th class="num">Log-odds</thead><tbody>%s</tbody></table>' % rows,
+        "<h2>The fit</h2>",
+        "<p>Fitted on %d decided 3v3 matches: %.1f%% accuracy, %.4f Brier, "
+        "%.4f log loss.</p>" % (
+            int(fit_metrics.get("samples", 0)),
+            100 * fit_metrics.get("accuracy", 0.0),
+            fit_metrics.get("brier", 0.0),
+            fit_metrics.get("log_loss", 0.0)),
+        "<h2>Known limitations</h2>",
+        "<ul>%s</ul>" % "".join("<li>%s" % escape(t) for t in LIMITATIONS),
+        caveat_block(Coverage(0, 0, 0.0), window=window, built_at=built_at,
+                     fitted_at=fitted_at, sample_size=sample_size),
+    ]
+    return page("How this works", "\n".join(body))

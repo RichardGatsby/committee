@@ -1,5 +1,6 @@
 from gibhub.scan import Coverage, ScanRow
-from gibhub.site import assign_slugs, caveat_block, index_page, page, slugify
+from gibhub.site import (about_page, assign_slugs, caveat_block, index_page,
+                         page, slugify)
 
 CLEAN = Coverage(players_seen=100, players_guessed=2, guessed_share=0.02)
 HEAVY = Coverage(players_seen=100, players_guessed=46, guessed_share=0.46)
@@ -132,3 +133,33 @@ def test_index_page_links_a_player_when_a_slug_is_given():
     rows = [_row("p1", "Lepari")]
     html = index_page(rows, CLEAN, {"p1": "lepari"}, **STAMP)
     assert '<a href="/players/lepari/">Lepari</a>' in html
+
+
+POINTS = {"S": 5.0, "E": 4.0, "A": 3.0, "B": 2.0, "C": 1.0, "D": 0.0}
+METRICS = {"accuracy": 0.6393, "brier": 0.2204, "log_loss": 0.6304, "samples": 6382}
+
+
+def test_about_page_states_the_tier_order():
+    html = about_page(POINTS, 0.4385, METRICS, **STAMP)
+    assert "S &gt; E &gt; A &gt; B &gt; C &gt; D" in html
+
+
+def test_about_page_prints_the_fit_metrics():
+    html = about_page(POINTS, 0.4385, METRICS, **STAMP)
+    assert "63.9%" in html and "0.2204" in html and "0.6304" in html
+    assert "6382" in html
+
+
+def test_about_page_says_there_is_no_intercept():
+    assert "no intercept" in about_page(POINTS, 0.4385, METRICS, **STAMP)
+
+
+def test_about_page_lists_the_known_limitations():
+    html = about_page(POINTS, 0.4385, METRICS, **STAMP)
+    assert "circular" in html
+    assert "52.5%" in html
+    assert "no history" in html
+
+
+def test_about_page_carries_the_caveats_too():
+    assert "too few games to call" in about_page(POINTS, 0.4385, METRICS, **STAMP)
