@@ -118,6 +118,11 @@ def build_bundle(client, to=None, limit=None, tier_channels=None, points=None,
     if not samples:
         raise ValueError("no usable 3v3 matches found; cannot fit")
 
+    # How far back the training set actually reaches. sample_size alone reads
+    # like a count of some window; it is the whole history the fit could see.
+    dated = sorted(sample.date for sample in samples if sample.date)
+    data_start = dated[0] if dated else None
+
     training = [(sample.features, sample.outcome) for sample in samples]
     if points:
         scale, coefficients = fit_points(training, points)
@@ -127,6 +132,7 @@ def build_bundle(client, to=None, limit=None, tier_channels=None, points=None,
     return Bundle(
         fitted_at=datetime.datetime.now(datetime.timezone.utc).isoformat(),
         data_cutoff=to or datetime.date.today().isoformat(),
+        data_start=data_start,
         sample_size=len(samples),
         coefficients=coefficients,
         fit_metrics=metrics(coefficients, training),

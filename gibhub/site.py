@@ -110,6 +110,21 @@ def covered(window: str, covering: str = "") -> str:
     return '<p class="stamp">Covering %s.</p>' % escape(covering or window)
 
 
+def build_stamp(built_at: str, fitted_at: str, sample_size: int,
+                trained_from: str = "") -> str:
+    """When this page was built, and what the model behind it was trained on.
+
+    The span is the training set, not the page's window: "6382 matches" beside
+    "last 1y" read as though the window held 6382.
+    """
+    span = ("%s to %s" % (trained_from, fitted_at[:10])
+            if trained_from else "up to %s" % fitted_at[:10])
+    return ('<p class="stamp">Built %s. Model fitted %s on %d matches of 3v3 '
+            "history, %s.</p>"
+            % (escape(built_at), escape(fitted_at[:10]), sample_size,
+               escape(span)))
+
+
 def caveat_block(
     coverage: Coverage,
     *,
@@ -117,6 +132,7 @@ def caveat_block(
     built_at: str,
     fitted_at: str,
     sample_size: int,
+    trained_from: str = "",
 ) -> str:
     """What a stranger has to know before reading a verdict as a fact."""
     parts = ['<section class="caveats">']
@@ -128,10 +144,7 @@ def caveat_block(
     parts.append(
         "<p><code>KEEP</code> means too few games to call, not correctly "
         "tiered. Players with no account mapped are missing entirely.</p>")
-    parts.append(
-        '<p class="stamp">Window %s. Built %s from a model fitted %s on %d '
-        "matches.</p>" % (escape(window), escape(built_at), escape(fitted_at),
-                          sample_size))
+    parts.append(build_stamp(built_at, fitted_at, sample_size, trained_from))
     parts.append("</section>")
     return "\n".join(parts)
 
@@ -206,12 +219,14 @@ def index_page(
     fitted_at: str,
     sample_size: int,
     covering: str = "",
+    trained_from: str = "",
     players: Sequence[Tuple[str, str]] = ()) -> str:
     shown = [r for r in rows if r.label != "ON TIER"]
     body = ["<h1>Where a record and a tier disagree</h1>"]
     body.append(covered(window, covering))
     body.append(caveat_block(coverage, window=window, built_at=built_at,
-                             fitted_at=fitted_at, sample_size=sample_size))
+                             fitted_at=fitted_at, sample_size=sample_size,
+                             trained_from=trained_from))
     if not shown:
         body.append("<p>No player's record differs from their tier by more "
                     "than luck.</p>")
@@ -263,6 +278,7 @@ def about_page(
     fitted_at: str,
     sample_size: int,
     covering: str = "",
+    trained_from: str = "",
     players: Sequence[Tuple[str, str]] = ()) -> str:
     rows = "".join(
         '<tr><td>%s<td class="num">%g<td class="num">%+.2f'
@@ -271,6 +287,7 @@ def about_page(
         for tier in TIER_ORDER)
     body = [
         "<h1>How this works</h1>",
+        covered(window, covering),
         "<p>Each tier is worth fixed points set by the committee. A team's "
         "strength is the sum of its three players' points, and the only fitted "
         "parameter is what one point of advantage is worth:</p>",
@@ -295,7 +312,8 @@ def about_page(
         "<h2>Known limitations</h2>",
         "<ul>%s</ul>" % "".join("<li>%s" % escape(t) for t in LIMITATIONS),
         caveat_block(Coverage(0, 0, 0.0), window=window, built_at=built_at,
-                     fitted_at=fitted_at, sample_size=sample_size),
+                     fitted_at=fitted_at, sample_size=sample_size,
+                     trained_from=trained_from),
     ]
     return page("How this works", "\n".join(body), players)
 
@@ -413,11 +431,12 @@ def build_site(
     previous_index=None,
     untiered_rows=(),
     covering: str = "",
+    trained_from: str = "",
 ) -> Dict[str, bytes]:
     """Every file the published site is made of. Paths are relative, no leading slash."""
     stamp = dict(window=window, built_at=built_at, fitted_at=fitted_at,
                  sample_size=sample_size)
-    listing = dict(stamp, covering=covering)
+    listing = dict(stamp, covering=covering, trained_from=trained_from)
     slugs = assign_slugs(rows)
     reports = reports or {}
     # Only link a player whose page this build actually writes.
@@ -449,7 +468,7 @@ def build_site(
     for player_id, report in reports.items():
         slug = slugs.get(player_id) or slugify(report.nick)
         files["players/%s/index.html" % slug] = player_page(
-            report, players=picker, **stamp)
+            report, players=picker, **listing)
         files["api/players/%s.json" % slug] = player_json(report, slug=slug, **stamp)
 
     moved = redirects(previous_index, slugs)
@@ -471,6 +490,8 @@ def player_page(
     built_at: str,
     fitted_at: str,
     sample_size: int,
+    covering: str = "",
+    trained_from: str = "",
     players: Sequence[Tuple[str, str]] = ()) -> str:
     nick = _display_nick(report)
     tier = report.current_tier or "none"
@@ -538,10 +559,8 @@ def player_page(
             '<p class="caveats">%d matches is under the %d it takes to detect '
             "a one-tier error, so this reads as not proven rather than "
             "confirmed.</p>" % (report.decided, ONE_TIER_GAMES))
-    body.append(
-        '<p class="stamp">Window %s. Built %s from a model fitted %s on %d '
-        "matches.</p>" % (escape(window), escape(built_at), escape(fitted_at),
-                          sample_size))
+    body.append(covered(window, covering))
+    body.append(build_stamp(built_at, fitted_at, sample_size, trained_from))
     return page("%s - 3v3 tiering evidence" % nick, "\n".join(body), players)
 
 
@@ -605,6 +624,7 @@ def gaps_page(
     fitted_at: str,
     sample_size: int,
     covering: str = "",
+    trained_from: str = "",
     players: Sequence[Tuple[str, str]] = ()) -> str:
     """The work list: who has no committee tier, busiest first."""
     body = ["<h1>Players with no committee tier</h1>",
@@ -616,7 +636,8 @@ def gaps_page(
         "at the top of this list are the ones whose tiers would improve the "
         "verdicts most.</p>")
     body.append(caveat_block(coverage, window=window, built_at=built_at,
-                             fitted_at=fitted_at, sample_size=sample_size))
+                             fitted_at=fitted_at, sample_size=sample_size,
+                             trained_from=trained_from))
 
     if not rows:
         body.append("<p>Every player in this window holds a committee tier. "
@@ -684,6 +705,7 @@ def players_page(
     fitted_at: str,
     sample_size: int,
     covering: str = "",
+    trained_from: str = "",
     players: Sequence[Tuple[str, str]] = (),
 ) -> str:
     """Every player with a page of their own.
@@ -699,7 +721,8 @@ def players_page(
         "<p>The scan lists only the records that disagree with the tier held. "
         "This is all of them, agreeing or not.</p>")
     body.append(caveat_block(coverage, window=window, built_at=built_at,
-                             fitted_at=fitted_at, sample_size=sample_size))
+                             fitted_at=fitted_at, sample_size=sample_size,
+                             trained_from=trained_from))
 
     if not listed:
         body.append("<p>This site was built without player pages. Run the "

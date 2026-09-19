@@ -17,6 +17,7 @@ class Sample:
     features: List[float]
     outcome: int  # 1 when alpha won, 0 when beta won
     sources: List[str]
+    date: str = ""  # YYYY-MM-DD, so a fit can say how far back it reaches
 
 
 def _roster_from_rounds(match: Dict[str, Any], side: str) -> List[str]:
@@ -103,6 +104,7 @@ def match_to_sample(
         ),
         outcome=1 if winner == "alpha" else 0,
         sources=[r.source for r in alpha_resolved + beta_resolved],
+        date=on_date or "",
     )
 
 

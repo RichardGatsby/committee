@@ -91,10 +91,11 @@ def test_caveat_block_stays_short():
 
 
 def test_caveat_block_carries_the_build_stamp():
+    """The window is stated by covered(); the stamp is about the model."""
     block = caveat_block(CLEAN, **STAMP)
     assert "2026-09-19T05:00:00+00:00" in block
-    assert "last 1y" in block
     assert "6382" in block
+    assert "3v3 history" in block
 
 
 def test_caveat_block_raises_the_coverage_warning_when_tiers_were_guessed():
@@ -266,7 +267,7 @@ def test_every_html_page_carries_its_provenance():
     site = _site([_row("p1", "Lepari")])
     missing = [p for p, html in _html_pages(site).items()
                if STAMP["built_at"] not in html or STAMP["window"] not in html]
-    assert missing == [], "pages published without a build stamp: %s" % missing
+    assert missing == [], "pages published without build stamp or window: %s" % missing
 
 
 def test_every_listing_page_carries_the_caveats():
@@ -674,3 +675,16 @@ def test_about_page_does_not_state_an_unsourced_alpha_rate():
 
 def test_about_page_admits_rosters_are_the_top_three_by_playtime():
     assert "playtime" in about_page(POINTS, 0.4385, METRICS, **STAMP)
+
+
+def test_the_stamp_says_the_training_set_is_history_not_the_window():
+    """6382 next to 'last 1y' read as if the window held 6382 matches."""
+    block = caveat_block(CLEAN, trained_from="2024-03-01", **STAMP)
+    assert "3v3 history" in block
+    assert "2024-03-01" in block
+
+
+def test_the_stamp_copes_with_a_bundle_that_never_recorded_the_span():
+    block = caveat_block(CLEAN, **STAMP)
+    assert "3v3 history" in block
+    assert "2026-09-18" in block

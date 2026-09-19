@@ -39,6 +39,9 @@ class Bundle:
     impute_max: Optional[str] = None
     # player_id -> tier, supplied by the committee rather than the API.
     overrides: Dict[str, str] = dataclasses.field(default_factory=dict)
+    # Earliest match in the training set. None on bundles fitted before this
+    # was recorded; sample_size alone says nothing about how far back it goes.
+    data_start: Optional[str] = None
     # Dated committee decisions, oldest first. Empty until one is logged.
     history: List[TierChange] = dataclasses.field(default_factory=list)
 
@@ -69,6 +72,7 @@ def save(bundle: Bundle, path=DEFAULT_PATH) -> None:
         "scale": bundle.scale,
         "impute_max": bundle.impute_max,
         "overrides": bundle.overrides,
+        "data_start": bundle.data_start,
         "history": [dataclasses.asdict(change) for change in bundle.history],
     }
     destination = str(path)
@@ -114,5 +118,6 @@ def load(path=DEFAULT_PATH) -> Bundle:
         scale=payload.get("scale"),
         impute_max=payload.get("impute_max"),
         overrides=payload.get("overrides", {}),
+        data_start=payload.get("data_start"),
         history=[TierChange(**entry) for entry in payload.get("history") or []],
     )

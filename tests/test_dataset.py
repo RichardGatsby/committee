@@ -207,3 +207,10 @@ def test_an_index_without_history_trains_exactly_as_before():
     old = _match(start_time="2026-05-01T20:00:00+02:00")
     new = _match(start_time="2026-09-20T20:00:00+02:00")
     assert match_to_sample(old, index).features == match_to_sample(new, index).features
+
+
+def test_a_sample_records_the_date_its_match_was_played():
+    """build_bundle needs it to say how far back the training set reaches."""
+    from gibhub.dataset import Sample
+
+    assert "date" in Sample.__dataclass_fields__

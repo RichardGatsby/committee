@@ -466,6 +466,7 @@ def cmd_site(args) -> int:
         bundle.fit_metrics,
         window=window_label(args),
         covering=covering,
+        trained_from=bundle.data_start or "",
         built_at=args.built_at or datetime.datetime.now(
             datetime.timezone.utc).replace(microsecond=0).isoformat(),
         fitted_at=bundle.fitted_at,

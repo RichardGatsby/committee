@@ -144,3 +144,36 @@ def test_the_index_carries_the_history():
 def test_an_index_from_a_bundle_without_history_is_unaffected():
     bundle = dataclasses.replace(_bundle(), overrides={"p1": "S"})
     assert bundle.index().resolve("p1", "x", on_date="2026-01-01").tier == "S"
+
+
+def test_a_bundle_can_record_when_its_training_data_starts():
+    """sample_size alone reads like a window count; the span says otherwise."""
+    from gibhub.bundle import Bundle
+
+    assert "data_start" in Bundle.__dataclass_fields__
+
+
+def test_data_start_survives_a_save_and_load(tmp_path):
+    from gibhub.bundle import Bundle, load, save
+
+    path = tmp_path / "coefficients.json"
+    bundle = Bundle(
+        fitted_at="2026-09-19T00:00:00+00:00", data_cutoff="2026-09-19",
+        sample_size=10, coefficients=[0.0] * 6, fit_metrics={}, bands={},
+        utro={}, holdings={}, channel_names={}, data_start="2024-03-01")
+    save(bundle, path)
+    assert load(path).data_start == "2024-03-01"
+
+
+def test_an_older_bundle_without_the_field_still_loads(tmp_path):
+    import json
+
+    from gibhub.bundle import load
+
+    path = tmp_path / "coefficients.json"
+    path.write_text(json.dumps({
+        "fitted_at": "x", "data_cutoff": "y", "sample_size": 1,
+        "coefficients": {t: 0.0 for t in ("S", "E", "A", "B", "C", "D")},
+        "fit_metrics": {}, "bands": {}, "utro": {}, "holdings": {},
+    }), encoding="utf-8")
+    assert load(path).data_start is None
