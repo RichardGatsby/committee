@@ -8,7 +8,7 @@ import html as html_module
 import re
 from typing import Dict, Sequence
 
-from .scan import ScanRow
+from .scan import Coverage, ScanRow
 
 _UNSAFE = re.compile(r"[^a-z0-9]+")
 
@@ -67,3 +67,35 @@ def page(title: str, body: str) -> str:
         "%s\n"
         "</html>\n"
     ) % (escape(title), STYLE, body)
+
+
+def caveat_block(
+    coverage: Coverage,
+    *,
+    window: str,
+    built_at: str,
+    fitted_at: str,
+    sample_size: int,
+) -> str:
+    """What a stranger has to know before reading a verdict as a fact."""
+    parts = ['<section class="caveats">']
+    if coverage.warning:
+        parts.append("<p><strong>%s</strong> %d of the %d players in this window "
+                     "had no committee tier.</p>"
+                     % (escape(coverage.warning), coverage.players_guessed,
+                        coverage.players_seen))
+    parts.append(
+        "<p><code>KEEP</code> means too few games to call, not correctly "
+        "tiered. A row with few games and a large effect reads as "
+        "<code>KEEP</code> because the evidence is thin, not because the tier "
+        "is right.</p>")
+    parts.append(
+        "<p>Some committee names still have no account mapped, mostly C and D, "
+        "so a player missing from this table has not been cleared - they have "
+        "not been checked.</p>")
+    parts.append(
+        '<p class="stamp">Window %s. Built %s from a model fitted %s on %d '
+        "matches.</p>" % (escape(window), escape(built_at), escape(fitted_at),
+                          sample_size))
+    parts.append("</section>")
+    return "\n".join(parts)

@@ -1,5 +1,8 @@
-from gibhub.scan import ScanRow
-from gibhub.site import assign_slugs, page, slugify
+from gibhub.scan import Coverage, ScanRow
+from gibhub.site import assign_slugs, caveat_block, page, slugify
+
+CLEAN = Coverage(players_seen=100, players_guessed=2, guessed_share=0.02)
+HEAVY = Coverage(players_seen=100, players_guessed=46, guessed_share=0.46)
 
 
 def _row(player_id, nick, **kwargs):
@@ -57,3 +60,35 @@ def test_page_loads_nothing_from_the_network():
     html = page("Scan", "")
     assert "http://" not in html and "https://" not in html
     assert "<script" not in html
+
+
+STAMP = dict(window="last 1y", built_at="2026-09-19T05:00:00+00:00",
+             fitted_at="2026-09-18T00:00:00+00:00", sample_size=6382)
+
+
+def test_caveat_block_always_explains_keep():
+    block = caveat_block(CLEAN, **STAMP)
+    assert "too few games to call" in block
+    assert "correctly tiered" in block
+
+
+def test_caveat_block_always_warns_about_unmapped_names():
+    assert "no account mapped" in caveat_block(CLEAN, **STAMP)
+
+
+def test_caveat_block_carries_the_build_stamp():
+    block = caveat_block(CLEAN, **STAMP)
+    assert "2026-09-19T05:00:00+00:00" in block
+    assert "last 1y" in block
+    assert "6382" in block
+
+
+def test_caveat_block_raises_the_coverage_warning_when_tiers_were_guessed():
+    block = caveat_block(HEAVY, **STAMP)
+    assert "UNRELIABLE" in block
+    assert "46 of the 100 players" in block
+
+
+def test_caveat_block_omits_the_coverage_warning_when_coverage_is_clean():
+    block = caveat_block(CLEAN, **STAMP)
+    assert "UNRELIABLE" not in block and "CAUTION" not in block
