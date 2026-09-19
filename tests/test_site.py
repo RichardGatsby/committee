@@ -133,7 +133,7 @@ def test_index_page_escapes_a_nick_that_looks_like_markup():
 
 def test_index_page_carries_the_caveats():
     html = index_page([_row("p1", "Lepari")], CLEAN, {}, **STAMP)
-    assert "too few games to call" in html
+    assert "evidence is thin" in html
 
 
 def test_index_page_links_a_player_when_a_slug_is_given():
@@ -169,7 +169,7 @@ def test_about_page_lists_the_known_limitations():
 
 
 def test_about_page_carries_the_caveats_too():
-    assert "too few games to call" in about_page(POINTS, 0.4385, METRICS, **STAMP)
+    assert "evidence is thin" in about_page(POINTS, 0.4385, METRICS, **STAMP)
 
 
 def test_scan_json_carries_every_row_including_on_tier_ones():
@@ -258,7 +258,7 @@ def _html_pages(site):
 def test_every_html_page_carries_the_caveats():
     site = _site([_row("p1", "Lepari")])
     missing = [p for p, html in _html_pages(site).items()
-               if "too few games to call" not in html]
+               if "evidence is thin" not in html]
     assert missing == [], "pages published without the caveat block: %s" % missing
 
 
@@ -299,19 +299,17 @@ def _report(**kwargs):
 def test_player_page_leads_with_the_verdict():
     html = player_page(_report(), **STAMP)
     assert "Lepari" in html
-    assert "CLEARLY UNDER" in html
     assert "MOVE DOWN: A → B" in html
-    assert "13.33" in html
 
 
 def test_player_page_raises_the_guessed_tier_alarm_above_the_headline():
     html = player_page(_report(), **STAMP)
-    assert html.index("guessed") < html.index("CLEARLY UNDER"), \
+    assert html.index("guessed") < html.index("Won 7 of 20"), \
         "the alarm must survive a cropped screenshot"
 
 
 def test_player_page_carries_the_caveats():
-    assert "too few games to call" in player_page(_report(), **STAMP)
+    assert "evidence is thin" in player_page(_report(), **STAMP)
 
 
 def test_player_page_escapes_the_nick():
@@ -395,7 +393,7 @@ def test_every_html_page_still_carries_the_caveats_with_player_pages():
     site = build_site([_row("p1", "Lepari")], CLEAN, POINTS, 0.4385, METRICS,
                       reports={"p1": _report()}, previous_index=None, **STAMP)
     missing = [p for p, html in _html_pages(site).items()
-               if "too few games to call" not in html]
+               if "evidence is thin" not in html]
     assert missing == []
 
 
@@ -476,7 +474,7 @@ def test_gaps_page_says_so_when_nothing_is_missing():
 
 
 def test_gaps_page_carries_the_caveats():
-    assert "too few games to call" in gaps_page(GAPS, CLEAN, **STAMP)
+    assert "evidence is thin" in gaps_page(GAPS, CLEAN, **STAMP)
 
 
 def test_gaps_page_escapes_a_nick_that_looks_like_markup():
@@ -537,7 +535,7 @@ def test_players_page_says_so_when_the_build_has_no_player_pages():
 
 
 def test_players_page_carries_the_caveats():
-    assert "too few games to call" in players_page(
+    assert "evidence is thin" in players_page(
         [_row("p1", "Lepari")], {"p1": "lepari"}, CLEAN, **STAMP)
 
 
@@ -550,3 +548,41 @@ def test_build_site_player_index_links_the_pages_it_wrote():
                       reports={"p1": _report()}, **STAMP)
     assert '<a href="/players/lepari/">' in \
         site["players/index.html"].decode("utf-8")
+
+
+def test_player_page_leads_with_plain_numbers():
+    html = player_page(_report(), **STAMP)
+    assert "Won 7 of 20" in html
+    assert "expected about 13 wins" in html
+
+
+def test_player_page_says_which_way_the_tier_is_wrong():
+    html = player_page(_report(), **STAMP)
+    assert "too high" in html
+
+
+def test_player_page_says_too_low_when_the_player_is_over():
+    html = player_page(_report(label="CLEARLY OVER",
+                               recommendation="MOVE UP: A → E"), **STAMP)
+    assert "too low" in html
+
+
+def test_player_page_accounts_for_every_decided_match():
+    """The old page showed four numbers that did not add up to the total."""
+    html = player_page(_report(), **STAMP)
+    # 5 favoured wins + 2 favoured losses + 1 underdog win + 4 underdog losses
+    # = 12, against 20 decided: the other 8 must be shown, not dropped.
+    assert ">8<" in html
+
+
+def test_player_page_does_not_talk_about_a_table():
+    assert "this table" not in player_page(_report(), **STAMP)
+
+
+def test_player_page_warns_that_tiers_have_no_history():
+    assert "no history" in player_page(_report(), **STAMP)
+
+
+def test_player_page_still_puts_the_guess_alarm_first():
+    html = player_page(_report(), **STAMP)
+    assert html.index("guessed") < html.index("Won 7 of 20")

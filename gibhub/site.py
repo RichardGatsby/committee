@@ -107,6 +107,7 @@ def caveat_block(
     built_at: str,
     fitted_at: str,
     sample_size: int,
+    scope: str = "table",
 ) -> str:
     """What a stranger has to know before reading a verdict as a fact."""
     parts = ['<section class="caveats">']
@@ -115,15 +116,25 @@ def caveat_block(
                      "had no committee tier.</p>"
                      % (escape(coverage.warning), coverage.players_guessed,
                         coverage.players_seen))
-    parts.append(
-        "<p><code>KEEP</code> means too few games to call, not correctly "
-        "tiered. A row with few games and a large effect reads as "
-        "<code>KEEP</code> because the evidence is thin, not because the tier "
-        "is right.</p>")
-    parts.append(
-        "<p>Some committee names still have no account mapped, mostly C and D, "
-        "so a player missing from this table has not been cleared - they have "
-        "not been checked.</p>")
+    if scope == "player":
+        parts.append(
+            "<p>A verdict is only as good as the number of matches behind it. "
+            "Few games and a big gap still reads as <code>KEEP</code>, because "
+            "the evidence is thin - not because the tier is right.</p>")
+        parts.append(
+            "<p>Tiers have no history here. Every match above is scored "
+            "against the tier held today, so someone promoted recently looks "
+            "like they were beating the new tier all year.</p>")
+    else:
+        parts.append(
+            "<p><code>KEEP</code> means too few games to call, not correctly "
+            "tiered. A row with few games and a large effect reads as "
+            "<code>KEEP</code> because the evidence is thin, not because the "
+            "tier is right.</p>")
+        parts.append(
+            "<p>Some committee names still have no account mapped, mostly C "
+            "and D, so a player missing from this table has not been cleared - "
+            "they have not been checked.</p>")
     parts.append(
         '<p class="stamp">Window %s. Built %s from a model fitted %s on %d '
         "matches.</p>" % (escape(window), escape(built_at), escape(fitted_at),
@@ -459,36 +470,73 @@ def player_page(
     sample_size: int,
     players: Sequence[Tuple[str, str]] = ()) -> str:
     nick = _display_nick(report)
+    tier = report.current_tier or "none"
     body = ["<h1>%s</h1>" % escape(nick)]
 
-    # Above the headline, where a cropped screenshot still catches it.
+    # Above everything, where a cropped screenshot still catches it.
     warning = guess_warning(report.source_counts)
     if warning:
         body.append(
             '<p class="caveats"><strong>%s</strong> %d of the %d players in '
-            "this window had no committee tier.</p>"
+            "these matches had no committee tier.</p>"
             % (escape(warning), report.players_guessed, report.players_seen))
 
     body.append(
-        "<p><strong>Expected %.2f wins, actual %d &mdash; %+.2f &rarr; %s"
-        "</strong></p>" % (report.expected_wins, report.actual_wins,
-                           report.delta, escape(report.label)))
-    body.append("<h2>%s</h2>" % escape(report.recommendation))
+        "<p><strong>Won %d of %d matches</strong> in this window, holding "
+        "tier %s. Weighing the tiers on both sides of each of those matches, "
+        "the model expected about %.0f wins - so %s is %+.1f against what the "
+        "tiers predicted.</p>"
+        % (report.actual_wins, report.decided, escape(tier),
+           report.expected_wins, escape(nick), report.delta))
+
+    if report.label == "ON TIER":
+        body.append("<h2>%s</h2>" % escape(report.recommendation))
+        body.append("<p>The record is what tier %s predicts, within what luck "
+                    "alone produces over %d matches.</p>"
+                    % (escape(tier), report.decided))
+    else:
+        over = report.label.endswith("OVER")
+        body.append(
+            "<h2>The tier looks too %s</h2>" % ("low" if over else "high"))
+        body.append(
+            "<p>%s wins <strong>%s</strong> than tier %s predicts, so the tier "
+            "is too %s. %s</p>"
+            % (escape(nick), "more" if over else "fewer", escape(tier),
+               "low" if over else "high",
+               "Luck alone explains a gap this big less than 1 time in 100."
+               if report.label.startswith("CLEARLY")
+               else "Luck alone explains a gap this big less than 1 time in "
+                    "20."))
+        body.append("<p><strong>%s</strong></p>" % escape(report.recommendation))
+
+    favoured = report.stack_wins + report.upset_losses
+    underdog = report.upset_wins + report.underdog_losses
+    other = report.decided - favoured - underdog
+    body.append("<h2>How those %d matches went</h2>" % report.decided)
     body.append(
-        "<p>Tier %s over %d decided matches. Won %d while favoured, lost %d as "
-        "the underdog: a record built entirely on stacked teams reads the same "
-        "as one built against the odds unless you look here.</p>"
-        % (escape(report.current_tier or "none"), report.decided,
-           report.stack_wins, report.underdog_losses))
+        '<table><thead><tr><th>Going in<th class="num">Matches'
+        '<th class="num">Won<th class="num">Lost</thead><tbody>'
+        '<tr><td>Favoured<td class="num">%d<td class="num">%d<td class="num">%d'
+        '<tr><td>Underdog<td class="num">%d<td class="num">%d<td class="num">%d'
+        '<tr><td>Evenly matched<td class="num">%d<td class="num">-'
+        '<td class="num">-'
+        "</tbody></table>"
+        % (favoured, report.stack_wins, report.upset_losses,
+           underdog, report.upset_wins, report.underdog_losses, other))
     body.append(
-        "<p>Won %d as the underdog, lost %d while favoured.</p>"
-        % (report.upset_wins, report.upset_losses))
+        "<p>Favoured means the model gave their team better than an even "
+        "chance before the match. Evenly matched games are not split here "
+        "because neither side was favoured. This split is worth reading "
+        "alongside the verdict: a record built on favoured games is not the "
+        "same as one built against the odds, and the totals above hide the "
+        "difference.</p>")
+
     body.append(caveat_block(
         Coverage(report.players_seen, report.players_guessed,
                  (report.players_guessed / report.players_seen)
                  if report.players_seen else 0.0),
         window=window, built_at=built_at, fitted_at=fitted_at,
-        sample_size=sample_size))
+        sample_size=sample_size, scope="player"))
     return page("%s - 3v3 tiering evidence" % nick, "\n".join(body), players)
 
 
