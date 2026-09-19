@@ -3,6 +3,7 @@
 import dataclasses
 from typing import Dict, Iterable, List, Mapping, Optional, Sequence
 
+from .history import TierHistory
 from .model import TIERS
 
 OVERRIDE = "override"
@@ -94,9 +95,20 @@ class TierIndex:
     # Committee-supplied tiers for players the API does not have, or has wrong.
     # Checked before everything else, and never capped.
     overrides: Mapping[str, str] = dataclasses.field(default_factory=dict)
+    # Dated committee decisions. Empty means every lookup answers as it does
+    # today, so the whole feature is inert until something is logged.
+    history: TierHistory = dataclasses.field(
+        default_factory=lambda: TierHistory.build([])
+    )
 
-    def resolve(self, player_id: str, channel_id: Optional[str]) -> ResolvedTier:
+    def resolve(
+        self, player_id: str, channel_id: Optional[str], on_date: Optional[str] = None
+    ) -> ResolvedTier:
         override = self.overrides.get(player_id)
+        if on_date is not None:
+            # What the committee had decided by that date, which may be nothing
+            # yet -- in which case fall through to holdings and imputation.
+            override = self.history.tier_at(player_id, on_date, current=override)
         if override:
             return ResolvedTier(override, OVERRIDE)
 
@@ -116,9 +128,17 @@ class TierIndex:
         )
 
     def resolve_all(
-        self, player_ids: Iterable[str], channel_id: Optional[str]
+        self,
+        player_ids: Iterable[str],
+        channel_id: Optional[str],
+        on_date: Optional[str] = None,
     ) -> List[ResolvedTier]:
-        return [self.resolve(player_id, channel_id) for player_id in player_ids]
+        return [self.resolve(pid, channel_id, on_date) for pid in player_ids]
 
-    def tiers_of(self, player_ids: Iterable[str], channel_id: Optional[str]) -> List[str]:
-        return [resolved.tier for resolved in self.resolve_all(player_ids, channel_id)]
+    def tiers_of(
+        self,
+        player_ids: Iterable[str],
+        channel_id: Optional[str],
+        on_date: Optional[str] = None,
+    ) -> List[str]:
+        return [r.tier for r in self.resolve_all(player_ids, channel_id, on_date)]

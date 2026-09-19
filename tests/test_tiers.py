@@ -1,6 +1,8 @@
 import pytest
 
-from gibhub.tiers import Holding, ResolvedTier, TierIndex, build_bands, nearest_tier
+from gibhub.history import TierChange, TierHistory
+from gibhub.tiers import (EXACT, IMPUTED, OVERRIDE, Holding, ResolvedTier,
+                          TierIndex, build_bands, nearest_tier)
 
 BANDS = {"S": 1.30, "A": 1.15, "B": 1.00, "C": 0.90, "D": 0.80, "E": 0.70}
 
@@ -174,3 +176,66 @@ def test_players_without_an_override_are_unaffected():
     index = TierIndex(holdings={}, bands=REAL_BANDS, utro={"q": 1.40},
                       impute_max="A", overrides={"p": "S"})
     assert index.resolve("q", "ch") == ResolvedTier("A", "imputed")
+
+
+# --- as-of resolution -------------------------------------------------------
+
+
+def _dated_index():
+    return TierIndex(
+        holdings={}, bands={"S": 1.3, "A": 1.05, "B": 1.0}, utro={},
+        overrides={"p1": "S"},
+        history=TierHistory.build([TierChange("2026-09-19", "p1", "E", "S", "")]),
+    )
+
+
+def test_without_a_date_the_current_override_wins():
+    assert _dated_index().resolve("p1", "c1").tier == "S"
+
+
+def test_a_match_before_the_change_sees_the_old_tier():
+    assert _dated_index().resolve("p1", "c1", on_date="2026-05-01").tier == "E"
+
+
+def test_a_match_on_the_change_date_sees_the_new_tier():
+    assert _dated_index().resolve("p1", "c1", on_date="2026-09-19").tier == "S"
+
+
+def test_a_historical_tier_is_still_a_committee_decision():
+    assert _dated_index().resolve("p1", "c1", on_date="2026-05-01").source == OVERRIDE
+
+
+def test_before_a_first_tiering_the_player_falls_back_to_imputation():
+    index = TierIndex(
+        holdings={}, bands={"A": 1.05, "B": 1.0}, utro={"p2": 1.0},
+        overrides={"p2": "A"},
+        history=TierHistory.build([TierChange("2026-09-19", "p2", None, "A", "")]),
+    )
+    resolved = index.resolve("p2", "c1", on_date="2026-01-01")
+    assert resolved.source == IMPUTED
+    assert resolved.tier == "B"
+
+
+def test_before_a_first_tiering_a_channel_holding_still_wins():
+    """Untiered by the committee then does not mean untiered entirely."""
+    index = TierIndex(
+        holdings={"p2": (Holding("c1", "C", "2026-01-01"),)},
+        bands={"A": 1.05, "B": 1.0}, utro={}, overrides={"p2": "A"},
+        history=TierHistory.build([TierChange("2026-09-19", "p2", None, "A", "")]),
+    )
+    resolved = index.resolve("p2", "c1", on_date="2026-01-01")
+    assert (resolved.tier, resolved.source) == ("C", EXACT)
+
+
+def test_resolve_all_threads_the_date_through():
+    resolved = _dated_index().resolve_all(["p1"], "c1", on_date="2026-05-01")
+    assert [r.tier for r in resolved] == ["E"]
+
+
+def test_tiers_of_threads_the_date_through():
+    assert _dated_index().tiers_of(["p1"], "c1", on_date="2026-05-01") == ["E"]
+
+
+def test_an_index_with_no_history_behaves_exactly_as_before():
+    index = TierIndex(holdings={}, bands={"A": 1.05}, utro={}, overrides={"p1": "A"})
+    assert index.resolve("p1", "c1", on_date="1999-01-01").tier == "A"
