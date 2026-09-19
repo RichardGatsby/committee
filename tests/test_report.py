@@ -444,8 +444,8 @@ def test_the_recommendation_says_which_way_to_move():
 def test_the_recommendation_handles_the_ends_of_the_ladder():
     from gibhub.report import recommend
 
-    assert recommend("CLEARLY OVER", "S") == "NO HIGHER TIER: already S, and beating it"
-    assert recommend("OVER", "S") == "NO HIGHER TIER: already S, and beating it"
+    assert recommend("CLEARLY OVER", "S") == "SS TIER: already S, and beating it"
+    assert recommend("OVER", "S") == "SS TIER: already S, and beating it"
     assert recommend("CLEARLY UNDER", "D") == "NO LOWER TIER: already D, and losing below it"
     assert recommend("UNDER", "D") == "NO LOWER TIER: already D, and losing below it"
 

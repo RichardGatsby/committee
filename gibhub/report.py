@@ -240,7 +240,9 @@ def recommend(label: str, tier: Optional[str]) -> str:
         # The ends of the ladder: S cannot go up, D cannot go down. Say that
         # outright rather than issuing a move with nowhere to move to.
         if direction == "UP":
-            return "NO HIGHER TIER: already %s, and beating it" % tier
+            # No tier above S exists, so the verdict names the one the
+            # committee would need to invent.
+            return "SS TIER: already %s, and beating it" % tier
         return "NO LOWER TIER: already %s, and losing below it" % tier
     return "%s %s" % (strength, direction)
 
