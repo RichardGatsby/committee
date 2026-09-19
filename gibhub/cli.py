@@ -3,6 +3,7 @@
 import argparse
 import os
 import sys
+from typing import List, Optional
 
 from .api import ApiError, Client
 from .build import build_bundle
@@ -10,6 +11,7 @@ from .bundle import DEFAULT_PATH, BundleMissing, load, save
 from .cache import MatchCache
 from .categories import POLAND, REPORT_DEFAULT, parse_selection
 from .fetch import AmbiguousPlayer, PlayerNotFound, fetch_player_data, resolve_player
+from .history import TierChange, parse_changes
 from .model import TIERS, TIER_POINTS
 from .render import strip_colors, to_csv, to_json, to_markdown, to_scan_csv, to_scan_table
 from .report import build_report
@@ -96,6 +98,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     fit.add_argument("--to")
     fit.add_argument("--limit", type=int)
+    fit.add_argument(
+        "--tier-history", metavar="FILE", dest="tier_history",
+        default="tier-history.txt",
+        help="resolved tier change log, so past matches are scored against the "
+             "tiers in force on the day. Missing file means no history.",
+    )
     fit.add_argument(
         "--overrides", metavar="FILE",
         help="committee-supplied tiers the API does not have, one 'name = TIER' "
@@ -257,6 +265,15 @@ def load_overrides(client, path):
     return overrides
 
 
+def load_history(path: Optional[str]) -> List[TierChange]:
+    """Read the resolved tier change log. A missing file means no history,
+    which makes every as-of lookup answer exactly as it does today."""
+    if not path or not os.path.exists(path):
+        return []
+    with open(path, "r", encoding="utf-8") as handle:
+        return parse_changes(handle.read())
+
+
 def parse_impute_max(spec):
     """A tier name, or None when uncapped."""
     if not spec or spec.lower() == "none":
@@ -347,6 +364,7 @@ def cmd_fit(args) -> int:
             tier_channels=args.tier_channel, points=parse_points(args.points),
             impute_max=parse_impute_max(args.impute_max),
             overrides=load_overrides(make_client(args), args.overrides),
+            history=load_history(args.tier_history),
         )
         save(bundle, args.bundle)
         print("wrote %s" % args.bundle)

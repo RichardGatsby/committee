@@ -1,0 +1,11 @@
+# Committee tier decisions. Append-only, one per line, tab-separated.
+#
+#   date	player	from	to	note
+#
+# date   YYYY-MM-DD, the day the committee decided.
+# player the same token data/tierlist-events-3v3.txt uses (a nick or a UUID).
+# from   the tier held before, or "-" if the player held no committee tier.
+# to     the tier held after.
+# note   why. Paste the evidence: gap, games, odds.
+#
+# Resolve into UUIDs with tools/resolve_tierlist.py before fitting.

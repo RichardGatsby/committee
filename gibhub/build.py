@@ -6,6 +6,7 @@ from typing import Dict, Tuple
 from .bundle import Bundle
 from .dataset import iter_samples
 from .model import TIERS, fit, fit_points, metrics
+from .history import TierHistory
 from .tiers import Holding, TierIndex, build_bands
 
 SIZE_3V3 = "3v3"
@@ -97,7 +98,7 @@ def filter_holdings(holdings, channel_names, tokens):
 
 
 def build_bundle(client, to=None, limit=None, tier_channels=None, points=None,
-                 impute_max=None, overrides=None) -> Bundle:
+                 impute_max=None, overrides=None, history=None) -> Bundle:
     """Fetch everything, fit, and return a bundle ready to save."""
     utro = fetch_utro(client)
     holdings, channel_names = fetch_tier_holdings(client)
@@ -109,8 +110,10 @@ def build_bundle(client, to=None, limit=None, tier_channels=None, points=None,
             holders[entry.tier].append(player_id)
     bands = build_bands(holders, utro)
 
+    changes = list(history or [])
     index = TierIndex(holdings=holdings, bands=bands, utro=utro,
-                      impute_max=impute_max, overrides=overrides or {})
+                      impute_max=impute_max, overrides=overrides or {},
+                      history=TierHistory.build(changes))
     samples = list(iter_samples(client, index, to=to, limit=limit))
     if not samples:
         raise ValueError("no usable 3v3 matches found; cannot fit")
@@ -136,4 +139,5 @@ def build_bundle(client, to=None, limit=None, tier_channels=None, points=None,
         scale=scale,
         impute_max=impute_max,
         overrides=dict(overrides or {}),
+        history=changes,
     )

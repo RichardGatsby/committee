@@ -162,3 +162,48 @@ def test_gathers_cups_and_team_games_all_train_the_model():
         match["channel_name"] = channel
         match["tags"] = tags
         assert match_to_sample(match, _index()) is not None, channel
+
+
+# --- as-of training ---------------------------------------------------------
+
+from gibhub.history import TierChange, TierHistory  # noqa: E402
+
+
+def _historical_index():
+    return TierIndex(
+        holdings={}, bands=BANDS, utro={}, overrides={"a1": "S"},
+        history=TierHistory.build([TierChange("2026-09-19", "a1", "D", "S", "")]),
+    )
+
+
+def test_a_training_sample_uses_the_tiers_of_its_own_date():
+    index = _historical_index()
+    old = _match(start_time="2026-05-01T20:00:00+02:00")
+    new = _match(start_time="2026-09-20T20:00:00+02:00")
+    assert match_to_sample(old, index).features != match_to_sample(new, index).features
+
+
+def test_a_match_before_the_change_trains_on_the_old_tier():
+    sample = match_to_sample(
+        _match(start_time="2026-05-01T20:00:00+02:00"), _historical_index())
+    # a1 was D then, so alpha gains nothing at S.
+    assert sample.features[0] == 0.0
+
+
+def test_a_match_after_the_change_trains_on_the_new_tier():
+    sample = match_to_sample(
+        _match(start_time="2026-09-20T20:00:00+02:00"), _historical_index())
+    assert sample.features[0] == 1.0
+
+
+def test_a_match_with_no_start_time_falls_back_to_current_tiers():
+    match = _match()
+    match.pop("start_time", None)
+    assert match_to_sample(match, _historical_index()).features[0] == 1.0
+
+
+def test_an_index_without_history_trains_exactly_as_before():
+    index = TierIndex(holdings={}, bands=BANDS, utro={}, overrides={"a1": "S"})
+    old = _match(start_time="2026-05-01T20:00:00+02:00")
+    new = _match(start_time="2026-09-20T20:00:00+02:00")
+    assert match_to_sample(old, index).features == match_to_sample(new, index).features

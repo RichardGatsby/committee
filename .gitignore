@@ -16,3 +16,4 @@ scan.json
 venv/
 .idea/
 .vscode/
+tier-history.txt

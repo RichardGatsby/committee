@@ -91,8 +91,10 @@ def match_to_sample(
         return None
 
     channel_id = match.get("channel_id")
-    alpha_resolved = index.resolve_all(alpha, channel_id)
-    beta_resolved = index.resolve_all(beta, channel_id)
+    # Score against the tiers in force on the day, not today's.
+    on_date = (match.get("start_time") or "")[:10] or None
+    alpha_resolved = index.resolve_all(alpha, channel_id, on_date)
+    beta_resolved = index.resolve_all(beta, channel_id, on_date)
 
     return Sample(
         match_id=match.get("match_id", ""),

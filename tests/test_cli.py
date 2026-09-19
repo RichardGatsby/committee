@@ -202,13 +202,40 @@ def test_fit_with_refit_writes_a_bundle(monkeypatch, tmp_path, capsys):
     monkeypatch.setattr("gibhub.cli.build_bundle",
                         lambda client, to=None, limit=None, tier_channels=None,
                                points=None, impute_max=None,
-                               overrides=None: fake)
+                               overrides=None, history=None: fake)
 
     path = tmp_path / "coefficients.json"
     code = main(["--bundle", str(path), "fit", "--refit"])
     assert code == 0
     assert load(path).sample_size == 7
     assert "7" in capsys.readouterr().out
+
+
+def test_refit_hands_the_change_log_to_build_bundle(monkeypatch, tmp_path):
+    """The log is useless if the fit never sees it."""
+    seen = {}
+
+    history = tmp_path / "tier-history.txt"
+    history.write_text("2026-09-19\tuuid-1\tE\tS\twhy\n")
+
+    fake = Bundle(
+        fitted_at="2026-09-19T00:00:00+00:00", data_cutoff="2026-09-19", sample_size=7,
+        coefficients=[1.0, 0.5, 0.2, 0.0, -0.3, -0.7],
+        fit_metrics={"log_loss": 0.5, "brier": 0.2, "accuracy": 0.8, "samples": 7},
+        bands={"S": 1.3}, utro={}, holdings={}, channel_names={},
+    )
+
+    def capture(client, **kwargs):
+        seen.update(kwargs)
+        return fake
+
+    monkeypatch.setattr("gibhub.cli.make_client", lambda args: FAKE_CLIENT)
+    monkeypatch.setattr("gibhub.cli.build_bundle", capture)
+
+    main(["--bundle", str(tmp_path / "c.json"), "fit", "--refit",
+          "--tier-history", str(history)])
+
+    assert [c.player for c in seen["history"]] == ["uuid-1"]
 
 
 def test_fit_accepts_repeated_tier_channel_filters():
@@ -595,3 +622,49 @@ def test_scan_stays_quiet_when_the_population_is_tiered(
     out = capsys.readouterr().out
     assert "UNRELIABLE" not in out
     assert "CAUTION" not in out
+
+
+# --- tier history -----------------------------------------------------------
+
+
+def test_load_history_reads_and_sorts(tmp_path):
+    from gibhub.cli import load_history
+
+    path = tmp_path / "tier-history.txt"
+    path.write_text(
+        "# comment\n"
+        "2026-10-01\tuuid-2\tA\tS\tlater\n"
+        "2026-09-19\tuuid-1\tE\tA\tearlier\n"
+    )
+    changes = load_history(str(path))
+    assert [c.date for c in changes] == ["2026-09-19", "2026-10-01"]
+    assert changes[0].player == "uuid-1"
+
+
+def test_no_history_path_means_no_history():
+    from gibhub.cli import load_history
+
+    assert load_history(None) == []
+
+
+def test_a_missing_history_file_means_no_history(tmp_path):
+    from gibhub.cli import load_history
+
+    assert load_history(str(tmp_path / "absent.txt")) == []
+
+
+def test_a_malformed_history_line_is_reported_with_its_number(tmp_path):
+    from gibhub.cli import load_history
+
+    path = tmp_path / "tier-history.txt"
+    path.write_text("2026-09-19\tuuid-1\tE\n")
+    with pytest.raises(ValueError, match="line 1"):
+        load_history(str(path))
+
+
+def test_the_committed_change_log_parses():
+    """The shipped file is comments only, but it must stay parseable."""
+    from gibhub.history import parse_changes
+
+    with open("data/tier-changes.tsv", "r", encoding="utf-8") as handle:
+        assert parse_changes(handle.read()) == []
