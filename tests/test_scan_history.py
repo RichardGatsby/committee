@@ -1,8 +1,12 @@
 """Scan behaviour once the committee has changed somebody's tier."""
 
+import csv
+import io
+
 import pytest
 
 from gibhub.history import TierChange, TierHistory
+from gibhub.render import to_scan_csv
 from gibhub.scan import scan
 from gibhub.tiers import TierIndex
 
@@ -107,3 +111,31 @@ def test_an_unchanged_population_scores_exactly_as_before():
     plain = scan(matches, _index(ALL_B), COEFFICIENTS, SCALE, min_games=50)
     empty_log = scan(matches, _index(ALL_B, []), COEFFICIENTS, SCALE, min_games=50)
     assert plain == empty_log
+
+
+# --- csv --------------------------------------------------------------------
+
+
+def _split_rows():
+    return scan(_days(5, 30) + _days(7, 30), _index(PROMOTED, CHANGE),
+                COEFFICIENTS, SCALE, min_games=50)
+
+
+def _parsed(rows):
+    return {r["player_id"]: r for r in csv.DictReader(io.StringIO(to_scan_csv(rows)))}
+
+
+def test_the_scan_csv_carries_the_change_columns():
+    header = to_scan_csv(_split_rows()).splitlines()[0]
+    assert "changed_on" in header
+    assert "games_at_tier" in header
+
+
+def test_the_scan_csv_reports_the_split_sample():
+    row = _parsed(_split_rows())["x"]
+    assert row["changed_on"] == "2026-06-01"
+    assert row["games_at_tier"] == "30"
+
+
+def test_an_unchanged_player_has_an_empty_change_date_in_csv():
+    assert _parsed(_split_rows())["y"]["changed_on"] == ""

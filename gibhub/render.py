@@ -295,15 +295,17 @@ def to_scan_table(rows: Sequence[ScanRow], show_all: bool = False) -> str:
 
 
 def to_scan_csv(rows: Sequence[ScanRow]) -> str:
-    columns = ["player_id", "nick", "tier", "games", "expected", "actual", "per_100",
-               "tiers_off", "luck_1_in", "label", "recommendation", "top_mate",
-               "top_mate_share", "guessed_share", "caution"]
+    columns = ["player_id", "nick", "tier", "games", "games_at_tier", "changed_on",
+               "expected", "actual", "per_100", "tiers_off", "luck_1_in", "label",
+               "recommendation", "top_mate", "top_mate_share", "guessed_share",
+               "caution"]
     buffer = io.StringIO()
     writer = csv.DictWriter(buffer, fieldnames=columns, lineterminator="\n")
     writer.writeheader()
     for r in rows:
         writer.writerow({
             "player_id": r.player_id, "nick": r.nick, "tier": r.tier, "games": r.games,
+            "games_at_tier": r.games_at_tier, "changed_on": r.changed_on,
             "expected": "%.1f" % r.expected, "actual": r.actual,
             "per_100": "%.1f" % r.per_100, "tiers_off": "%.2f" % r.tiers_off,
             "luck_1_in": r.odds, "label": r.label, "recommendation": r.recommendation,
