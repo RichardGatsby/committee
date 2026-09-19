@@ -1,4 +1,18 @@
+# caches
 .cache/
+.pytest_cache/
 __pycache__/
 *.pyc
-.pytest_cache/
+
+# generated reports. Output is derived from coefficients.json and goes stale
+# the moment the model is refitted, so it is never committed.
+*.csv
+*.report.md
+scan.json
+
+# macOS, editors, envs
+.DS_Store
+.venv/
+venv/
+.idea/
+.vscode/
