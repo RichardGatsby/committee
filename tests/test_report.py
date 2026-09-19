@@ -547,3 +547,96 @@ def test_a_player_seen_in_many_matches_is_counted_once():
 
     assert report.players_seen == 6
     assert report.players_guessed == 5
+
+
+# --- tier eras --------------------------------------------------------------
+
+from gibhub.history import TierChange, TierHistory  # noqa: E402
+from gibhub.report import ONE_TIER_GAMES, recommend  # noqa: E402
+
+
+def _history_index():
+    return TierIndex(
+        holdings={}, bands={"S": 1.3, "E": 1.2, "A": 1.05, "D": 0.8},
+        utro={}, overrides={"me": "S", "a2": "D", "a3": "D",
+                            "b1": "D", "b2": "D", "b3": "D"},
+        history=TierHistory.build([TierChange("2026-09-15", "me", "E", "S", "")]),
+    )
+
+
+def _dated(match_id, winner, when):
+    match = _detail(match_id, winner, 1.2)
+    match["start_time"] = when + "T20:00:00+02:00"
+    return match
+
+
+def test_rows_carry_the_tier_the_subject_held_that_day():
+    report = build_report(
+        PROFILE, SPIDER,
+        [_dated("m1", "alpha", "2026-09-01"), _dated("m2", "alpha", "2026-09-20")],
+        _history_index(), COEFFICIENTS, {})
+    assert [row.own_tier for row in report.rows] == ["E", "S"]
+
+
+def test_eras_split_the_window_at_the_change():
+    report = build_report(
+        PROFILE, SPIDER,
+        [_dated("m1", "alpha", "2026-09-01"), _dated("m2", "alpha", "2026-09-20")],
+        _history_index(), COEFFICIENTS, {})
+    assert [(era.tier, era.games) for era in report.eras] == [("E", 1), ("S", 1)]
+
+
+def test_each_era_is_scored_on_its_own_matches():
+    report = build_report(
+        PROFILE, SPIDER,
+        [_dated("m1", "beta", "2026-09-01"), _dated("m2", "alpha", "2026-09-20")],
+        _history_index(), COEFFICIENTS, {})
+    assert (report.eras[0].actual, report.eras[1].actual) == (0, 1)
+
+
+def test_an_unchanged_player_has_exactly_one_era():
+    report = build_report(PROFILE, SPIDER, [_detail("m1", "alpha", 1.3)], _index(),
+                          COEFFICIENTS, {})
+    assert len(report.eras) == 1
+
+
+def test_an_unchanged_player_keeps_the_whole_window_verdict():
+    report = build_report(PROFILE, SPIDER, [_detail("m1", "alpha", 1.3)], _index(),
+                          COEFFICIENTS, {})
+    assert report.recommendation == recommend(report.label, report.current_tier)
+
+
+def test_the_recommendation_comes_from_the_current_era_only():
+    """Two losses at E, one win at S. The recommendation must speak about S."""
+    report = build_report(
+        PROFILE, SPIDER,
+        [_dated("m1", "beta", "2026-09-01"), _dated("m2", "beta", "2026-09-02"),
+         _dated("m3", "alpha", "2026-09-20")],
+        _history_index(), COEFFICIENTS, {})
+    assert report.current_tier == "S"
+    assert report.recommendation == recommend(report.eras[-1].label, "S")
+
+
+def test_a_thin_current_era_is_flagged():
+    report = build_report(
+        PROFILE, SPIDER, [_dated("m1", "alpha", "2026-09-20")],
+        _history_index(), COEFFICIENTS, {})
+    assert report.current_era_is_thin is True
+
+
+def test_an_unchanged_player_is_never_flagged_as_thin():
+    report = build_report(PROFILE, SPIDER, [_detail("m1", "alpha", 1.3)], _index(),
+                          COEFFICIENTS, {})
+    assert report.current_era_is_thin is False
+
+
+def test_an_era_with_no_matches_in_the_window_is_dropped():
+    """A change older than the window leaves one era, not an empty one."""
+    report = build_report(
+        PROFILE, SPIDER, [_dated("m1", "alpha", "2026-09-20")],
+        _history_index(), COEFFICIENTS, {})
+    assert [era.tier for era in report.eras] == ["S"]
+
+
+def test_one_tier_games_is_importable_from_report():
+    assert ONE_TIER_GAMES > 0

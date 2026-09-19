@@ -7,6 +7,7 @@ from .categories import allowed, categorise, split
 from .dataset import TEAM_SIZE, roster_ids, winner_of
 from .model import feature_vector, points_delta, predict
 from .model import TIER_POINTS
+from .history import TierHistory
 from .tiers import CROSS_CHANNEL, EXACT, IMPUTED, OVERRIDE, TierIndex
 
 # Verdict thresholds on the probability that a gap this big is luck. Chosen so
@@ -90,6 +91,22 @@ class MatchRow:
     channel: str = ""
     score: str = ""
     category: str = ""
+    # The tier the subject held on the day of this match.
+    own_tier: Optional[str] = None
+
+
+@dataclasses.dataclass(frozen=True)
+class TierEra:
+    """One span the subject held a tier, and how they did while holding it."""
+
+    tier: Optional[str]
+    start: Optional[str]   # inclusive; None means open at the start
+    end: Optional[str]     # exclusive; None means still current
+    games: int
+    expected: float
+    actual: int
+    luck: float
+    label: str
 
 
 @dataclasses.dataclass(frozen=True)
@@ -127,12 +144,22 @@ class PlayerReport:
     # Distinct people in the window, and how many had no committee tier.
     players_seen: int = 0
     players_guessed: int = 0
+    # The spans the subject held each tier in this window, oldest first. One
+    # entry when the tier never changed.
+    eras: List[Any] = dataclasses.field(default_factory=list)
+    # True when the current era is too short to judge the tier it tests.
+    current_era_is_thin: bool = False
 
 
 # Share of tier inputs that had to be guessed before the verdict stops being
 # worth much. Imputation error, not luck, is the dominant source of false signal
 # here: one player's apparent overperformance fell from +24.7 to +10.3 as the
 # guessing was tightened.
+# Games needed to detect a one-tier error at 80% power, from the fitted scale.
+# Lives here rather than in scan.py because the report needs it too and scan
+# already imports from report.
+ONE_TIER_GAMES = 250
+
 CAUTION_GUESS_SHARE = 0.20
 UNRELIABLE_GUESS_SHARE = 0.40
 
@@ -249,6 +276,38 @@ def _lifetime_summary(profile: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def _eras(
+    rows: Sequence[MatchRow],
+    history: TierHistory,
+    player_id: str,
+    current_tier: Optional[str],
+) -> List[TierEra]:
+    """Group the window's decided matches into the tier spans they fall in.
+
+    Spans with no matches in the window are dropped, so a change older than the
+    window leaves a single era rather than an empty leading one.
+    """
+    spans = history.eras(player_id, current=current_tier)
+    out: List[TierEra] = []
+    for start, end, tier in spans:
+        inside = [r for r in rows
+                  if r.result in ("W", "L")
+                  and (start is None or r.date >= start)
+                  and (end is None or r.date < end)]
+        if not inside and len(spans) > 1:
+            continue
+        probabilities = [r.expected for r in inside]
+        expected = sum(probabilities)
+        actual = sum(1 for r in inside if r.result == "W")
+        luck = luck_probability(probabilities, actual) if inside else 1.0
+        out.append(TierEra(
+            tier=tier, start=start, end=end, games=len(inside),
+            expected=expected, actual=actual, luck=luck,
+            label=classify(actual - expected, luck),
+        ))
+    return out
+
+
 def build_report(
     profile: Dict[str, Any],
     spider: Dict[str, Any],
@@ -298,8 +357,13 @@ def build_report(
             continue
 
         channel_id = match.get("channel_id")
-        alpha_resolved = index.resolve_all(alpha, channel_id)
-        beta_resolved = index.resolve_all(beta, channel_id)
+        # Score against the tiers in force on the day, not today's.
+        on_date = (match.get("start_time") or "")[:10] or None
+        alpha_resolved = index.resolve_all(alpha, channel_id, on_date)
+        beta_resolved = index.resolve_all(beta, channel_id, on_date)
+        own_side, own_resolved = ((alpha, alpha_resolved) if side == "alpha"
+                                  else (beta, beta_resolved))
+        own_tier = own_resolved[own_side.index(player_id)].tier
         for player, resolved in zip(alpha + beta, alpha_resolved + beta_resolved):
             counts[resolved.source] += 1
             seen.add(player)
@@ -380,6 +444,7 @@ def build_report(
                 channel=match.get("channel_name") or "",
                 score=score,
                 category=categorise(match),
+                own_tier=own_tier,
             )
         )
 
@@ -398,6 +463,16 @@ def build_report(
         categories.append((key, len(decided_rows), exp, won, group_luck,
                            classify(won - exp, group_luck)))
 
+    eras = _eras(rows, index.history, player_id, current_tier)
+    # The headline covers the whole window; the recommendation must not, or a
+    # player promoted last week is judged on the tier they no longer hold.
+    # A known start date is the signal, not the surviving era count: a change
+    # just before the window leaves one era but still dates the current tier.
+    current_era = eras[-1] if eras else None
+    dated = bool(current_era and current_era.start)
+    verdict = current_era.label if dated else classify(delta, luck)
+    thin = bool(dated and current_era.games < ONE_TIER_GAMES)
+
     spider_metrics = spider.get("metrics") or []
 
     return PlayerReport(
@@ -414,7 +489,7 @@ def build_report(
         label=classify(delta, luck),
         luck=luck,
         current_tier=current_tier,
-        recommendation=recommend(classify(delta, luck), current_tier),
+        recommendation=recommend(verdict, current_tier),
         per_100=(100.0 * delta / decided) if decided else 0.0,
         decided=decided,
         upset_wins=upset_wins,
@@ -429,4 +504,6 @@ def build_report(
         players_guessed=len(guessed_players),
         provenance=provenance,
         categories=categories,
+        eras=eras,
+        current_era_is_thin=thin,
     )

@@ -12,7 +12,8 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence
 from .categories import allowed, categorise
 from .dataset import TEAM_SIZE, roster_ids, winner_of
 from .model import feature_vector, predict
-from .report import classify, guess_warning, luck_probability, recommend
+from .report import (ONE_TIER_GAMES, classify, guess_warning,
+                     luck_probability, recommend)
 from .tiers import IMPUTED, OVERRIDE, TierIndex
 
 # Above this the odds stop measuring evidence and start measuring broken
@@ -21,8 +22,6 @@ from .tiers import IMPUTED, OVERRIDE, TierIndex
 ODDS_CEILING = 10000
 DOMINANT_MATE_SHARE = 0.25
 HEAVY_GUESS_SHARE = 0.20
-# Games needed to detect a one-tier error at 80% power, from the fitted scale.
-ONE_TIER_GAMES = 250
 
 
 @dataclasses.dataclass(frozen=True)

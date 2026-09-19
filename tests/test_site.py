@@ -1,6 +1,8 @@
+import json
+
 from gibhub.scan import Coverage, ScanRow
-from gibhub.site import (about_page, assign_slugs, caveat_block, index_page,
-                         page, slugify)
+from gibhub.site import (about_page, assign_slugs, caveat_block, index_json,
+                         index_page, model_json, page, scan_json, slugify)
 
 CLEAN = Coverage(players_seen=100, players_guessed=2, guessed_share=0.02)
 HEAVY = Coverage(players_seen=100, players_guessed=46, guessed_share=0.46)
@@ -163,3 +165,50 @@ def test_about_page_lists_the_known_limitations():
 
 def test_about_page_carries_the_caveats_too():
     assert "too few games to call" in about_page(POINTS, 0.4385, METRICS, **STAMP)
+
+
+def test_scan_json_carries_every_row_including_on_tier_ones():
+    rows = [_row("p1", "Lepari"), _row("p2", "Jassi", label="ON TIER",
+                                       recommendation="KEEP")]
+    payload = json.loads(scan_json(rows, CLEAN, {"p1": "lepari", "p2": "jassi"},
+                                   **STAMP))
+    assert [r["nick"] for r in payload["rows"]] == ["Lepari", "Jassi"]
+    assert payload["rows"][0]["slug"] == "lepari"
+    assert payload["rows"][0]["odds_1_in"] == 100
+
+
+def test_scan_json_reports_the_coverage():
+    payload = json.loads(scan_json([], HEAVY, {}, **STAMP))
+    assert payload["coverage"]["players_guessed"] == 46
+    assert payload["coverage"]["players_seen"] == 100
+
+
+def test_scan_json_stamps_the_build():
+    payload = json.loads(scan_json([], CLEAN, {}, **STAMP))
+    assert payload["built_at"] == "2026-09-19T05:00:00+00:00"
+    assert payload["window"] == "last 1y"
+
+
+def test_model_json_carries_the_points_and_the_scale():
+    payload = json.loads(model_json(POINTS, 0.4385, METRICS,
+                                    fitted_at="2026-09-18T00:00:00+00:00",
+                                    sample_size=6382))
+    assert payload["tier_points"]["E"] == 4.0
+    assert payload["scale"] == 0.4385
+    assert payload["fit_metrics"]["accuracy"] == 0.6393
+    assert payload["tier_order"] == ["S", "E", "A", "B", "C", "D"]
+
+
+def test_index_json_maps_slugs_to_player_ids():
+    rows = [_row("3f2a1b9c-0000-0000-0000-000000000000", "Lepari")]
+    payload = json.loads(index_json(
+        rows, {"3f2a1b9c-0000-0000-0000-000000000000": "lepari"}, **STAMP))
+    assert payload["players"] == [
+        {"slug": "lepari", "player_id": "3f2a1b9c-0000-0000-0000-000000000000",
+         "nick": "Lepari", "tier": "A"}]
+
+
+def test_index_json_sorts_players_by_slug():
+    rows = [_row("p2", "zed", tier="B"), _row("p1", "alf")]
+    payload = json.loads(index_json(rows, {"p1": "alf", "p2": "zed"}, **STAMP))
+    assert [p["slug"] for p in payload["players"]] == ["alf", "zed"]
