@@ -452,12 +452,20 @@ def cmd_site(args) -> int:
             with open(previous_path, "r", encoding="utf-8") as handle:
                 previous_index = json.load(handle)
 
+    # What the window actually turned out to hold, which is not the same as
+    # what was asked for: "last 1y" is a request.
+    dates = sorted((m.get("start_time") or "")[:10] for m in matches
+                   if m.get("start_time"))
+    covering = ("%s to %s, %d matches" % (dates[0], dates[-1], len(matches))
+                if dates else "")
+
     files = build_site(
         rows, coverage,
         bundle.tier_points or dict(TIER_POINTS),
         bundle.scale or 1.0,
         bundle.fit_metrics,
         window=window_label(args),
+        covering=covering,
         built_at=args.built_at or datetime.datetime.now(
             datetime.timezone.utc).replace(microsecond=0).isoformat(),
         fitted_at=bundle.fitted_at,

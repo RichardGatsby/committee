@@ -100,6 +100,16 @@ def page(title: str, body: str, players: Sequence[Tuple[str, str]] = ()) -> str:
     ) % (escape(title), STYLE, picker, body)
 
 
+def covered(window: str, covering: str = "") -> str:
+    """What the page actually covers, said before the numbers rather than under them.
+
+    `covering` is the real span and match count when the caller knows it; the
+    requested window is the fallback, because "last 1y" is a request, not a
+    guarantee that a year of matches existed.
+    """
+    return '<p class="stamp">Covering %s.</p>' % escape(covering or window)
+
+
 def caveat_block(
     coverage: Coverage,
     *,
@@ -195,9 +205,11 @@ def index_page(
     built_at: str,
     fitted_at: str,
     sample_size: int,
+    covering: str = "",
     players: Sequence[Tuple[str, str]] = ()) -> str:
     shown = [r for r in rows if r.label != "ON TIER"]
     body = ["<h1>Where a record and a tier disagree</h1>"]
+    body.append(covered(window, covering))
     body.append(caveat_block(coverage, window=window, built_at=built_at,
                              fitted_at=fitted_at, sample_size=sample_size))
     if not shown:
@@ -227,9 +239,14 @@ LIMITATIONS = (
     "The approach is partly circular by design: it asks whether a record is "
     "consistent with the tier held, not what tier a player deserves in the "
     "absolute.",
-    "Tiers have no history, so past matches are scored against today's tiers. "
-    "A recently promoted player looks like they were overperforming all year.",
-    "The alpha side wins 52.5% of matches and the model cannot express that.",
+    "Tier changes are dated only from the day they started being recorded. A "
+    "match played after a logged change is scored against the tier held then; "
+    "anything earlier is scored against the tier held today, so an old "
+    "promotion can still look like a year of overperformance.",
+    "The alpha side wins about 52% of matches and the model, having no "
+    "intercept, cannot express that.",
+    "A roster is the three players with the most playtime on each side. A "
+    "match where four people played a side is still scored as three.",
     "A player with no committee tier gets one imputed from their shrunken "
     "UTRO, capped at A. Imputation error, not luck, is the largest source of "
     "false signal here.",
@@ -245,6 +262,7 @@ def about_page(
     built_at: str,
     fitted_at: str,
     sample_size: int,
+    covering: str = "",
     players: Sequence[Tuple[str, str]] = ()) -> str:
     rows = "".join(
         '<tr><td>%s<td class="num">%g<td class="num">%+.2f'
@@ -394,10 +412,12 @@ def build_site(
     reports=None,
     previous_index=None,
     untiered_rows=(),
+    covering: str = "",
 ) -> Dict[str, bytes]:
     """Every file the published site is made of. Paths are relative, no leading slash."""
     stamp = dict(window=window, built_at=built_at, fitted_at=fitted_at,
                  sample_size=sample_size)
+    listing = dict(stamp, covering=covering)
     slugs = assign_slugs(rows)
     reports = reports or {}
     # Only link a player whose page this build actually writes.
@@ -408,7 +428,7 @@ def build_site(
 
     files = {
         "index.html": index_page(rows, coverage, linked, players=picker,
-                                 **stamp),
+                                 **listing),
         "about/index.html": about_page(tier_points, scale, fit_metrics,
                                        players=picker, **stamp),
         "_headers": headers(),
@@ -419,11 +439,11 @@ def build_site(
         # Always published, even when empty: the nav links to it, and "nothing
         # is missing" is itself worth stating.
         "gaps/index.html": gaps_page(untiered_rows, coverage,
-                                     players=picker, **stamp),
+                                     players=picker, **listing),
         # Always published, like gaps: the nav links to it, and a build with no
         # player pages should say so rather than 404.
         "players/index.html": players_page(rows, linked, coverage,
-                                           players=picker, **stamp),
+                                           players=picker, **listing),
         "api/gaps.json": gaps_json(untiered_rows, coverage, **stamp),
     }
     for player_id, report in reports.items():
@@ -584,9 +604,11 @@ def gaps_page(
     built_at: str,
     fitted_at: str,
     sample_size: int,
+    covering: str = "",
     players: Sequence[Tuple[str, str]] = ()) -> str:
     """The work list: who has no committee tier, busiest first."""
-    body = ["<h1>Players with no committee tier</h1>"]
+    body = ["<h1>Players with no committee tier</h1>",
+            covered(window, covering)]
     body.append(
         "<p>Every one of these had a tier guessed for them from their shrunken "
         "UTRO, capped at A. A guess is not a committee decision, and guesses "
@@ -661,6 +683,7 @@ def players_page(
     built_at: str,
     fitted_at: str,
     sample_size: int,
+    covering: str = "",
     players: Sequence[Tuple[str, str]] = (),
 ) -> str:
     """Every player with a page of their own.
@@ -671,7 +694,7 @@ def players_page(
     """
     listed = sorted((r for r in rows if r.player_id in slugs),
                     key=lambda r: slugs[r.player_id])
-    body = ["<h1>Every player scored</h1>"]
+    body = ["<h1>Every player scored</h1>", covered(window, covering)]
     body.append(
         "<p>The scan lists only the records that disagree with the tier held. "
         "This is all of them, agreeing or not.</p>")

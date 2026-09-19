@@ -170,8 +170,8 @@ def test_about_page_says_there_is_no_intercept():
 def test_about_page_lists_the_known_limitations():
     html = about_page(POINTS, 0.4385, METRICS, **STAMP)
     assert "circular" in html
-    assert "52.5%" in html
-    assert "no history" in html
+    assert "52%" in html
+    assert "imputed" in html
 
 
 def test_about_page_carries_the_caveats_too():
@@ -626,3 +626,51 @@ def test_player_page_does_not_warn_when_the_sample_is_large():
     html = player_page(_report(label="ON TIER", recommendation="KEEP at A",
                                decided=400), **STAMP)
     assert "not proven" not in html
+
+
+COVERED = dict(STAMP, covering="2025-09-20 to 2026-09-19, 6214 matches")
+
+
+def _between_heading_and_caveats(html):
+    return html[html.index("</h1>"):html.index('class="caveats"')]
+
+
+def test_index_page_states_the_span_it_covers_under_the_heading():
+    html = index_page([_row("p1", "Lepari")], CLEAN, {}, **COVERED)
+    assert "2025-09-20 to 2026-09-19" in _between_heading_and_caveats(html)
+    assert "6214 matches" in html
+
+
+def test_gaps_page_states_the_span_it_covers():
+    html = gaps_page(GAPS, CLEAN, **COVERED)
+    assert "2025-09-20 to 2026-09-19" in _between_heading_and_caveats(html)
+
+
+def test_players_page_states_the_span_it_covers():
+    html = players_page([_row("p1", "Lepari")], {"p1": "lepari"}, CLEAN, **COVERED)
+    assert "2025-09-20 to 2026-09-19" in _between_heading_and_caveats(html)
+
+
+def test_the_span_falls_back_to_the_window_when_no_dates_are_known():
+    html = index_page([_row("p1", "Lepari")], CLEAN, {}, **STAMP)
+    assert "last 1y" in _between_heading_and_caveats(html)
+
+
+def test_about_page_does_not_claim_tiers_have_no_history():
+    """Tier history landed; the limitation list outlived it."""
+    assert "no history" not in about_page(POINTS, 0.4385, METRICS, **STAMP)
+
+
+def test_about_page_says_tier_history_only_reaches_so_far():
+    html = about_page(POINTS, 0.4385, METRICS, **STAMP)
+    assert "started being recorded" in html
+
+
+def test_about_page_does_not_state_an_unsourced_alpha_rate():
+    html = about_page(POINTS, 0.4385, METRICS, **STAMP)
+    assert "52.5%" not in html
+    assert "52%" in html
+
+
+def test_about_page_admits_rosters_are_the_top_three_by_playtime():
+    assert "playtime" in about_page(POINTS, 0.4385, METRICS, **STAMP)
