@@ -290,6 +290,19 @@ def parse_points(spec):
 
 def cmd_scan(args) -> int:
     bundle = load(args.bundle)
+    # scan() scores only players holding a committee tier. Without one there is
+    # nobody to score, and an empty table would read as "everybody is correctly
+    # tiered" rather than "nothing was checked".
+    if not bundle.overrides:
+        sys.stderr.write(
+            "this bundle carries no committee tier list, so scan has nobody to "
+            "score.\nRefit with --overrides, for example:\n"
+            "  python3 tools/resolve_tierlist.py "
+            "data/tierlist-events-3v3.txt overrides.txt\n"
+            "  python3 -m gibhub.cli fit --refit --tier-channel Events --points "
+            "--impute-max A --overrides overrides.txt\n"
+        )
+        return 1
     client = make_client(args)
 
     start = None if (getattr(args, "from_", None) or "none").lower() == "none" else args.from_

@@ -37,7 +37,9 @@ player report rather than one report per player. Columns:
   to detect a one-tier error.
 
 Only players whose record differs from their tier are listed; `--all` shows
-everyone.
+everyone. The scan scores only players carrying a **committee tier**, so a
+bundle fitted without `--overrides` has nobody to score and the command says
+so rather than printing an empty table.
 
 Review a whole tier as a spreadsheet:
 

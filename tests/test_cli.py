@@ -350,3 +350,199 @@ def test_asking_for_poland_twice_does_not_duplicate_it():
 
     args = build_parser().parse_args(["scan", "--only", "poland", "--with-poland"])
     assert categories_for(args) == [POLAND]
+
+
+# --- scan ------------------------------------------------------------------
+#
+# cmd_scan reaches the API through paginate() alone, so the fake only has to
+# yield whole matches. p1 holds A and is stacked against three D-tier
+# opponents every time, then loses every match, which is the clearest possible
+# UNDER.
+
+_SCAN_HOLDINGS = {
+    "p1": (Holding("legacy", "A", "2026-09-01"),),
+    "a2": (Holding("legacy", "D", "2026-09-01"),),
+    "a3": (Holding("legacy", "D", "2026-09-01"),),
+    "b1": (Holding("legacy", "D", "2026-09-01"),),
+    "b2": (Holding("legacy", "D", "2026-09-01"),),
+    "b3": (Holding("legacy", "D", "2026-09-01"),),
+}
+
+
+def _scan_match(index, winner="beta"):
+    roster = {
+        "alpha": [{"player_id": "p1", "nick": "^1Me"}, {"player_id": "a2", "nick": "a2"},
+                  {"player_id": "a3", "nick": "a3"}],
+        "beta": [{"player_id": "b1", "nick": "b1"}, {"player_id": "b2", "nick": "b2"},
+                 {"player_id": "b3", "nick": "b3"}],
+    }
+    return {
+        "match_id": "m%d" % index,
+        "state": "finished",
+        "winner": winner,
+        "tags": ["gather"],
+        "channel_id": "123",
+        "channel_name": "ET:Legacy Events: #3vs3",
+        "start_time": "2026-09-01T20:00:00+02:00",
+        "teams": roster,
+        "rounds": [{
+            "alpha": [dict(p, utro=1.0, playtime_percent=100) for p in roster["alpha"]],
+            "beta": [dict(p, utro=1.0, playtime_percent=100) for p in roster["beta"]],
+        }],
+    }
+
+
+class _ScanClient:
+    def __init__(self, matches):
+        self.matches = matches
+        self.seen = []
+
+    def get(self, path, params=None):
+        raise AssertionError("scan should not call get(): " + path)
+
+    def paginate(self, path, params=None, page_size=100, limit=None):
+        self.seen.append((path, params))
+        return iter(self.matches)
+
+
+@pytest.fixture
+def scan_bundle_path(tmp_path):
+    path = tmp_path / "coefficients.json"
+    save(
+        Bundle(
+            fitted_at="2026-09-18T00:00:00+00:00",
+            data_cutoff="2026-09-18",
+            sample_size=100,
+            coefficients=[0.9, 0.6, 0.3, 0.0, -0.4, -0.8],
+            fit_metrics={"log_loss": 0.6, "brier": 0.2, "accuracy": 0.7, "samples": 100},
+            bands={"S": 1.3, "E": 1.2, "A": 1.15, "B": 1.0, "C": 0.9, "D": 0.8},
+            utro={},
+            holdings=_SCAN_HOLDINGS,
+            channel_names={"legacy": "ET:Legacy Events: #3vs3"},
+            overrides={"p1": "A", "a2": "D", "a3": "D",
+                       "b1": "D", "b2": "D", "b3": "D"},
+        ),
+        path,
+    )
+    return str(path)
+
+
+def test_scan_command_lists_a_mis_tiered_player(monkeypatch, capsys, scan_bundle_path):
+    client = _ScanClient([_scan_match(i) for i in range(60)])
+    monkeypatch.setattr("gibhub.cli.make_client", lambda args: client)
+
+    code = main(["--bundle", scan_bundle_path, "scan", "--min-games", "50"])
+
+    out = capsys.readouterr().out
+    assert code == 0
+    assert "Me" in out
+    assert "MOVE DOWN: A → B" in out
+
+
+def test_scan_strips_colour_codes_from_the_nick(monkeypatch, capsys, scan_bundle_path):
+    client = _ScanClient([_scan_match(i) for i in range(60)])
+    monkeypatch.setattr("gibhub.cli.make_client", lambda args: client)
+
+    main(["--bundle", scan_bundle_path, "scan", "--min-games", "50"])
+
+    assert "^1" not in capsys.readouterr().out
+
+
+def test_scan_drops_players_below_min_games(monkeypatch, capsys, scan_bundle_path):
+    client = _ScanClient([_scan_match(i) for i in range(10)])
+    monkeypatch.setattr("gibhub.cli.make_client", lambda args: client)
+
+    code = main(["--bundle", scan_bundle_path, "scan", "--min-games", "50"])
+
+    assert code == 0
+    assert "No player's record differs" in capsys.readouterr().out
+
+
+def test_scan_counts_only_the_report_categories_by_default(
+    monkeypatch, capsys, scan_bundle_path
+):
+    poland = []
+    for index in range(60):
+        match = _scan_match(index)
+        match["channel_name"] = "Poland ET:Legacy: #3v3"
+        poland.append(match)
+    monkeypatch.setattr("gibhub.cli.make_client", lambda args: _ScanClient(poland))
+
+    main(["--bundle", scan_bundle_path, "scan", "--min-games", "50"])
+
+    assert "No player's record differs" in capsys.readouterr().out
+
+
+def test_scan_with_poland_counts_the_poland_matches(monkeypatch, capsys, scan_bundle_path):
+    poland = []
+    for index in range(60):
+        match = _scan_match(index)
+        match["channel_name"] = "Poland ET:Legacy: #3v3"
+        poland.append(match)
+    monkeypatch.setattr("gibhub.cli.make_client", lambda args: _ScanClient(poland))
+
+    main(["--bundle", scan_bundle_path, "scan", "--min-games", "50", "--with-poland"])
+
+    assert "MOVE DOWN: A → B" in capsys.readouterr().out
+
+
+def test_scan_writes_csv_to_a_file(monkeypatch, tmp_path, capsys, scan_bundle_path):
+    client = _ScanClient([_scan_match(i) for i in range(60)])
+    monkeypatch.setattr("gibhub.cli.make_client", lambda args: client)
+    out = tmp_path / "scan.csv"
+
+    main(["--bundle", scan_bundle_path, "scan", "--min-games", "50", "--out", str(out)])
+
+    rows = list(csv.DictReader(io.StringIO(out.read_text())))
+    assert "Me" in [r["nick"] for r in rows]
+    assert [r for r in rows if r["nick"] == "Me"][0]["label"] == "CLEARLY UNDER"
+    assert "wrote %d rows to" % len(rows) in capsys.readouterr().out
+
+
+def test_scan_asks_the_api_only_for_finished_3v3_matches(
+    monkeypatch, capsys, scan_bundle_path
+):
+    client = _ScanClient([_scan_match(i) for i in range(60)])
+    monkeypatch.setattr("gibhub.cli.make_client", lambda args: client)
+
+    main(["--bundle", scan_bundle_path, "scan"])
+
+    path, params = client.seen[0]
+    assert path == "/matches"
+    assert params["size"] == "3v3"
+    assert params["state"] == "finished"
+
+
+def test_scan_says_so_when_the_bundle_carries_no_committee_tiers(
+    monkeypatch, capsys, tmp_path
+):
+    """scan() scores only players holding a committee override.
+
+    With no tier list in the bundle it has nobody to score, which is not the
+    same as everybody being correctly tiered - and the empty table says the
+    latter. Fail loudly instead.
+    """
+    path = tmp_path / "coefficients.json"
+    save(
+        Bundle(
+            fitted_at="2026-09-18T00:00:00+00:00",
+            data_cutoff="2026-09-18",
+            sample_size=100,
+            coefficients=[0.9, 0.6, 0.3, 0.0, -0.4, -0.8],
+            fit_metrics={"log_loss": 0.6, "brier": 0.2, "accuracy": 0.7, "samples": 100},
+            bands={"S": 1.3, "E": 1.2, "A": 1.15, "B": 1.0, "C": 0.9, "D": 0.8},
+            utro={},
+            holdings=_SCAN_HOLDINGS,
+            channel_names={"legacy": "ET:Legacy Events: #3vs3"},
+        ),
+        path,
+    )
+    client = _ScanClient([_scan_match(i) for i in range(60)])
+    monkeypatch.setattr("gibhub.cli.make_client", lambda args: client)
+
+    code = main(["--bundle", str(path), "scan"])
+
+    captured = capsys.readouterr()
+    assert code != 0
+    assert "no committee tier list" in captured.err
+    assert "No player's record differs" not in captured.out
