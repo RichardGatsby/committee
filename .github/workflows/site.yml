@@ -34,6 +34,10 @@ jobs:
           key: matches-${{ github.run_id }}
           restore-keys: matches-
 
+      # The tool itself is stdlib-only; pytest is a dev tool and is not
+      # vendored, so the runner needs it installed.
+      - run: python3 -m pip install pytest
+
       - run: python3 -m pytest
 
       # --players adds a page per scanned player: one profile, spider and
