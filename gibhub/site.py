@@ -104,6 +104,33 @@ def caveat_block(
     return "\n".join(parts)
 
 
+# What each verdict means, and which way it points. OVER means the tier is too
+# low, which reads backwards to anyone meeting the table for the first time.
+LABELS = (
+    ("CLEARLY OVER", "wins <strong>more</strong> than the tier predicts; luck "
+                     "explains it less than 1 time in 100", "MOVE UP"),
+    ("OVER", "same, less than 1 time in 20", "CONSIDER MOVING UP"),
+    ("ON TIER", "within what luck produces", "KEEP"),
+    ("UNDER", "wins <strong>fewer</strong>, less than 1 time in 20",
+     "CONSIDER MOVING DOWN"),
+    ("CLEARLY UNDER", "wins fewer, less than 1 time in 100", "MOVE DOWN"),
+)
+
+
+def legend() -> str:
+    rows = "".join(
+        "<tr><td><code>%s</code><td>%s<td><code>%s</code>"
+        % (escape(label), meaning, escape(decision))
+        for label, meaning, decision in LABELS)
+    return (
+        "<table><thead><tr><th>Label<th>Meaning<th>Decision</thead>"
+        "<tbody>%s</tbody></table>\n"
+        "<p><code>OVER</code> means the tier is too <strong>low</strong> - they "
+        "beat it. <code>UNDER</code> means it is too <strong>high</strong>. The "
+        "target tier comes off the points scale rather than the alphabet, so "
+        '"up" from A is E, not S.</p>' % rows)
+
+
 COLUMNS = ("Player", "Tier", "Games", "Per 100", "Tiers off", "Decision",
            "Confidence", "Read with care because")
 NUMERIC = frozenset(("Games", "Per 100", "Tiers off", "Confidence"))
@@ -155,6 +182,7 @@ def index_page(
         body.append("<p>No player's record differs from their tier by more "
                     "than luck.</p>")
     else:
+        body.append(legend())
         head = "".join(
             '<th class="num">%s' % escape(c) if c in NUMERIC else "<th>" + escape(c)
             for c in COLUMNS)

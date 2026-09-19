@@ -410,3 +410,27 @@ def test_player_page_falls_back_to_the_discord_nick_when_the_nick_is_all_colour(
 def test_player_json_strips_the_colour_codes_too():
     payload = json.loads(player_json(_report(nick="^1agsor"), slug="agsor", **STAMP))
     assert payload["nick"] == "agsor"
+
+
+def test_index_page_explains_what_each_label_means():
+    html = index_page([_row("p1", "Lepari")], CLEAN, {}, **STAMP)
+    for label in ("CLEARLY OVER", "OVER", "ON TIER", "UNDER", "CLEARLY UNDER"):
+        assert label in html
+    assert "CONSIDER MOVING DOWN" in html
+    assert "1 time in 100" in html and "1 time in 20" in html
+
+
+def test_index_page_says_which_way_over_and_under_point():
+    html = index_page([_row("p1", "Lepari")], CLEAN, {}, **STAMP)
+    assert "too <strong>low</strong>" in html
+    assert "too <strong>high</strong>" in html
+
+
+def test_the_legend_sits_above_the_scan_table():
+    html = index_page([_row("p1", "Lepari")], CLEAN, {}, **STAMP)
+    assert html.index("within what luck produces") < html.index("Lepari")
+
+
+def test_no_legend_when_there_is_nothing_to_decode():
+    rows = [_row("p1", "Lepari", label="ON TIER", recommendation="KEEP")]
+    assert "within what luck produces" not in index_page(rows, CLEAN, {}, **STAMP)
