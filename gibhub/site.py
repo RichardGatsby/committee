@@ -533,23 +533,23 @@ def gaps_page(
         cells = []
         for row in rows:
             cells.append(
-                "<tr><td>%s<td><code>%s</code>"
-                '<td class="num">%d<td class="num">%s<td class="num">%s'
-                % (escape(row.nick), escape(row.player_id), row.games,
-                   escape(row.guessed_tier),
+                '<tr><td>%s<td class="num">%d<td class="num">%s<td class="num">%s'
+                % (escape(row.nick), row.games, escape(row.guessed_tier),
                    ("%.3f" % row.utro) if row.utro is not None else "-"))
         body.append(
-            "<table><thead><tr><th>Player<th>Account id"
-            '<th class="num">Games<th class="num">Guessed as'
-            '<th class="num">UTRO</thead><tbody>%s</tbody></table>'
-            % "".join(cells))
+            '<table><thead><tr><th>Player<th class="num">Games'
+            '<th class="num">Guessed as<th class="num">UTRO</thead>'
+            "<tbody>%s</tbody></table>" % "".join(cells))
         body.append(
-            "<p>Record a decision by adding the account id and a tier to the "
-            "overrides file, then refit. <strong>Games</strong> is matches in "
-            "this window, so the top of the list is where a guess does the "
-            "most damage. <strong>UTRO</strong> is what the guess was made "
-            "from; a blank one means the player was below the leaderboard's "
-            "round floor and got the median band instead.</p>")
+            "<p><strong>Guessed as</strong> is the tier the model used for "
+            "them anyway - a guess is not a blank, it counts toward their "
+            "team's points in every match they played. <strong>Games</strong> "
+            "is matches in this window, so the top of the list is where a "
+            "guess does the most damage. <strong>UTRO</strong> is what the "
+            "guess was made from; a blank one means the player was below the "
+            "leaderboard's round floor and got the median band instead.</p>\n"
+            '<p class="stamp">Account ids for recording a decision are in '
+            '<a href="/api/gaps.json">gaps.json</a>.</p>')
     return page("Players with no committee tier", "\n".join(body))
 
 

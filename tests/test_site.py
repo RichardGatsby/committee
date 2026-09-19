@@ -457,8 +457,14 @@ def test_gaps_page_survives_a_player_with_no_utro():
     assert "Rob" in gaps_page(GAPS, CLEAN, **STAMP)
 
 
-def test_gaps_page_gives_the_player_id_so_a_tier_can_be_recorded():
-    assert "q1" in gaps_page(GAPS, CLEAN, **STAMP)
+def test_gaps_page_keeps_the_account_id_off_the_page():
+    """Readable to a committee member, not a wall of UUIDs. The id stays in the JSON."""
+    assert "q1" not in gaps_page(GAPS, CLEAN, **STAMP)
+
+
+def test_gaps_json_still_carries_the_account_id():
+    payload = json.loads(gaps_json(GAPS, CLEAN, **STAMP))
+    assert payload["untiered"][0]["player_id"] == "q1"
 
 
 def test_gaps_page_says_so_when_nothing_is_missing():
