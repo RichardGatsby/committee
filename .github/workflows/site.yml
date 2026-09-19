@@ -31,7 +31,9 @@ jobs:
 
       - run: python3 -m pytest
 
-      - run: python3 -m gibhub.cli site --out _site --range 1y
+      # --players adds a page per scanned player: one profile, spider and
+      # match listing fetch each. Drop the flag if the build gets too slow.
+      - run: python3 -m gibhub.cli site --out _site --range 1y --players
 
       - uses: cloudflare/wrangler-action@v3
         with:

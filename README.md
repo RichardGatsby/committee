@@ -147,9 +147,20 @@ browser:
 | `/api/scan.json` | every scanned player, including the ones reading `ON TIER` |
 | `/api/model.json` | tier points, the fitted scale, the fit metrics |
 | `/api/index.json` | the build stamp and the slug-to-UUID map |
+| `/api/players/<slug>.json` | one player's verdict |
+
+Each player also gets a page at `/players/<slug>/`, keyed off their nick. A
+rename moves the URL, and the build writes a redirect from the old one by
+comparing against the previous `index.json`.
 
 It is only as fresh as the last build. Nothing a visitor does triggers a fetch
 against gibhub.gg.
+
+Player pages cost real requests: the scan is one sweep, but a report fetches a
+profile, a spider and a match listing per player. `--players` is therefore
+optional, and the local command leaves it off:
+
+    python3 -m gibhub.cli site --out _site --players
 
 ## Types of game
 
