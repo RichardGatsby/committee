@@ -191,3 +191,12 @@ def test_paginate_respects_a_limit():
     items = list(Client(opener=opener).paginate("/matches", page_size=2, limit=3))
     assert [item["id"] for item in items] == [1, 2, 3]
     assert len(seen) == 2
+
+
+def test_the_user_agent_names_the_site_rather_than_the_api_it_calls():
+    """It goes to someone else's server, so it should say who is calling."""
+    from gibhub.api import USER_AGENT
+
+    assert "committee" not in USER_AGENT.lower()
+    assert "truetier" in USER_AGENT
+    assert "truetier.pages.dev" in USER_AGENT

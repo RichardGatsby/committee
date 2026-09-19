@@ -8,7 +8,7 @@ import urllib.request
 from typing import Any, Dict, Iterator, Optional
 
 BASE_URL = "https://gibhub.gg/api"
-USER_AGENT = "committee-tiering-tool/1.0 (+https://gibhub.gg)"
+USER_AGENT = "truetier/1.0 (+https://truetier.pages.dev)"
 RETRIES = 3
 BACKOFF_SECONDS = 1.0
 RETRY_STATUSES = frozenset({429, 500, 502, 503, 504})
