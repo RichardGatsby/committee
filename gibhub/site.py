@@ -117,13 +117,7 @@ def caveat_block(
                         coverage.players_seen))
     parts.append(
         "<p><code>KEEP</code> means too few games to call, not correctly "
-        "tiered. A row with few games and a large effect reads as "
-        "<code>KEEP</code> because the evidence is thin, not because the tier "
-        "is right.</p>")
-    parts.append(
-        "<p>Some committee names still have no account mapped, mostly C and D, "
-        "so a player missing from this table has not been cleared - they have "
-        "not been checked.</p>")
+        "tiered. Players with no account mapped are missing entirely.</p>")
     parts.append(
         '<p class="stamp">Window %s. Built %s from a model fitted %s on %d '
         "matches.</p>" % (escape(window), escape(built_at), escape(fitted_at),

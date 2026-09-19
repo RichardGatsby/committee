@@ -84,6 +84,12 @@ def test_caveat_block_always_warns_about_unmapped_names():
     assert "no account mapped" in caveat_block(CLEAN, **STAMP)
 
 
+def test_caveat_block_stays_short():
+    """It is read by people who did not ask for an essay."""
+    words = len(caveat_block(CLEAN, **STAMP).split())
+    assert words < 60, "caveat block has grown to %d words" % words
+
+
 def test_caveat_block_carries_the_build_stamp():
     block = caveat_block(CLEAN, **STAMP)
     assert "2026-09-19T05:00:00+00:00" in block
@@ -133,7 +139,7 @@ def test_index_page_escapes_a_nick_that_looks_like_markup():
 
 def test_index_page_carries_the_caveats():
     html = index_page([_row("p1", "Lepari")], CLEAN, {}, **STAMP)
-    assert "evidence is thin" in html
+    assert "too few games to call" in html
 
 
 def test_index_page_links_a_player_when_a_slug_is_given():
@@ -169,7 +175,7 @@ def test_about_page_lists_the_known_limitations():
 
 
 def test_about_page_carries_the_caveats_too():
-    assert "evidence is thin" in about_page(POINTS, 0.4385, METRICS, **STAMP)
+    assert "too few games to call" in about_page(POINTS, 0.4385, METRICS, **STAMP)
 
 
 def test_scan_json_carries_every_row_including_on_tier_ones():
@@ -269,7 +275,7 @@ def test_every_listing_page_carries_the_caveats():
     listings = ["index.html", "gaps/index.html", "players/index.html",
                 "about/index.html"]
     missing = [p for p in listings
-               if "evidence is thin" not in site[p].decode("utf-8")]
+               if "too few games to call" not in site[p].decode("utf-8")]
     assert missing == [], "listing pages without the caveat block: %s" % missing
 
 
@@ -481,7 +487,7 @@ def test_gaps_page_says_so_when_nothing_is_missing():
 
 
 def test_gaps_page_carries_the_caveats():
-    assert "evidence is thin" in gaps_page(GAPS, CLEAN, **STAMP)
+    assert "too few games to call" in gaps_page(GAPS, CLEAN, **STAMP)
 
 
 def test_gaps_page_escapes_a_nick_that_looks_like_markup():
@@ -542,7 +548,7 @@ def test_players_page_says_so_when_the_build_has_no_player_pages():
 
 
 def test_players_page_carries_the_caveats():
-    assert "evidence is thin" in players_page(
+    assert "too few games to call" in players_page(
         [_row("p1", "Lepari")], {"p1": "lepari"}, CLEAN, **STAMP)
 
 
@@ -605,7 +611,7 @@ def test_player_page_keeps_the_build_stamp():
 
 def test_player_page_drops_the_generic_lecture():
     html = player_page(_report(), **STAMP)
-    assert "evidence is thin" not in html
+    assert "too few games to call" not in html
     assert "before that" not in html
 
 
