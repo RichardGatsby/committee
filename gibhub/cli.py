@@ -1,7 +1,10 @@
 """Command line entry point."""
 
 import argparse
+import datetime
+import json
 import os
+import shutil
 import sys
 from typing import List, Optional
 
@@ -16,6 +19,7 @@ from .model import TIERS, TIER_POINTS
 from .render import strip_colors, to_csv, to_json, to_markdown, to_scan_csv, to_scan_table
 from .report import build_report
 from .scan import scan, tier_coverage
+from .site import build_site
 
 PAGE_SIZE = 100
 
@@ -87,6 +91,20 @@ def build_parser() -> argparse.ArgumentParser:
         "--all", action="store_true",
         help="list every player, not only those whose record differs from their tier")
     scan_cmd.add_argument("--out", metavar="FILE", help="write the full table as CSV")
+
+    site_cmd = sub.add_parser("site", help="render the published site")
+    site_cmd.add_argument("--out", default="_site", metavar="DIR",
+                          help="directory to write the site into (default: _site)")
+    site_cmd.add_argument("--range", default="1y")
+    site_cmd.add_argument("--from", dest="from_", metavar="YYYY-MM-DD")
+    site_cmd.add_argument("--to", metavar="YYYY-MM-DD")
+    site_cmd.add_argument("--min-games", type=int, default=50, dest="min_games")
+    site_cmd.add_argument("--only", action="append", metavar="TYPE")
+    site_cmd.add_argument("--with-poland", action="store_true", dest="with_poland")
+    site_cmd.add_argument(
+        "--built-at", dest="built_at", metavar="ISO8601",
+        help="stamp the build with this time instead of now; for reproducible "
+             "output in tests")
 
     fit = sub.add_parser("fit", help="show or refit the model")
     fit.add_argument("--refit", action="store_true")
@@ -305,6 +323,27 @@ def parse_points(spec):
     return points
 
 
+def _sweep(client, args):
+    """Every match in the window, plus a nick for every player seen.
+
+    Shared by scan and site so the two can never count different matches.
+    """
+    start = None if (getattr(args, "from_", None) or "none").lower() == "none" else args.from_
+    params = {"size": "3v3", "state": "finished",
+              "range": args.range if not start else None,
+              "from": start, "to": args.to}
+    matches = []
+    nicks = {}
+    for match in client.paginate("/matches", params, page_size=PAGE_SIZE):
+        matches.append(match)
+        for side in ("alpha", "beta"):
+            for player in (match.get("teams") or {}).get(side) or []:
+                nicks.setdefault(
+                    player["player_id"],
+                    strip_colors(player.get("discord_nick") or player.get("nick"))[:14])
+    return matches, nicks
+
+
 def cmd_scan(args) -> int:
     bundle = load(args.bundle)
     # scan() scores only players holding a committee tier. Without one there is
@@ -321,21 +360,7 @@ def cmd_scan(args) -> int:
         )
         return 1
     client = make_client(args)
-
-    start = None if (getattr(args, "from_", None) or "none").lower() == "none" else args.from_
-    params = {"size": "3v3", "state": "finished",
-              "range": args.range if not start else None,
-              "from": start, "to": args.to}
-
-    matches = []
-    nicks = {}
-    for match in client.paginate("/matches", params, page_size=100):
-        matches.append(match)
-        for side in ("alpha", "beta"):
-            for player in (match.get("teams") or {}).get(side) or []:
-                nicks.setdefault(
-                    player["player_id"],
-                    strip_colors(player.get("discord_nick") or player.get("nick"))[:14])
+    matches, nicks = _sweep(client, args)
 
     rows = scan(matches, bundle.index(), bundle.coefficients, bundle.scale or 1.0,
                 min_games=args.min_games, only=categories_for(args), nicks=nicks)
@@ -354,6 +379,51 @@ def cmd_scan(args) -> int:
         with open(args.out, "w", encoding="utf-8") as handle:
             handle.write(to_scan_csv(rows))
         print("\nwrote %d rows to %s" % (len(rows), args.out))
+    return 0
+
+
+def write_site(files, out) -> int:
+    """Replace `out` with exactly `files`. A stale page must not outlive a build."""
+    if os.path.isdir(out):
+        shutil.rmtree(out)
+    for path, blob in sorted(files.items()):
+        destination = os.path.join(out, path)
+        os.makedirs(os.path.dirname(destination) or ".", exist_ok=True)
+        with open(destination, "wb") as handle:
+            handle.write(blob)
+    return len(files)
+
+
+def cmd_site(args) -> int:
+    bundle = load(args.bundle)
+    # Same reason cmd_scan refuses: with no committee tier list there is nobody
+    # to score, and an empty page would read as "everybody is correctly tiered".
+    if not bundle.overrides:
+        sys.stderr.write(
+            "this bundle carries no committee tier list, so the site would have "
+            "nobody to score.\nRefit with --overrides first.\n")
+        return 1
+
+    client = make_client(args)
+    matches, nicks = _sweep(client, args)
+    only = categories_for(args)
+    rows = scan(matches, bundle.index(), bundle.coefficients, bundle.scale or 1.0,
+                min_games=args.min_games, only=only, nicks=nicks)
+    coverage = tier_coverage(matches, bundle.index(), only=only)
+
+    files = build_site(
+        rows, coverage,
+        bundle.tier_points or dict(TIER_POINTS),
+        bundle.scale or 1.0,
+        bundle.fit_metrics,
+        window=window_label(args),
+        built_at=args.built_at or datetime.datetime.now(
+            datetime.timezone.utc).replace(microsecond=0).isoformat(),
+        fitted_at=bundle.fitted_at,
+        sample_size=bundle.sample_size,
+    )
+    written = write_site(files, args.out)
+    print("wrote %d files to %s" % (written, args.out))
     return 0
 
 
@@ -410,6 +480,8 @@ def main(argv=None) -> int:
             return cmd_bulk(args)
         if args.command == "scan":
             return cmd_scan(args)
+        if args.command == "site":
+            return cmd_site(args)
         return cmd_fit(args)
     except (BundleMissing, PlayerNotFound, AmbiguousPlayer, ApiError, ValueError) as error:
         print(str(error), file=sys.stderr)

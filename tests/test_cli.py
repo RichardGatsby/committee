@@ -668,3 +668,44 @@ def test_the_committed_change_log_parses():
 
     with open("data/tier-changes.tsv", "r", encoding="utf-8") as handle:
         assert parse_changes(handle.read()) == []
+
+
+def test_site_command_writes_the_files(monkeypatch, tmp_path, scan_bundle_path):
+    client = _ScanClient([_scan_match(i) for i in range(60)])
+    monkeypatch.setattr("gibhub.cli.make_client", lambda args: client)
+    out = tmp_path / "_site"
+
+    code = main(["--bundle", scan_bundle_path, "site", "--out", str(out),
+                 "--min-games", "50"])
+
+    assert code == 0
+    assert (out / "index.html").exists()
+    assert (out / "about" / "index.html").exists()
+    assert (out / "_headers").exists()
+    assert (out / "api" / "scan.json").exists()
+    assert "Me" in (out / "index.html").read_text(encoding="utf-8")
+
+
+def test_site_command_refuses_a_bundle_with_no_committee_tiers(
+    monkeypatch, tmp_path, capsys, fake_bundle_path
+):
+    monkeypatch.setattr("gibhub.cli.make_client", lambda args: FAKE_CLIENT)
+    code = main(["--bundle", fake_bundle_path, "site",
+                 "--out", str(tmp_path / "_site")])
+    assert code == 1
+    assert "no committee tier list" in capsys.readouterr().err
+
+
+def test_site_command_clears_stale_files_from_a_previous_build(
+    monkeypatch, tmp_path, scan_bundle_path
+):
+    client = _ScanClient([_scan_match(i) for i in range(60)])
+    monkeypatch.setattr("gibhub.cli.make_client", lambda args: client)
+    out = tmp_path / "_site"
+    out.mkdir()
+    (out / "gone.html").write_text("stale", encoding="utf-8")
+
+    main(["--bundle", scan_bundle_path, "site", "--out", str(out),
+          "--min-games", "50"])
+
+    assert not (out / "gone.html").exists()
