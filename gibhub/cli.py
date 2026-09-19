@@ -330,8 +330,14 @@ def parse_points(spec):
     return points
 
 
-def _sweep(client, args):
-    """Every match in the window, plus a nick for every player seen.
+def _sweep(client, args, cache=None):
+    """Every match in the window as a detail payload, plus a nick per player.
+
+    Details, not listings, because the two carry different rosters: the
+    listing's `teams` block is who was drafted, and the rounds are who turned
+    up. In roughly 4% of sides a no-show was replaced and the teams block was
+    never updated, so scoring the listing scores someone who never connected.
+    The player report has always read the rounds; this makes the scan agree.
 
     Shared by scan and site so the two can never count different matches.
     """
@@ -339,15 +345,27 @@ def _sweep(client, args):
     params = {"size": "3v3", "state": "finished",
               "range": args.range if not start else None,
               "from": start, "to": args.to}
+
+    def _name(player):
+        return strip_colors(player.get("discord_nick") or player.get("nick"))[:14]
+
     matches = []
     nicks = {}
-    for match in client.paginate("/matches", params, page_size=PAGE_SIZE):
-        matches.append(match)
+    for listed in client.paginate("/matches", params, page_size=PAGE_SIZE):
+        # The drafted names are still worth harvesting: a player who appears in
+        # no round of any match would otherwise show as a bare id.
         for side in ("alpha", "beta"):
-            for player in (match.get("teams") or {}).get(side) or []:
-                nicks.setdefault(
-                    player["player_id"],
-                    strip_colors(player.get("discord_nick") or player.get("nick"))[:14])
+            for player in (listed.get("teams") or {}).get(side) or []:
+                nicks.setdefault(player["player_id"], _name(player))
+
+        match_id = listed["match_id"]
+        detail = (cache.fetch(match_id, lambda mid: client.get("/matches/" + mid))
+                  if cache else client.get("/matches/" + match_id))
+        matches.append(detail)
+        for round_ in detail.get("rounds") or []:
+            for side in ("alpha", "beta"):
+                for entry in round_.get(side) or []:
+                    nicks.setdefault(entry["player_id"], _name(entry))
     return matches, nicks
 
 
@@ -367,7 +385,7 @@ def cmd_scan(args) -> int:
         )
         return 1
     client = make_client(args)
-    matches, nicks = _sweep(client, args)
+    matches, nicks = _sweep(client, args, MatchCache(args.cache))
 
     rows = scan(matches, bundle.index(), bundle.coefficients, bundle.scale or 1.0,
                 min_games=args.min_games, only=categories_for(args), nicks=nicks)
@@ -412,7 +430,8 @@ def cmd_site(args) -> int:
         return 1
 
     client = make_client(args)
-    matches, nicks = _sweep(client, args)
+    cache = MatchCache(args.cache)
+    matches, nicks = _sweep(client, args, cache)
     only = categories_for(args)
     rows = scan(matches, bundle.index(), bundle.coefficients, bundle.scale or 1.0,
                 min_games=args.min_games, only=only, nicks=nicks)
@@ -424,7 +443,6 @@ def cmd_site(args) -> int:
     reports = {}
     previous_index = None
     if args.players:
-        cache = MatchCache(args.cache)
         for row in rows:
             report = _report_for(client, bundle, row.player_id, args, cache)
             if report is not None:

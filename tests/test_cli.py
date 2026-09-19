@@ -42,6 +42,19 @@ class _Client:
         return iter([{"match_id": "m1"}])
 
 
+@pytest.fixture(autouse=True)
+def isolate_the_match_cache(monkeypatch, tmp_path):
+    """No test may write to the repo's real .cache.
+
+    The CLI defaults --cache to ".cache", so a test that omits it used to fetch
+    fake matches into the working cache and the next test read them back.
+    """
+    from gibhub.cache import MatchCache as _MatchCache
+
+    monkeypatch.setattr("gibhub.cli.MatchCache",
+                        lambda root: _MatchCache(str(tmp_path / "match-cache")))
+
+
 FAKE_CLIENT = _Client([{"player_id": "p1", "nick": "Me", "discord_nick": "me"}])
 AMBIGUOUS_CLIENT = _Client([
     {"player_id": "p1", "nick": "kiz", "discord_nick": "kizA"},
@@ -425,7 +438,24 @@ class _ScanClient:
         self.seen = []
 
     def get(self, path, params=None):
-        raise AssertionError("scan should not call get(): " + path)
+        """The detail endpoint: same match, rosters in rounds and no teams block."""
+        if path.startswith("/matches/"):
+            match_id = path.rsplit("/", 1)[1]
+            for match in self.matches:
+                if match["match_id"] != match_id:
+                    continue
+                detail = {k: v for k, v in match.items() if k != "teams"}
+                teams = match.get("teams") or {}
+                detail["rounds"] = [{
+                    side: [{"player_id": p["player_id"],
+                            "nick": p.get("nick") or p["player_id"],
+                            "playtime_percent": 100, "utro": 1.0}
+                           for p in (teams.get(side) or [])]
+                    for side in ("alpha", "beta")
+                }]
+                return detail
+            raise AssertionError("no such match " + match_id)
+        raise AssertionError("unexpected path " + path)
 
     def paginate(self, path, params=None, page_size=100, limit=None):
         self.seen.append((path, params))
@@ -796,3 +826,65 @@ def test_site_command_publishes_the_untiered_players(monkeypatch, tmp_path,
     assert (out / "gaps" / "index.html").exists()
     payload = json.loads((out / "api" / "gaps.json").read_text(encoding="utf-8"))
     assert isinstance(payload["untiered"], list)
+
+
+class _SubstituteClient:
+    """A listing whose teams block names a no-show, and rounds naming the sub.
+
+    This is the real shape found in the data: the teams block is who was
+    drafted, the rounds are who turned up.
+    """
+
+    def __init__(self, count=60):
+        self.count = count
+        self.details_served = 0
+
+    def get(self, path, params=None):
+        if path.startswith("/matches/"):
+            self.details_served += 1
+            return {
+                "match_id": path.rsplit("/", 1)[1], "state": "finished",
+                "winner": "beta", "tags": ["gather"], "channel_id": "123",
+                "channel_name": "ET:Legacy Events: #3vs3",
+                "start_time": "2026-09-01T20:00:00+02:00",
+                # No teams block, exactly like the real detail endpoint.
+                "rounds": [{
+                    "alpha": [{"player_id": p, "nick": p,
+                               "playtime_percent": 100, "utro": 1.0}
+                              for p in ("sub1", "a2", "a3")],
+                    "beta": [{"player_id": p, "nick": p,
+                              "playtime_percent": 100, "utro": 1.0}
+                             for p in ("b1", "b2", "b3")],
+                }],
+            }
+        raise AssertionError("unexpected path " + path)
+
+    def paginate(self, path, params=None, page_size=100, limit=None):
+        drafted = {
+            "alpha": [{"player_id": "p1", "nick": "NoShow"},
+                      {"player_id": "a2", "nick": "a2"},
+                      {"player_id": "a3", "nick": "a3"}],
+            "beta": [{"player_id": "b1", "nick": "b1"},
+                     {"player_id": "b2", "nick": "b2"},
+                     {"player_id": "b3", "nick": "b3"}],
+        }
+        return iter([{"match_id": "m%d" % i, "state": "finished",
+                      "winner": "beta", "tags": ["gather"], "channel_id": "123",
+                      "channel_name": "ET:Legacy Events: #3vs3",
+                      "start_time": "2026-09-01T20:00:00+02:00",
+                      "teams": drafted}
+                     for i in range(self.count)])
+
+
+def test_scan_scores_who_played_not_who_was_drafted(monkeypatch, capsys,
+                                                    tmp_path, scan_bundle_path):
+    client = _SubstituteClient()
+    monkeypatch.setattr("gibhub.cli.make_client", lambda args: client)
+
+    code = main(["--bundle", scan_bundle_path, "--cache", str(tmp_path / "c"),
+                 "scan", "--min-games", "50", "--all"])
+
+    out = capsys.readouterr().out
+    assert code == 0
+    assert "NoShow" not in out, "the drafted no-show must not be scored"
+    assert client.details_served > 0, "the sweep must read match details"
