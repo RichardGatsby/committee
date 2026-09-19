@@ -147,7 +147,13 @@ browser:
 | `/api/scan.json` | every scanned player, including the ones reading `ON TIER` |
 | `/api/model.json` | tier points, the fitted scale, the fit metrics |
 | `/api/index.json` | the build stamp and the slug-to-UUID map |
+| `/api/gaps.json` | every player in the window with no committee tier |
 | `/api/players/<slug>.json` | one player's verdict |
+
+`/gaps/` is the work list: every player the model had to guess a tier for,
+busiest first, with their account id and the UTRO the guess came from. The top
+of that list is where a guess distorts the most verdicts, so it is where a
+committee decision buys the most.
 
 Each player also gets a page at `/players/<slug>/`, keyed off their nick. A
 rename moves the URL, and the build writes a redirect from the old one by

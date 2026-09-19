@@ -781,3 +781,18 @@ def test_site_command_redirects_a_slug_that_moved_since_the_last_build(
 
     assert "/players/old-me/ /players/me/ 301" in \
         (out / "_redirects").read_text(encoding="utf-8")
+
+
+def test_site_command_publishes_the_untiered_players(monkeypatch, tmp_path,
+                                                     scan_bundle_path):
+    client = _ScanClient([_scan_match(i) for i in range(60)])
+    monkeypatch.setattr("gibhub.cli.make_client", lambda args: client)
+    out = tmp_path / "_site"
+
+    code = main(["--bundle", scan_bundle_path, "site", "--out", str(out),
+                 "--min-games", "50"])
+
+    assert code == 0
+    assert (out / "gaps" / "index.html").exists()
+    payload = json.loads((out / "api" / "gaps.json").read_text(encoding="utf-8"))
+    assert isinstance(payload["untiered"], list)

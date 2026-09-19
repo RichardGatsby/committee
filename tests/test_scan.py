@@ -183,3 +183,54 @@ def test_coverage_of_no_matches_is_empty_rather_than_a_division_by_zero():
     assert found.players_seen == 0
     assert found.guessed_share == 0.0
     assert found.warning == ""
+
+
+def test_untiered_lists_the_players_the_model_had_to_guess_for():
+    from gibhub.scan import untiered
+
+    overrides = {p: "B" for p in ("x", "y", "z")}
+    matches = [_match(["x", "y", "z"], ["q", "r", "s"], "alpha") for _ in range(4)]
+    rows = untiered(matches, _index(overrides), nicks={"q": "Quentin"})
+
+    assert [r.player_id for r in rows] == ["q", "r", "s"]
+    assert rows[0].nick == "Quentin"
+    assert all(r.games == 4 for r in rows)
+
+
+def test_untiered_leaves_out_everyone_the_committee_has_tiered():
+    from gibhub.scan import untiered
+
+    overrides = {p: "B" for p in ("x", "y", "z", "q", "r", "s")}
+    matches = [_match(["x", "y", "z"], ["q", "r", "s"], "alpha") for _ in range(4)]
+    assert untiered(matches, _index(overrides)) == []
+
+
+def test_untiered_ranks_the_most_active_first():
+    from gibhub.scan import untiered
+
+    overrides = {p: "B" for p in ("x", "y", "z")}
+    matches = [_match(["x", "y", "z"], ["q", "r", "s"], "alpha") for _ in range(4)]
+    matches += [_match(["x", "y", "z"], ["t", "u", "v"], "alpha")]
+    rows = untiered(matches, _index(overrides))
+
+    assert rows[0].games == 4
+    assert rows[-1].games == 1
+
+
+def test_untiered_reports_the_tier_that_was_guessed():
+    from gibhub.scan import untiered
+
+    overrides = {p: "B" for p in ("x", "y", "z")}
+    matches = [_match(["x", "y", "z"], ["q", "r", "s"], "alpha") for _ in range(4)]
+    rows = untiered(matches, _index(overrides))
+
+    assert all(r.guessed_tier in BANDS for r in rows)
+
+
+def test_untiered_honours_the_category_filter():
+    from gibhub.scan import untiered
+
+    overrides = {p: "B" for p in ("x", "y", "z")}
+    matches = [_match(["x", "y", "z"], ["q", "r", "s"], "alpha",
+                      channel="Poland ET:Legacy 3v3")]
+    assert untiered(matches, _index(overrides), only=["legacy"]) == []

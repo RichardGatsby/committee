@@ -18,7 +18,7 @@ from .history import TierChange, parse_changes
 from .model import TIERS, TIER_POINTS
 from .render import strip_colors, to_csv, to_json, to_markdown, to_scan_csv, to_scan_table
 from .report import build_report
-from .scan import scan, tier_coverage
+from .scan import scan, tier_coverage, untiered
 from .site import build_site
 
 PAGE_SIZE = 100
@@ -417,6 +417,7 @@ def cmd_site(args) -> int:
     rows = scan(matches, bundle.index(), bundle.coefficients, bundle.scale or 1.0,
                 min_games=args.min_games, only=only, nicks=nicks)
     coverage = tier_coverage(matches, bundle.index(), only=only)
+    gaps = untiered(matches, bundle.index(), only=only, nicks=nicks)
 
     # Read the previous manifest before write_site clears the directory: it is
     # the only record of what each player's slug used to be.
@@ -445,6 +446,7 @@ def cmd_site(args) -> int:
         sample_size=bundle.sample_size,
         reports=reports,
         previous_index=previous_index,
+        untiered_rows=gaps,
     )
     written = write_site(files, args.out)
     print("wrote %d files to %s" % (written, args.out))

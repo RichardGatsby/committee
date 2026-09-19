@@ -1,12 +1,12 @@
 import json
 import re
 
-from gibhub.scan import Coverage, ScanRow
+from gibhub.scan import Coverage, ScanRow, UntieredRow
 from gibhub.report import PlayerReport
 from gibhub.site import (about_page, assign_slugs, build_site, caveat_block,
                          index_json, index_page, model_json, page, player_json,
                          player_page,
-                         redirects, scan_json, slugify)
+                         gaps_json, gaps_page, redirects, scan_json, slugify)
 
 CLEAN = Coverage(players_seen=100, players_guessed=2, guessed_share=0.02)
 HEAVY = Coverage(players_seen=100, players_guessed=46, guessed_share=0.46)
@@ -222,10 +222,10 @@ def _site(rows=(), coverage=CLEAN):
     return build_site(list(rows), coverage, POINTS, 0.4385, METRICS, **STAMP)
 
 
-def test_build_site_writes_the_phase_one_paths():
+def test_build_site_writes_the_expected_paths():
     assert set(_site().keys()) == {
-        "index.html", "about/index.html", "_headers",
-        "api/scan.json", "api/model.json", "api/index.json"}
+        "index.html", "about/index.html", "gaps/index.html", "_headers",
+        "api/scan.json", "api/model.json", "api/index.json", "api/gaps.json"}
 
 
 def test_build_site_returns_bytes_for_every_path():
@@ -434,3 +434,64 @@ def test_the_legend_sits_above_the_scan_table():
 def test_no_legend_when_there_is_nothing_to_decode():
     rows = [_row("p1", "Lepari", label="ON TIER", recommendation="KEEP")]
     assert "within what luck produces" not in index_page(rows, CLEAN, {}, **STAMP)
+
+
+GAPS = [UntieredRow(player_id="q1", nick="Quentin", games=48, guessed_tier="A",
+                    utro=1.04),
+        UntieredRow(player_id="r2", nick="Rob", games=3, guessed_tier="C",
+                    utro=None)]
+
+
+def test_gaps_page_lists_who_needs_tiering_busiest_first():
+    html = gaps_page(GAPS, CLEAN, **STAMP)
+    assert html.index("Quentin") < html.index("Rob")
+    assert "48" in html
+
+
+def test_gaps_page_shows_the_tier_that_was_guessed_and_the_utro_behind_it():
+    html = gaps_page(GAPS, CLEAN, **STAMP)
+    assert "A" in html and "1.04" in html
+
+
+def test_gaps_page_survives_a_player_with_no_utro():
+    assert "Rob" in gaps_page(GAPS, CLEAN, **STAMP)
+
+
+def test_gaps_page_gives_the_player_id_so_a_tier_can_be_recorded():
+    assert "q1" in gaps_page(GAPS, CLEAN, **STAMP)
+
+
+def test_gaps_page_says_so_when_nothing_is_missing():
+    html = gaps_page([], CLEAN, **STAMP)
+    assert "Every player" in html
+
+
+def test_gaps_page_carries_the_caveats():
+    assert "too few games to call" in gaps_page(GAPS, CLEAN, **STAMP)
+
+
+def test_gaps_page_escapes_a_nick_that_looks_like_markup():
+    rows = [UntieredRow("p", "<b>x</b>", 1, "C", None)]
+    html = gaps_page(rows, CLEAN, **STAMP)
+    assert "<b>x</b>" not in html and "&lt;b&gt;" in html
+
+
+def test_gaps_json_carries_every_row():
+    payload = json.loads(gaps_json(GAPS, CLEAN, **STAMP))
+    assert [r["nick"] for r in payload["untiered"]] == ["Quentin", "Rob"]
+    assert payload["untiered"][0]["games"] == 48
+    assert payload["untiered"][0]["guessed_tier"] == "A"
+    assert payload["untiered"][1]["utro"] is None
+
+
+def test_build_site_publishes_the_gaps_page():
+    site = build_site([_row("p1", "Lepari")], CLEAN, POINTS, 0.4385, METRICS,
+                      untiered_rows=GAPS, **STAMP)
+    assert "gaps/index.html" in site
+    assert "api/gaps.json" in site
+
+
+def test_build_site_publishes_a_gaps_page_even_with_no_gaps():
+    site = build_site([_row("p1", "Lepari")], CLEAN, POINTS, 0.4385, METRICS,
+                      **STAMP)
+    assert "gaps/index.html" in site

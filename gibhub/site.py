@@ -11,7 +11,7 @@ from typing import Dict, Sequence
 
 from .render import strip_colors
 from .report import PlayerReport, guess_warning
-from .scan import Coverage, ScanRow
+from .scan import Coverage, ScanRow, UntieredRow
 
 _UNSAFE = re.compile(r"[^a-z0-9]+")
 
@@ -66,7 +66,9 @@ def page(title: str, body: str) -> str:
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
         "<title>%s</title>\n"
         "<style>%s</style>\n"
-        '<nav><a href="/">Scan</a><a href="/about/">How this works</a></nav>\n'
+        '<nav><a href="/">Scan</a>'
+        '<a href="/gaps/">Missing tiers</a>'
+        '<a href="/about/">How this works</a></nav>\n'
         "%s\n"
         "</html>\n"
     ) % (escape(title), STYLE, body)
@@ -371,6 +373,7 @@ def build_site(
     sample_size: int,
     reports=None,
     previous_index=None,
+    untiered_rows=(),
 ) -> Dict[str, bytes]:
     """Every file the published site is made of. Paths are relative, no leading slash."""
     stamp = dict(window=window, built_at=built_at, fitted_at=fitted_at,
@@ -388,6 +391,10 @@ def build_site(
         "api/model.json": model_json(tier_points, scale, fit_metrics,
                                      fitted_at=fitted_at, sample_size=sample_size),
         "api/index.json": index_json(rows, slugs, **stamp),
+        # Always published, even when empty: the nav links to it, and "nothing
+        # is missing" is itself worth stating.
+        "gaps/index.html": gaps_page(untiered_rows, coverage, **stamp),
+        "api/gaps.json": gaps_json(untiered_rows, coverage, **stamp),
     }
     for player_id, report in reports.items():
         slug = slugs.get(player_id) or slugify(report.nick)
@@ -497,3 +504,79 @@ def redirects(previous, slugs: Dict[str, str]) -> str:
             lines.append("/players/%s/ /players/%s/ 301"
                          % (entry["slug"], current))
     return "\n".join(sorted(lines)) + ("\n" if lines else "")
+
+
+def gaps_page(
+    rows: Sequence[UntieredRow],
+    coverage: Coverage,
+    *,
+    window: str,
+    built_at: str,
+    fitted_at: str,
+    sample_size: int,
+) -> str:
+    """The work list: who has no committee tier, busiest first."""
+    body = ["<h1>Players with no committee tier</h1>"]
+    body.append(
+        "<p>Every one of these had a tier guessed for them from their shrunken "
+        "UTRO, capped at A. A guess is not a committee decision, and guesses "
+        "are the largest source of false signal in the scan - so the players "
+        "at the top of this list are the ones whose tiers would improve the "
+        "verdicts most.</p>")
+    body.append(caveat_block(coverage, window=window, built_at=built_at,
+                             fitted_at=fitted_at, sample_size=sample_size))
+
+    if not rows:
+        body.append("<p>Every player in this window holds a committee tier. "
+                    "Nothing to fill in.</p>")
+    else:
+        cells = []
+        for row in rows:
+            cells.append(
+                "<tr><td>%s<td><code>%s</code>"
+                '<td class="num">%d<td class="num">%s<td class="num">%s'
+                % (escape(row.nick), escape(row.player_id), row.games,
+                   escape(row.guessed_tier),
+                   ("%.3f" % row.utro) if row.utro is not None else "-"))
+        body.append(
+            "<table><thead><tr><th>Player<th>Account id"
+            '<th class="num">Games<th class="num">Guessed as'
+            '<th class="num">UTRO</thead><tbody>%s</tbody></table>'
+            % "".join(cells))
+        body.append(
+            "<p>Record a decision by adding the account id and a tier to the "
+            "overrides file, then refit. <strong>Games</strong> is matches in "
+            "this window, so the top of the list is where a guess does the "
+            "most damage. <strong>UTRO</strong> is what the guess was made "
+            "from; a blank one means the player was below the leaderboard's "
+            "round floor and got the median band instead.</p>")
+    return page("Players with no committee tier", "\n".join(body))
+
+
+def gaps_json(
+    rows: Sequence[UntieredRow],
+    coverage: Coverage,
+    *,
+    window: str,
+    built_at: str,
+    fitted_at: str,
+    sample_size: int,
+) -> str:
+    return _dump({
+        "built_at": built_at,
+        "window": window,
+        "fitted_at": fitted_at,
+        "sample_size": sample_size,
+        "coverage": {
+            "players_seen": coverage.players_seen,
+            "players_guessed": coverage.players_guessed,
+            "guessed_share": round(coverage.guessed_share, 4),
+        },
+        "untiered": [{
+            "player_id": r.player_id,
+            "nick": r.nick,
+            "games": r.games,
+            "guessed_tier": r.guessed_tier,
+            "utro": round(r.utro, 4) if r.utro is not None else None,
+        } for r in rows],
+    })
