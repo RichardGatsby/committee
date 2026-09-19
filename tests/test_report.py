@@ -444,8 +444,23 @@ def test_the_recommendation_says_which_way_to_move():
 def test_the_recommendation_handles_the_ends_of_the_ladder():
     from gibhub.report import recommend
 
-    assert recommend("CLEARLY OVER", "S") == "MOVE UP from S (no tier above of it)"
-    assert recommend("CLEARLY UNDER", "D") == "MOVE DOWN from D (no tier below of it)"
+    assert recommend("CLEARLY OVER", "S") == "NO HIGHER TIER: already S, and beating it"
+    assert recommend("OVER", "S") == "NO HIGHER TIER: already S, and beating it"
+    assert recommend("CLEARLY UNDER", "D") == "NO LOWER TIER: already D, and losing below it"
+    assert recommend("UNDER", "D") == "NO LOWER TIER: already D, and losing below it"
+
+
+def test_the_ends_of_the_ladder_never_say_no_tier_above_of_it():
+    """The old wording was ungrammatical and reached the committee's headline.
+
+    Nine players hold S, and the top of them reads CLEARLY OVER.
+    """
+    from gibhub.report import recommend
+
+    for label in ("CLEARLY OVER", "OVER"):
+        assert "of it" not in recommend(label, "S")
+    for label in ("CLEARLY UNDER", "UNDER"):
+        assert "of it" not in recommend(label, "D")
 
 
 def test_the_recommendation_without_a_known_tier():

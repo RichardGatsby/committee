@@ -177,8 +177,11 @@ def recommend(label: str, tier: Optional[str]) -> str:
     if tier and target:
         return "%s %s: %s → %s" % (strength, direction, tier, target)
     if tier:
-        return "%s %s from %s (no tier %s of it)" % (
-            strength, direction, tier, "above" if direction == "UP" else "below")
+        # The ends of the ladder: S cannot go up, D cannot go down. Say that
+        # outright rather than issuing a move with nowhere to move to.
+        if direction == "UP":
+            return "NO HIGHER TIER: already %s, and beating it" % tier
+        return "NO LOWER TIER: already %s, and losing below it" % tier
     return "%s %s" % (strength, direction)
 
 
