@@ -135,7 +135,7 @@ is computed from every match in the window. `--format json` has them all.
 
 ## The published site
 
-The scan is published at <https://committee.pages.dev>, rebuilt daily at 05:00
+The scan is published at <https://truetier.pages.dev>, rebuilt daily at 05:00
 UTC and on demand from the Actions tab. Every page stamps the build time, the
 window and the model it was fitted from, so a screenshot can be dated.
 
