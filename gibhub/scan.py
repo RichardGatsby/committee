@@ -69,6 +69,66 @@ class ScanRow:
 
 
 @dataclasses.dataclass(frozen=True)
+class UntieredRow:
+    """A player the model had to guess a tier for. The work list for the committee."""
+
+    player_id: str
+    nick: str
+    games: int
+    guessed_tier: str
+    utro: Optional[float]
+
+
+def untiered(
+    matches: Iterable[Dict[str, Any]],
+    index: TierIndex,
+    *,
+    only: Optional[List[str]] = None,
+    nicks: Optional[Dict[str, str]] = None,
+) -> List["UntieredRow"]:
+    """Everyone in the window with no committee tier, busiest first.
+
+    tier_coverage says how many there are; this says who they are. Sorted by
+    games because an untiered regular distorts far more verdicts than an
+    untiered visitor.
+    """
+    counted = allowed(only)
+    games: Dict[str, int] = collections.Counter()
+    guessed: Dict[str, str] = {}
+
+    for match in matches:
+        if categorise(match) not in counted:
+            continue
+        alpha, beta = roster_ids(match)
+        if len(alpha) != TEAM_SIZE or len(beta) != TEAM_SIZE:
+            continue
+        channel = match.get("channel_id")
+        for player, resolved in zip(alpha + beta,
+                                    index.resolve_all(alpha, channel)
+                                    + index.resolve_all(beta, channel)):
+            if resolved.source != IMPUTED:
+                continue
+            games[player] += 1
+            guessed[player] = resolved.tier
+
+    nicks = nicks or {}
+    rows = [
+        UntieredRow(
+            player_id=player_id,
+            nick=nicks.get(player_id, player_id[:8]),
+            games=count,
+            guessed_tier=guessed[player_id],
+            utro=index.utro.get(player_id),
+        )
+        for player_id, count in games.items()
+    ]
+    # Busiest first, then by id so two players on the same count never swap
+    # places between builds.
+    rows.sort(key=lambda r: (-r.games, r.player_id))
+    return rows
+
+
+@dataclasses.dataclass(frozen=True)
 class Coverage:
     """How much of the scanned population the committee has actually tiered."""
 

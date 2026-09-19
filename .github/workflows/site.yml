@@ -1,0 +1,66 @@
+name: site
+
+on:
+  schedule:
+    - cron: "0 5 * * *"
+  workflow_dispatch:
+
+# The job reads the repo and deploys to Cloudflare. It never writes back to
+# GitHub, so the automatic GITHUB_TOKEN needs nothing beyond checkout.
+permissions:
+  contents: read
+
+concurrency:
+  group: site
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+
+      # Finished matches are immutable, so the cache only ever grows. Entries
+      # are immutable once written, hence the run id in the key and the prefix
+      # restore. Entries are evicted after seven days unused, which is why this
+      # runs daily rather than weekly.
+      - uses: actions/cache/restore@v4
+        with:
+          path: .cache
+          key: matches-${{ github.run_id }}
+          restore-keys: matches-
+
+      # The tool itself is stdlib-only; pytest is a dev tool and is not
+      # vendored, so the runner needs it installed.
+      - run: python3 -m pip install pytest
+
+      - run: python3 -m pytest
+
+      # The tier list and the change log are two files that can drift apart.
+      # Nothing here refits, so a hole in the history would otherwise only
+      # surface the next time somebody did.
+      - run: python3 tools/check_tier_history.py
+
+      # --players adds a page per scanned player: one profile, spider and
+      # match listing fetch each. Drop the flag if the build gets too slow.
+      - run: python3 -m gibhub.cli site --out _site --range 1y --players
+
+      # Saved with if: always(), and deliberately not in the combined cache
+      # action, whose post step is skipped when the job fails. A cold build
+      # fetches thousands of match details; losing them to one failed deploy
+      # would mean starting cold again tomorrow.
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: .cache
+          key: matches-${{ github.run_id }}
+
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy _site --project-name=truetier

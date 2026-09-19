@@ -9,7 +9,9 @@ import json
 import re
 from typing import Dict, Sequence
 
-from .scan import Coverage, ScanRow
+from .render import strip_colors
+from .report import PlayerReport, guess_warning
+from .scan import Coverage, ScanRow, UntieredRow
 
 _UNSAFE = re.compile(r"[^a-z0-9]+")
 
@@ -64,7 +66,9 @@ def page(title: str, body: str) -> str:
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
         "<title>%s</title>\n"
         "<style>%s</style>\n"
-        '<nav><a href="/">Scan</a><a href="/about/">How this works</a></nav>\n'
+        '<nav><a href="/">Scan</a>'
+        '<a href="/gaps/">Missing tiers</a>'
+        '<a href="/about/">How this works</a></nav>\n'
         "%s\n"
         "</html>\n"
     ) % (escape(title), STYLE, body)
@@ -100,6 +104,33 @@ def caveat_block(
                           sample_size))
     parts.append("</section>")
     return "\n".join(parts)
+
+
+# What each verdict means, and which way it points. OVER means the tier is too
+# low, which reads backwards to anyone meeting the table for the first time.
+LABELS = (
+    ("CLEARLY OVER", "wins <strong>more</strong> than the tier predicts; luck "
+                     "explains it less than 1 time in 100", "MOVE UP"),
+    ("OVER", "same, less than 1 time in 20", "CONSIDER MOVING UP"),
+    ("ON TIER", "within what luck produces", "KEEP"),
+    ("UNDER", "wins <strong>fewer</strong>, less than 1 time in 20",
+     "CONSIDER MOVING DOWN"),
+    ("CLEARLY UNDER", "wins fewer, less than 1 time in 100", "MOVE DOWN"),
+)
+
+
+def legend() -> str:
+    rows = "".join(
+        "<tr><td><code>%s</code><td>%s<td><code>%s</code>"
+        % (escape(label), meaning, escape(decision))
+        for label, meaning, decision in LABELS)
+    return (
+        "<table><thead><tr><th>Label<th>Meaning<th>Decision</thead>"
+        "<tbody>%s</tbody></table>\n"
+        "<p><code>OVER</code> means the tier is too <strong>low</strong> - they "
+        "beat it. <code>UNDER</code> means it is too <strong>high</strong>. The "
+        "target tier comes off the points scale rather than the alphabet, so "
+        '"up" from A is E, not S.</p>' % rows)
 
 
 COLUMNS = ("Player", "Tier", "Games", "Per 100", "Tiers off", "Decision",
@@ -153,6 +184,7 @@ def index_page(
         body.append("<p>No player's record differs from their tier by more "
                     "than luck.</p>")
     else:
+        body.append(legend())
         head = "".join(
             '<th class="num">%s' % escape(c) if c in NUMERIC else "<th>" + escape(c)
             for c in COLUMNS)
@@ -339,18 +371,212 @@ def build_site(
     built_at: str,
     fitted_at: str,
     sample_size: int,
+    reports=None,
+    previous_index=None,
+    untiered_rows=(),
 ) -> Dict[str, bytes]:
     """Every file the published site is made of. Paths are relative, no leading slash."""
     stamp = dict(window=window, built_at=built_at, fitted_at=fitted_at,
                  sample_size=sample_size)
     slugs = assign_slugs(rows)
+    reports = reports or {}
+    # Only link a player whose page this build actually writes.
+    linked = {pid: slug for pid, slug in slugs.items() if pid in reports}
+
     files = {
-        "index.html": index_page(rows, coverage, {}, **stamp),
+        "index.html": index_page(rows, coverage, linked, **stamp),
         "about/index.html": about_page(tier_points, scale, fit_metrics, **stamp),
         "_headers": headers(),
         "api/scan.json": scan_json(rows, coverage, slugs, **stamp),
         "api/model.json": model_json(tier_points, scale, fit_metrics,
                                      fitted_at=fitted_at, sample_size=sample_size),
         "api/index.json": index_json(rows, slugs, **stamp),
+        # Always published, even when empty: the nav links to it, and "nothing
+        # is missing" is itself worth stating.
+        "gaps/index.html": gaps_page(untiered_rows, coverage, **stamp),
+        "api/gaps.json": gaps_json(untiered_rows, coverage, **stamp),
     }
+    for player_id, report in reports.items():
+        slug = slugs.get(player_id) or slugify(report.nick)
+        files["players/%s/index.html" % slug] = player_page(report, **stamp)
+        files["api/players/%s.json" % slug] = player_json(report, slug=slug, **stamp)
+
+    moved = redirects(previous_index, slugs)
+    if moved:
+        files["_redirects"] = moved
+
     return {path: text.encode("utf-8") for path, text in files.items()}
+
+
+def _display_nick(report: PlayerReport) -> str:
+    """The name to show. Same rule to_markdown uses, so the two agree."""
+    return strip_colors(report.nick) or report.discord_nick
+
+
+def player_page(
+    report: PlayerReport,
+    *,
+    window: str,
+    built_at: str,
+    fitted_at: str,
+    sample_size: int,
+) -> str:
+    nick = _display_nick(report)
+    body = ["<h1>%s</h1>" % escape(nick)]
+
+    # Above the headline, where a cropped screenshot still catches it.
+    warning = guess_warning(report.source_counts)
+    if warning:
+        body.append(
+            '<p class="caveats"><strong>%s</strong> %d of the %d players in '
+            "this window had no committee tier.</p>"
+            % (escape(warning), report.players_guessed, report.players_seen))
+
+    body.append(
+        "<p><strong>Expected %.2f wins, actual %d &mdash; %+.2f &rarr; %s"
+        "</strong></p>" % (report.expected_wins, report.actual_wins,
+                           report.delta, escape(report.label)))
+    body.append("<h2>%s</h2>" % escape(report.recommendation))
+    body.append(
+        "<p>Tier %s over %d decided matches. Won %d while favoured, lost %d as "
+        "the underdog: a record built entirely on stacked teams reads the same "
+        "as one built against the odds unless you look here.</p>"
+        % (escape(report.current_tier or "none"), report.decided,
+           report.stack_wins, report.underdog_losses))
+    body.append(
+        "<p>Won %d as the underdog, lost %d while favoured.</p>"
+        % (report.upset_wins, report.upset_losses))
+    body.append(caveat_block(
+        Coverage(report.players_seen, report.players_guessed,
+                 (report.players_guessed / report.players_seen)
+                 if report.players_seen else 0.0),
+        window=window, built_at=built_at, fitted_at=fitted_at,
+        sample_size=sample_size))
+    return page("%s - 3v3 tiering evidence" % nick, "\n".join(body))
+
+
+def player_json(
+    report: PlayerReport,
+    *,
+    slug: str,
+    window: str,
+    built_at: str,
+    fitted_at: str,
+    sample_size: int,
+) -> str:
+    return _dump({
+        "built_at": built_at,
+        "window": window,
+        "fitted_at": fitted_at,
+        "sample_size": sample_size,
+        "slug": slug,
+        "player_id": report.player_id,
+        "nick": _display_nick(report),
+        "tier": report.current_tier,
+        "decided": report.decided,
+        "expected_wins": round(report.expected_wins, 2),
+        "actual_wins": report.actual_wins,
+        "delta": round(report.delta, 2),
+        "per_100": round(report.per_100, 2),
+        "label": report.label,
+        "recommendation": report.recommendation,
+        "luck": report.luck,
+        "stack_wins": report.stack_wins,
+        "underdog_losses": report.underdog_losses,
+        "upset_wins": report.upset_wins,
+        "upset_losses": report.upset_losses,
+        "source_counts": report.source_counts,
+        "players_seen": report.players_seen,
+        "players_guessed": report.players_guessed,
+    })
+
+
+def redirects(previous, slugs: Dict[str, str]) -> str:
+    """_redirects lines for slugs that moved since the last build.
+
+    A player who left the scan gets no line: the old page is gone, and a
+    redirect to nothing is worse than a 404.
+    """
+    lines = []
+    for entry in (previous or {}).get("players", []):
+        current = slugs.get(entry.get("player_id"))
+        if current and current != entry.get("slug"):
+            lines.append("/players/%s/ /players/%s/ 301"
+                         % (entry["slug"], current))
+    return "\n".join(sorted(lines)) + ("\n" if lines else "")
+
+
+def gaps_page(
+    rows: Sequence[UntieredRow],
+    coverage: Coverage,
+    *,
+    window: str,
+    built_at: str,
+    fitted_at: str,
+    sample_size: int,
+) -> str:
+    """The work list: who has no committee tier, busiest first."""
+    body = ["<h1>Players with no committee tier</h1>"]
+    body.append(
+        "<p>Every one of these had a tier guessed for them from their shrunken "
+        "UTRO, capped at A. A guess is not a committee decision, and guesses "
+        "are the largest source of false signal in the scan - so the players "
+        "at the top of this list are the ones whose tiers would improve the "
+        "verdicts most.</p>")
+    body.append(caveat_block(coverage, window=window, built_at=built_at,
+                             fitted_at=fitted_at, sample_size=sample_size))
+
+    if not rows:
+        body.append("<p>Every player in this window holds a committee tier. "
+                    "Nothing to fill in.</p>")
+    else:
+        cells = []
+        for row in rows:
+            cells.append(
+                '<tr><td>%s<td class="num">%d<td class="num">%s<td class="num">%s'
+                % (escape(row.nick), row.games, escape(row.guessed_tier),
+                   ("%.3f" % row.utro) if row.utro is not None else "-"))
+        body.append(
+            '<table><thead><tr><th>Player<th class="num">Games'
+            '<th class="num">Guessed as<th class="num">UTRO</thead>'
+            "<tbody>%s</tbody></table>" % "".join(cells))
+        body.append(
+            "<p><strong>Guessed as</strong> is the tier the model used for "
+            "them anyway - a guess is not a blank, it counts toward their "
+            "team's points in every match they played. <strong>Games</strong> "
+            "is matches in this window, so the top of the list is where a "
+            "guess does the most damage. <strong>UTRO</strong> is what the "
+            "guess was made from; a blank one means the player was below the "
+            "leaderboard's round floor and got the median band instead.</p>\n"
+            '<p class="stamp">Account ids for recording a decision are in '
+            '<a href="/api/gaps.json">gaps.json</a>.</p>')
+    return page("Players with no committee tier", "\n".join(body))
+
+
+def gaps_json(
+    rows: Sequence[UntieredRow],
+    coverage: Coverage,
+    *,
+    window: str,
+    built_at: str,
+    fitted_at: str,
+    sample_size: int,
+) -> str:
+    return _dump({
+        "built_at": built_at,
+        "window": window,
+        "fitted_at": fitted_at,
+        "sample_size": sample_size,
+        "coverage": {
+            "players_seen": coverage.players_seen,
+            "players_guessed": coverage.players_guessed,
+            "guessed_share": round(coverage.guessed_share, 4),
+        },
+        "untiered": [{
+            "player_id": r.player_id,
+            "nick": r.nick,
+            "games": r.games,
+            "guessed_tier": r.guessed_tier,
+            "utro": round(r.utro, 4) if r.utro is not None else None,
+        } for r in rows],
+    })

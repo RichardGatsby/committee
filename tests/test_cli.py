@@ -709,3 +709,90 @@ def test_site_command_clears_stale_files_from_a_previous_build(
           "--min-games", "50"])
 
     assert not (out / "gone.html").exists()
+
+
+def _site_report(player_id, nick):
+    from gibhub.report import PlayerReport
+
+    return PlayerReport(
+        player_id=player_id, nick=nick, discord_nick=nick, tiers=[], lifetime={},
+        percentiles=[], rows=[], expected_wins=13.33, actual_wins=7, delta=-6.33,
+        label="CLEARLY UNDER", luck=0.004, per_100=-31.7, decided=20,
+        current_tier="A", recommendation="MOVE DOWN: A → B", upset_wins=1,
+        upset_losses=2, stack_wins=5, underdog_losses=4, even_matches=0, draws=0,
+        skipped=0, source_counts={"override": 100}, provenance={}, categories=[],
+        players_seen=39, players_guessed=2,
+    )
+
+
+class _SiteClient(_ScanClient):
+    """Serves the scan sweep and the per-player endpoints a report needs."""
+
+    def get(self, path, params=None):
+        # Every scanned player needs a profile and a spider, not just p1.
+        if path.endswith("/spider"):
+            return {"metrics": [{"key": "utro", "value": 1.1, "avg": 1.0,
+                                 "percentile": 70}]}
+        if path.endswith("/matches") and (params or {}).get("pageSize") == 1:
+            return {"total": 1}
+        if path.startswith("/players/") and path.count("/") == 2:
+            player_id = path.rsplit("/", 1)[1]
+            return {"player_id": player_id, "nick": player_id,
+                    "discord_nick": player_id, "tiers": [],
+                    "lifetime": {"matches": 10, "match_wins": 6, "match_losses": 4,
+                                 "match_draws": 0, "utro": 1.1, "kdr": 1.0}}
+        return FAKE_CLIENT.get(path, params)
+
+    def paginate(self, path, params=None, page_size=100, limit=None):
+        if path == "/matches":
+            return _ScanClient.paginate(self, path, params, page_size, limit)
+        return iter([{"match_id": "m1"}])
+
+
+def test_site_command_writes_a_page_per_player(monkeypatch, tmp_path,
+                                               scan_bundle_path):
+    client = _SiteClient([_scan_match(i) for i in range(60)])
+    monkeypatch.setattr("gibhub.cli.make_client", lambda args: client)
+    out = tmp_path / "_site"
+
+    code = main(["--bundle", scan_bundle_path, "site", "--out", str(out),
+                 "--min-games", "50", "--players"])
+
+    assert code == 0
+    assert (out / "players" / "me" / "index.html").exists()
+    assert (out / "api" / "players" / "me.json").exists()
+    assert '<a href="/players/me/">' in (out / "index.html").read_text(
+        encoding="utf-8")
+
+
+def test_site_command_redirects_a_slug_that_moved_since_the_last_build(
+    monkeypatch, tmp_path, scan_bundle_path
+):
+    client = _SiteClient([_scan_match(i) for i in range(60)])
+    monkeypatch.setattr("gibhub.cli.make_client", lambda args: client)
+    out = tmp_path / "_site"
+    (out / "api").mkdir(parents=True)
+    (out / "api" / "index.json").write_text(
+        json.dumps({"players": [{"slug": "old-me", "player_id": "p1"}]}),
+        encoding="utf-8")
+
+    main(["--bundle", scan_bundle_path, "site", "--out", str(out),
+          "--min-games", "50", "--players"])
+
+    assert "/players/old-me/ /players/me/ 301" in \
+        (out / "_redirects").read_text(encoding="utf-8")
+
+
+def test_site_command_publishes_the_untiered_players(monkeypatch, tmp_path,
+                                                     scan_bundle_path):
+    client = _ScanClient([_scan_match(i) for i in range(60)])
+    monkeypatch.setattr("gibhub.cli.make_client", lambda args: client)
+    out = tmp_path / "_site"
+
+    code = main(["--bundle", scan_bundle_path, "site", "--out", str(out),
+                 "--min-games", "50"])
+
+    assert code == 0
+    assert (out / "gaps" / "index.html").exists()
+    payload = json.loads((out / "api" / "gaps.json").read_text(encoding="utf-8"))
+    assert isinstance(payload["untiered"], list)

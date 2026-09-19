@@ -1,10 +1,12 @@
 import json
 import re
 
-from gibhub.scan import Coverage, ScanRow
+from gibhub.scan import Coverage, ScanRow, UntieredRow
+from gibhub.report import PlayerReport
 from gibhub.site import (about_page, assign_slugs, build_site, caveat_block,
-                         index_json, index_page, model_json, page, scan_json,
-                         slugify)
+                         index_json, index_page, model_json, page, player_json,
+                         player_page,
+                         gaps_json, gaps_page, redirects, scan_json, slugify)
 
 CLEAN = Coverage(players_seen=100, players_guessed=2, guessed_share=0.02)
 HEAVY = Coverage(players_seen=100, players_guessed=46, guessed_share=0.46)
@@ -220,10 +222,10 @@ def _site(rows=(), coverage=CLEAN):
     return build_site(list(rows), coverage, POINTS, 0.4385, METRICS, **STAMP)
 
 
-def test_build_site_writes_the_phase_one_paths():
+def test_build_site_writes_the_expected_paths():
     assert set(_site().keys()) == {
-        "index.html", "about/index.html", "_headers",
-        "api/scan.json", "api/model.json", "api/index.json"}
+        "index.html", "about/index.html", "gaps/index.html", "_headers",
+        "api/scan.json", "api/model.json", "api/index.json", "api/gaps.json"}
 
 
 def test_build_site_returns_bytes_for_every_path():
@@ -275,3 +277,227 @@ def test_every_published_json_file_parses():
     for path, blob in site.items():
         if path.endswith(".json"):
             json.loads(blob.decode("utf-8"))
+
+
+def _report(**kwargs):
+    fields = dict(
+        player_id="p1", nick="Lepari", discord_nick="lepari", tiers=[],
+        lifetime={}, percentiles=[], rows=[], expected_wins=13.33, actual_wins=7,
+        delta=-6.33, label="CLEARLY UNDER", luck=0.004, per_100=-31.7, decided=20,
+        current_tier="A", recommendation="MOVE DOWN: A → B", upset_wins=1,
+        upset_losses=2, stack_wins=5, underdog_losses=4, even_matches=0, draws=0,
+        skipped=0, source_counts={"override": 80, "imputed": 40},
+        provenance={}, categories=[], players_seen=39, players_guessed=18,
+    )
+    fields.update(kwargs)
+    return PlayerReport(**fields)
+
+
+def test_player_page_leads_with_the_verdict():
+    html = player_page(_report(), **STAMP)
+    assert "Lepari" in html
+    assert "CLEARLY UNDER" in html
+    assert "MOVE DOWN: A → B" in html
+    assert "13.33" in html
+
+
+def test_player_page_raises_the_guessed_tier_alarm_above_the_headline():
+    html = player_page(_report(), **STAMP)
+    assert html.index("guessed") < html.index("CLEARLY UNDER"), \
+        "the alarm must survive a cropped screenshot"
+
+
+def test_player_page_carries_the_caveats():
+    assert "too few games to call" in player_page(_report(), **STAMP)
+
+
+def test_player_page_escapes_the_nick():
+    html = player_page(_report(nick="<b>x</b>"), **STAMP)
+    assert "<b>x</b>" not in html and "&lt;b&gt;" in html
+
+
+def test_player_page_shows_the_stacked_and_underdog_split():
+    html = player_page(_report(), **STAMP)
+    assert "favoured" in html.lower() and "underdog" in html.lower()
+
+
+def test_player_json_carries_the_verdict_and_its_provenance():
+    payload = json.loads(player_json(_report(), slug="lepari", **STAMP))
+    assert payload["slug"] == "lepari"
+    assert payload["nick"] == "Lepari"
+    assert payload["label"] == "CLEARLY UNDER"
+    assert payload["expected_wins"] == 13.33
+    assert payload["source_counts"]["imputed"] == 40
+
+
+def test_player_json_stamps_the_build():
+    payload = json.loads(player_json(_report(), slug="lepari", **STAMP))
+    assert payload["built_at"] == "2026-09-19T05:00:00+00:00"
+
+
+PREVIOUS = {"players": [
+    {"slug": "chuck", "player_id": "p1", "nick": "chuCk", "tier": "A"},
+    {"slug": "jassi", "player_id": "p2", "nick": "Jassi", "tier": "A"},
+]}
+
+
+def test_redirects_point_a_retired_slug_at_the_current_one():
+    lines = redirects(PREVIOUS, {"p1": "czkk", "p2": "jassi"})
+    assert "/players/chuck/ /players/czkk/ 301" in lines
+
+
+def test_redirects_leave_unchanged_slugs_alone():
+    assert redirects(PREVIOUS, {"p1": "chuck", "p2": "jassi"}) == ""
+
+
+def test_redirects_ignore_a_player_who_has_left_the_scan():
+    assert redirects(PREVIOUS, {"p2": "jassi"}) == ""
+
+
+def test_redirects_survive_a_missing_previous_build():
+    assert redirects(None, {"p1": "chuck"}) == ""
+    assert redirects({}, {"p1": "chuck"}) == ""
+
+
+def test_build_site_writes_a_page_and_json_per_report():
+    site = build_site([_row("p1", "Lepari")], CLEAN, POINTS, 0.4385, METRICS,
+                      reports={"p1": _report()}, previous_index=None, **STAMP)
+    assert "players/lepari/index.html" in site
+    assert "api/players/lepari.json" in site
+
+
+def test_build_site_links_players_once_pages_exist():
+    site = build_site([_row("p1", "Lepari")], CLEAN, POINTS, 0.4385, METRICS,
+                      reports={"p1": _report()}, previous_index=None, **STAMP)
+    assert '<a href="/players/lepari/">' in site["index.html"].decode("utf-8")
+
+
+def test_build_site_writes_redirects_only_when_a_slug_moved():
+    rows = [_row("p1", "Lepari")]
+    without = build_site(rows, CLEAN, POINTS, 0.4385, METRICS,
+                         reports={"p1": _report()},
+                         previous_index={"players": [
+                             {"slug": "lepari", "player_id": "p1"}]}, **STAMP)
+    assert "_redirects" not in without
+
+    moved = build_site(rows, CLEAN, POINTS, 0.4385, METRICS,
+                       reports={"p1": _report()},
+                       previous_index={"players": [
+                           {"slug": "old-name", "player_id": "p1"}]}, **STAMP)
+    assert "/players/old-name/ /players/lepari/ 301" in \
+        moved["_redirects"].decode("utf-8")
+
+
+def test_every_html_page_still_carries_the_caveats_with_player_pages():
+    site = build_site([_row("p1", "Lepari")], CLEAN, POINTS, 0.4385, METRICS,
+                      reports={"p1": _report()}, previous_index=None, **STAMP)
+    missing = [p for p, html in _html_pages(site).items()
+               if "too few games to call" not in html]
+    assert missing == []
+
+
+def test_player_page_strips_the_colour_codes_from_the_nick():
+    html = player_page(_report(nick="^1agsor"), **STAMP)
+    assert "^1agsor" not in html
+    assert "agsor" in html
+
+
+def test_player_page_falls_back_to_the_discord_nick_when_the_nick_is_all_colour():
+    html = player_page(_report(nick="^1^2", discord_nick="lepari"), **STAMP)
+    assert "lepari" in html
+
+
+def test_player_json_strips_the_colour_codes_too():
+    payload = json.loads(player_json(_report(nick="^1agsor"), slug="agsor", **STAMP))
+    assert payload["nick"] == "agsor"
+
+
+def test_index_page_explains_what_each_label_means():
+    html = index_page([_row("p1", "Lepari")], CLEAN, {}, **STAMP)
+    for label in ("CLEARLY OVER", "OVER", "ON TIER", "UNDER", "CLEARLY UNDER"):
+        assert label in html
+    assert "CONSIDER MOVING DOWN" in html
+    assert "1 time in 100" in html and "1 time in 20" in html
+
+
+def test_index_page_says_which_way_over_and_under_point():
+    html = index_page([_row("p1", "Lepari")], CLEAN, {}, **STAMP)
+    assert "too <strong>low</strong>" in html
+    assert "too <strong>high</strong>" in html
+
+
+def test_the_legend_sits_above_the_scan_table():
+    html = index_page([_row("p1", "Lepari")], CLEAN, {}, **STAMP)
+    assert html.index("within what luck produces") < html.index("Lepari")
+
+
+def test_no_legend_when_there_is_nothing_to_decode():
+    rows = [_row("p1", "Lepari", label="ON TIER", recommendation="KEEP")]
+    assert "within what luck produces" not in index_page(rows, CLEAN, {}, **STAMP)
+
+
+GAPS = [UntieredRow(player_id="q1", nick="Quentin", games=48, guessed_tier="A",
+                    utro=1.04),
+        UntieredRow(player_id="r2", nick="Rob", games=3, guessed_tier="C",
+                    utro=None)]
+
+
+def test_gaps_page_lists_who_needs_tiering_busiest_first():
+    html = gaps_page(GAPS, CLEAN, **STAMP)
+    assert html.index("Quentin") < html.index("Rob")
+    assert "48" in html
+
+
+def test_gaps_page_shows_the_tier_that_was_guessed_and_the_utro_behind_it():
+    html = gaps_page(GAPS, CLEAN, **STAMP)
+    assert "A" in html and "1.04" in html
+
+
+def test_gaps_page_survives_a_player_with_no_utro():
+    assert "Rob" in gaps_page(GAPS, CLEAN, **STAMP)
+
+
+def test_gaps_page_keeps_the_account_id_off_the_page():
+    """Readable to a committee member, not a wall of UUIDs. The id stays in the JSON."""
+    assert "q1" not in gaps_page(GAPS, CLEAN, **STAMP)
+
+
+def test_gaps_json_still_carries_the_account_id():
+    payload = json.loads(gaps_json(GAPS, CLEAN, **STAMP))
+    assert payload["untiered"][0]["player_id"] == "q1"
+
+
+def test_gaps_page_says_so_when_nothing_is_missing():
+    html = gaps_page([], CLEAN, **STAMP)
+    assert "Every player" in html
+
+
+def test_gaps_page_carries_the_caveats():
+    assert "too few games to call" in gaps_page(GAPS, CLEAN, **STAMP)
+
+
+def test_gaps_page_escapes_a_nick_that_looks_like_markup():
+    rows = [UntieredRow("p", "<b>x</b>", 1, "C", None)]
+    html = gaps_page(rows, CLEAN, **STAMP)
+    assert "<b>x</b>" not in html and "&lt;b&gt;" in html
+
+
+def test_gaps_json_carries_every_row():
+    payload = json.loads(gaps_json(GAPS, CLEAN, **STAMP))
+    assert [r["nick"] for r in payload["untiered"]] == ["Quentin", "Rob"]
+    assert payload["untiered"][0]["games"] == 48
+    assert payload["untiered"][0]["guessed_tier"] == "A"
+    assert payload["untiered"][1]["utro"] is None
+
+
+def test_build_site_publishes_the_gaps_page():
+    site = build_site([_row("p1", "Lepari")], CLEAN, POINTS, 0.4385, METRICS,
+                      untiered_rows=GAPS, **STAMP)
+    assert "gaps/index.html" in site
+    assert "api/gaps.json" in site
+
+
+def test_build_site_publishes_a_gaps_page_even_with_no_gaps():
+    site = build_site([_row("p1", "Lepari")], CLEAN, POINTS, 0.4385, METRICS,
+                      **STAMP)
+    assert "gaps/index.html" in site

@@ -18,7 +18,7 @@ from .history import TierChange, parse_changes
 from .model import TIERS, TIER_POINTS
 from .render import strip_colors, to_csv, to_json, to_markdown, to_scan_csv, to_scan_table
 from .report import build_report
-from .scan import scan, tier_coverage
+from .scan import scan, tier_coverage, untiered
 from .site import build_site
 
 PAGE_SIZE = 100
@@ -99,8 +99,15 @@ def build_parser() -> argparse.ArgumentParser:
     site_cmd.add_argument("--from", dest="from_", metavar="YYYY-MM-DD")
     site_cmd.add_argument("--to", metavar="YYYY-MM-DD")
     site_cmd.add_argument("--min-games", type=int, default=50, dest="min_games")
+    # _report_for reads args.matches; 0 means every match in the window, which
+    # is what a published verdict should be built from.
+    site_cmd.add_argument("--matches", type=int, default=0, metavar="N")
     site_cmd.add_argument("--only", action="append", metavar="TYPE")
     site_cmd.add_argument("--with-poland", action="store_true", dest="with_poland")
+    site_cmd.add_argument(
+        "--players", action="store_true",
+        help="also render a page per scanned player. Costs one profile, spider "
+             "and match listing fetch each, so roughly 155 sets of calls.")
     site_cmd.add_argument(
         "--built-at", dest="built_at", metavar="ISO8601",
         help="stamp the build with this time instead of now; for reproducible "
@@ -410,6 +417,22 @@ def cmd_site(args) -> int:
     rows = scan(matches, bundle.index(), bundle.coefficients, bundle.scale or 1.0,
                 min_games=args.min_games, only=only, nicks=nicks)
     coverage = tier_coverage(matches, bundle.index(), only=only)
+    gaps = untiered(matches, bundle.index(), only=only, nicks=nicks)
+
+    # Read the previous manifest before write_site clears the directory: it is
+    # the only record of what each player's slug used to be.
+    reports = {}
+    previous_index = None
+    if args.players:
+        cache = MatchCache(args.cache)
+        for row in rows:
+            report = _report_for(client, bundle, row.player_id, args, cache)
+            if report is not None:
+                reports[row.player_id] = report
+        previous_path = os.path.join(args.out, "api", "index.json")
+        if os.path.exists(previous_path):
+            with open(previous_path, "r", encoding="utf-8") as handle:
+                previous_index = json.load(handle)
 
     files = build_site(
         rows, coverage,
@@ -421,6 +444,9 @@ def cmd_site(args) -> int:
             datetime.timezone.utc).replace(microsecond=0).isoformat(),
         fitted_at=bundle.fitted_at,
         sample_size=bundle.sample_size,
+        reports=reports,
+        previous_index=previous_index,
+        untiered_rows=gaps,
     )
     written = write_site(files, args.out)
     print("wrote %d files to %s" % (written, args.out))

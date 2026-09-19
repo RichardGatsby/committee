@@ -46,6 +46,10 @@ Review a whole tier as a spreadsheet:
     python3 -m gibhub.cli bulk --tier A --tier B --out tier-ab.csv
     python3 -m gibhub.cli bulk --players shortlist.txt --out shortlist.csv
 
+Render the published site:
+
+    python3 -m gibhub.cli site --out _site
+
 Inspect or refit the model:
 
     python3 -m gibhub.cli fit            # show the committed model
@@ -128,6 +132,41 @@ their baseline for the window in brackets.
 
 The per-match table is not printed — it runs to hundreds of rows — but the verdict
 is computed from every match in the window. `--format json` has them all.
+
+## The published site
+
+The scan is published at <https://truetier.pages.dev>, rebuilt daily at 05:00
+UTC and on demand from the Actions tab. Every page stamps the build time, the
+window and the model it was fitted from, so a screenshot can be dated.
+
+The same build writes a JSON API, CORS-open so anything can read it from a
+browser:
+
+| path | holds |
+| --- | --- |
+| `/api/scan.json` | every scanned player, including the ones reading `ON TIER` |
+| `/api/model.json` | tier points, the fitted scale, the fit metrics |
+| `/api/index.json` | the build stamp and the slug-to-UUID map |
+| `/api/gaps.json` | every player in the window with no committee tier |
+| `/api/players/<slug>.json` | one player's verdict |
+
+`/gaps/` is the work list: every player the model had to guess a tier for,
+busiest first, with their account id and the UTRO the guess came from. The top
+of that list is where a guess distorts the most verdicts, so it is where a
+committee decision buys the most.
+
+Each player also gets a page at `/players/<slug>/`, keyed off their nick. A
+rename moves the URL, and the build writes a redirect from the old one by
+comparing against the previous `index.json`.
+
+It is only as fresh as the last build. Nothing a visitor does triggers a fetch
+against gibhub.gg.
+
+Player pages cost real requests: the scan is one sweep, but a report fetches a
+profile, a spider and a match listing per player. `--players` is therefore
+optional, and the local command leaves it off:
+
+    python3 -m gibhub.cli site --out _site --players
 
 ## Types of game
 

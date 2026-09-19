@@ -10,6 +10,9 @@ __pycache__/
 *.report.md
 scan.json
 
+# the rendered site. Built by the workflow, never committed.
+_site/
+
 # macOS, editors, envs
 .DS_Store
 .venv/
@@ -17,3 +20,6 @@ venv/
 .idea/
 .vscode/
 tier-history.txt
+
+# git worktrees created for parallel work
+.claude/worktrees/
