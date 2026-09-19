@@ -99,3 +99,70 @@ def caveat_block(
                           sample_size))
     parts.append("</section>")
     return "\n".join(parts)
+
+
+COLUMNS = ("Player", "Tier", "Games", "Per 100", "Tiers off", "Decision",
+           "Confidence", "Read with care because")
+NUMERIC = frozenset(("Games", "Per 100", "Tiers off", "Confidence"))
+
+
+def _odds(row: ScanRow) -> str:
+    return "1 in %d%s" % (row.odds, "+" if row.odds >= 10000 else "")
+
+
+def _name_cell(row: ScanRow, slugs: Dict[str, str]) -> str:
+    slug = slugs.get(row.player_id)
+    if not slug:
+        return escape(row.nick)
+    return '<a href="/players/%s/">%s</a>' % (escape(slug), escape(row.nick))
+
+
+def _row_html(row: ScanRow, slugs: Dict[str, str]) -> str:
+    cells = [
+        _name_cell(row, slugs),
+        escape(row.tier),
+        '<td class="num">%d' % row.games,
+        '<td class="num">%+.1f' % row.per_100,
+        '<td class="num">%+.1f' % row.tiers_off,
+        escape(row.recommendation),
+        '<td class="num">%s' % escape(_odds(row)),
+        escape(row.caution),
+    ]
+    out = ["<tr>"]
+    for cell in cells:
+        out.append(cell if cell.startswith("<td") else "<td>" + cell)
+    return "".join(out)
+
+
+def index_page(
+    rows: Sequence[ScanRow],
+    coverage: Coverage,
+    slugs: Dict[str, str],
+    *,
+    window: str,
+    built_at: str,
+    fitted_at: str,
+    sample_size: int,
+) -> str:
+    shown = [r for r in rows if r.label != "ON TIER"]
+    body = ["<h1>Where a record and a tier disagree</h1>"]
+    body.append(caveat_block(coverage, window=window, built_at=built_at,
+                             fitted_at=fitted_at, sample_size=sample_size))
+    if not shown:
+        body.append("<p>No player's record differs from their tier by more "
+                    "than luck.</p>")
+    else:
+        head = "".join(
+            '<th class="num">%s' % escape(c) if c in NUMERIC else "<th>" + escape(c)
+            for c in COLUMNS)
+        body.append("<table><thead><tr>%s</thead><tbody>%s</tbody></table>"
+                    % (head, "".join(_row_html(r, slugs) for r in shown)))
+        body.append(
+            "<p><strong>Per 100</strong> is wins per 100 games above or below "
+            "what the tier predicts, and is the number to argue over. "
+            "<strong>Tiers off</strong> is how many tier steps that gap is "
+            "worth. <strong>Confidence</strong> assumes games are independent, "
+            "which they are not when one teammate fills much of a sample, so it "
+            "is capped at 1 in 10000. Showing %d of %d players scanned.</p>"
+            % (len(shown), len(rows)))
+    return page("3v3 tiering evidence", "\n".join(body))

@@ -1,5 +1,5 @@
 from gibhub.scan import Coverage, ScanRow
-from gibhub.site import assign_slugs, caveat_block, page, slugify
+from gibhub.site import assign_slugs, caveat_block, index_page, page, slugify
 
 CLEAN = Coverage(players_seen=100, players_guessed=2, guessed_share=0.02)
 HEAVY = Coverage(players_seen=100, players_guessed=46, guessed_share=0.46)
@@ -92,3 +92,43 @@ def test_caveat_block_raises_the_coverage_warning_when_tiers_were_guessed():
 def test_caveat_block_omits_the_coverage_warning_when_coverage_is_clean():
     block = caveat_block(CLEAN, **STAMP)
     assert "UNRELIABLE" not in block and "CAUTION" not in block
+
+
+def test_index_page_lists_a_mis_tiered_player():
+    rows = [_row("p1", "Lepari", tier="A", games=120, per_100=12.5, tiers_off=0.8,
+                 recommendation="CONSIDER MOVING UP: A → E", luck=0.01)]
+    html = index_page(rows, CLEAN, {}, **STAMP)
+    assert "Lepari" in html
+    assert "+12.5" in html
+    assert "CONSIDER MOVING UP: A → E" in html
+    assert "1 in 100" in html
+
+
+def test_index_page_hides_players_whose_record_matches_their_tier():
+    rows = [_row("p1", "Lepari", label="ON TIER", recommendation="KEEP")]
+    html = index_page(rows, CLEAN, {}, **STAMP)
+    assert "Lepari" not in html
+    assert "No player" in html
+
+
+def test_index_page_caps_the_odds_it_prints():
+    rows = [_row("p1", "Lepari", luck=0.0)]
+    assert "1 in 10000+" in index_page(rows, CLEAN, {}, **STAMP)
+
+
+def test_index_page_escapes_a_nick_that_looks_like_markup():
+    rows = [_row("p1", "<script>x</script>")]
+    html = index_page(rows, CLEAN, {}, **STAMP)
+    assert "<script>x</script>" not in html
+    assert "&lt;script&gt;" in html
+
+
+def test_index_page_carries_the_caveats():
+    html = index_page([_row("p1", "Lepari")], CLEAN, {}, **STAMP)
+    assert "too few games to call" in html
+
+
+def test_index_page_links_a_player_when_a_slug_is_given():
+    rows = [_row("p1", "Lepari")]
+    html = index_page(rows, CLEAN, {"p1": "lepari"}, **STAMP)
+    assert '<a href="/players/lepari/">Lepari</a>' in html
