@@ -7,7 +7,7 @@ passed in, so two builds of the same inputs produce identical bytes.
 import html as html_module
 import json
 import re
-from typing import Dict, Sequence
+from typing import Dict, Sequence, Tuple
 
 from .render import strip_colors
 from .report import PlayerReport, guess_warning
@@ -57,8 +57,33 @@ def escape(value) -> str:
     return html_module.escape(str(value), quote=True)
 
 
-def page(title: str, body: str) -> str:
+def player_options(players: Sequence[Tuple[str, str]]) -> str:
+    """The <option> list for the header picker, from (nick, slug) pairs.
+
+    Alphabetical by nick, case-insensitively: the index is ranked by effect
+    size, which is no way to find somebody you already have in mind.
+    """
+    if not players:
+        return ""
+    options = ['<option value="">Jump to a player…</option>']
+    for nick, slug in sorted(players, key=lambda p: p[0].lower()):
+        options.append('<option value="/players/%s/">%s</option>'
+                       % (escape(slug), escape(nick)))
+    return "".join(options)
+
+
+def page(title: str, body: str, players: Sequence[Tuple[str, str]] = ()) -> str:
     """One self-contained document. Nothing is fetched at view time."""
+    options = player_options(players)
+    picker = ""
+    if options:
+        # Inline, because the whole point of the site is that a page needs no
+        # second request to work. location.assign keeps the back button honest.
+        picker = (
+            '<select aria-label="Jump to a player"'
+            ' onchange="if(this.value)location.assign(this.value)">%s</select>'
+            % options
+        )
     return (
         "<!doctype html>\n"
         '<html lang="en">\n'
@@ -68,10 +93,10 @@ def page(title: str, body: str) -> str:
         "<style>%s</style>\n"
         '<nav><a href="/">Scan</a>'
         '<a href="/gaps/">Missing tiers</a>'
-        '<a href="/about/">How this works</a></nav>\n'
+        '<a href="/about/">How this works</a>%s</nav>\n'
         "%s\n"
         "</html>\n"
-    ) % (escape(title), STYLE, body)
+    ) % (escape(title), STYLE, picker, body)
 
 
 def caveat_block(
@@ -175,7 +200,7 @@ def index_page(
     built_at: str,
     fitted_at: str,
     sample_size: int,
-) -> str:
+    players: Sequence[Tuple[str, str]] = ()) -> str:
     shown = [r for r in rows if r.label != "ON TIER"]
     body = ["<h1>Where a record and a tier disagree</h1>"]
     body.append(caveat_block(coverage, window=window, built_at=built_at,
@@ -198,7 +223,7 @@ def index_page(
             "which they are not when one teammate fills much of a sample, so it "
             "is capped at 1 in 10000. Showing %d of %d players scanned.</p>"
             % (len(shown), len(rows)))
-    return page("3v3 tiering evidence", "\n".join(body))
+    return page("3v3 tiering evidence", "\n".join(body), players)
 
 
 TIER_ORDER = ("S", "E", "A", "B", "C", "D")
@@ -225,7 +250,7 @@ def about_page(
     built_at: str,
     fitted_at: str,
     sample_size: int,
-) -> str:
+    players: Sequence[Tuple[str, str]] = ()) -> str:
     rows = "".join(
         '<tr><td>%s<td class="num">%g<td class="num">%+.2f'
         % (escape(tier), tier_points.get(tier, 0.0),
@@ -259,7 +284,7 @@ def about_page(
         caveat_block(Coverage(0, 0, 0.0), window=window, built_at=built_at,
                      fitted_at=fitted_at, sample_size=sample_size),
     ]
-    return page("How this works", "\n".join(body))
+    return page("How this works", "\n".join(body), players)
 
 
 def _dump(payload) -> str:
@@ -382,10 +407,15 @@ def build_site(
     reports = reports or {}
     # Only link a player whose page this build actually writes.
     linked = {pid: slug for pid, slug in slugs.items() if pid in reports}
+    # The header picker offers the same set: a dead option is worse than none.
+    picker = sorted((row.nick, linked[row.player_id]) for row in rows
+                    if row.player_id in linked)
 
     files = {
-        "index.html": index_page(rows, coverage, linked, **stamp),
-        "about/index.html": about_page(tier_points, scale, fit_metrics, **stamp),
+        "index.html": index_page(rows, coverage, linked, players=picker,
+                                 **stamp),
+        "about/index.html": about_page(tier_points, scale, fit_metrics,
+                                       players=picker, **stamp),
         "_headers": headers(),
         "api/scan.json": scan_json(rows, coverage, slugs, **stamp),
         "api/model.json": model_json(tier_points, scale, fit_metrics,
@@ -393,12 +423,14 @@ def build_site(
         "api/index.json": index_json(rows, slugs, **stamp),
         # Always published, even when empty: the nav links to it, and "nothing
         # is missing" is itself worth stating.
-        "gaps/index.html": gaps_page(untiered_rows, coverage, **stamp),
+        "gaps/index.html": gaps_page(untiered_rows, coverage,
+                                     players=picker, **stamp),
         "api/gaps.json": gaps_json(untiered_rows, coverage, **stamp),
     }
     for player_id, report in reports.items():
         slug = slugs.get(player_id) or slugify(report.nick)
-        files["players/%s/index.html" % slug] = player_page(report, **stamp)
+        files["players/%s/index.html" % slug] = player_page(
+            report, players=picker, **stamp)
         files["api/players/%s.json" % slug] = player_json(report, slug=slug, **stamp)
 
     moved = redirects(previous_index, slugs)
@@ -420,7 +452,7 @@ def player_page(
     built_at: str,
     fitted_at: str,
     sample_size: int,
-) -> str:
+    players: Sequence[Tuple[str, str]] = ()) -> str:
     nick = _display_nick(report)
     body = ["<h1>%s</h1>" % escape(nick)]
 
@@ -452,7 +484,7 @@ def player_page(
                  if report.players_seen else 0.0),
         window=window, built_at=built_at, fitted_at=fitted_at,
         sample_size=sample_size))
-    return page("%s - 3v3 tiering evidence" % nick, "\n".join(body))
+    return page("%s - 3v3 tiering evidence" % nick, "\n".join(body), players)
 
 
 def player_json(
@@ -514,7 +546,7 @@ def gaps_page(
     built_at: str,
     fitted_at: str,
     sample_size: int,
-) -> str:
+    players: Sequence[Tuple[str, str]] = ()) -> str:
     """The work list: who has no committee tier, busiest first."""
     body = ["<h1>Players with no committee tier</h1>"]
     body.append(
@@ -550,7 +582,7 @@ def gaps_page(
             "leaderboard's round floor and got the median band instead.</p>\n"
             '<p class="stamp">Account ids for recording a decision are in '
             '<a href="/api/gaps.json">gaps.json</a>.</p>')
-    return page("Players with no committee tier", "\n".join(body))
+    return page("Players with no committee tier", "\n".join(body), players)
 
 
 def gaps_json(
