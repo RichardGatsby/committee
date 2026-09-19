@@ -1,0 +1,40 @@
+name: site
+
+on:
+  schedule:
+    - cron: "0 5 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: site
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+
+      # Finished matches are immutable, so the cache only ever grows. Entries
+      # are immutable once written, hence the run id in the key and the prefix
+      # restore. Entries are evicted after seven days unused, which is why this
+      # runs daily rather than weekly.
+      - uses: actions/cache@v4
+        with:
+          path: .cache
+          key: matches-${{ github.run_id }}
+          restore-keys: matches-
+
+      - run: python3 -m pytest
+
+      - run: python3 -m gibhub.cli site --out _site --range 1y
+
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy _site --project-name=committee
