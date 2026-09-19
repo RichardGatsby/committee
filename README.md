@@ -257,3 +257,12 @@ shown to be incomparable.
 not call. Public endpoints need no authentication.
 
 Design and plan: `docs/superpowers/specs/` and `docs/superpowers/plans/`.
+
+Working on this: `CLAUDE.md` has the baseline context and the domain facts that
+trip people up. Conventions live in `.claude/skills/`:
+
+| skill | covers |
+| --- | --- |
+| `code-quality` | test-first, functional core with I/O at the edges, stdlib-only Python 3.9 |
+| `unslop` | prose in docs, commits and committee-facing output |
+| `conventional-commits` | commit format, and what a refit must record |
