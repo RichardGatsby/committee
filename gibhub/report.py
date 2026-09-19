@@ -1,7 +1,7 @@
 """Pure assembly of a player's evidence report. No I/O."""
 
 import dataclasses
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from .categories import allowed, categorise, split
 from .dataset import TEAM_SIZE, roster_ids, winner_of
@@ -149,7 +149,7 @@ def luck_probability(probabilities: Sequence[float], actual: int) -> float:
     return sum(distribution[:actual + 1])
 
 
-def stronger_and_weaker(tier: Optional[str]):
+def stronger_and_weaker(tier: Optional[str]) -> Tuple[Optional[str], Optional[str]]:
     """The tiers either side of `tier` by strength, not by letter.
 
     The letters are not an ordered ladder — E sits between S and A — so the

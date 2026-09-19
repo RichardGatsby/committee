@@ -5,21 +5,22 @@ import dataclasses
 import io
 import json
 import re
-from typing import Optional, Sequence
+from typing import Any, List, Optional, Sequence
 
 from .categories import LABELS
 from .report import PlayerReport
+from .scan import ScanRow
 
 # Quake 3 colour codes: a caret followed by any single character.
 _COLOR = re.compile(r"\^.")
 
-CSV_COLUMNS = [
+CSV_COLUMNS = (
     "player_id", "nick", "discord_nick", "tier", "tier_channel", "tier_updated_at",
     "matches", "wins", "losses", "draws", "win_rate", "expected_wins", "actual_wins",
     "delta", "per_100", "luck_1_in", "label", "recommendation", "decided", "stack_wins", "stack_losses", "underdog_wins", "underdog_losses",
     "upset_wins", "upset_losses", "utro", "utro_percentile", "kdr",
     "exact_tiers", "crosschannel_tiers", "imputed_tiers", "override_tiers",
-]
+)
 
 
 def strip_colors(nick: Optional[str]) -> str:
@@ -43,7 +44,11 @@ def _utro(value: Optional[float], delta: Optional[float]) -> str:
 MARK = {"override": "", "exact": "", "cross_channel": "*", "imputed": "?"}
 
 
-def table(headers, rows, aligns=None) -> list:
+def table(
+    headers: Sequence[str],
+    rows: Sequence[Sequence[Any]],
+    aligns: Optional[Sequence[str]] = None,
+) -> List[str]:
     """An aligned plain-text table.
 
     Plain monospace rather than a markdown table: this is read in a terminal and
@@ -55,7 +60,7 @@ def table(headers, rows, aligns=None) -> list:
     widths = [max(len(str(c)) for c in col) for col in columns]
     aligns = aligns or ["<"] * len(headers)
 
-    def line(cells):
+    def line(cells: Sequence[Any]) -> str:
         return ("  " + "   ".join(
             format(str(cell), "%s%d" % (align, width))
             for cell, width, align in zip(cells, widths, aligns)
@@ -225,7 +230,7 @@ def to_markdown(report: PlayerReport, extremes: int = 0) -> str:
     return "\n".join(lines) + "\n"
 
 
-def to_scan_table(rows, show_all: bool = False) -> str:
+def to_scan_table(rows: Sequence[ScanRow], show_all: bool = False) -> str:
     """The population scan as a table, ranked by effect size."""
     shown = [r for r in rows if show_all or r.label != "ON TIER"]
     if not shown:
@@ -257,7 +262,7 @@ def to_scan_table(rows, show_all: bool = False) -> str:
     return "\n".join(lines) + "\n"
 
 
-def to_scan_csv(rows) -> str:
+def to_scan_csv(rows: Sequence[ScanRow]) -> str:
     columns = ["player_id", "nick", "tier", "games", "expected", "actual", "per_100",
                "tiers_off", "luck_1_in", "label", "recommendation", "top_mate",
                "top_mate_share", "guessed_share", "caution"]

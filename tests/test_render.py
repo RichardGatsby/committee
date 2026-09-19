@@ -144,8 +144,12 @@ def test_markdown_flags_a_genuinely_untiered_player():
         dataclasses.replace(REPORT, tiers=[], current_tier=None))
 
 
+def test_csv_header_is_an_immutable_tuple():
+    assert isinstance(CSV_COLUMNS, tuple)
+
+
 def test_csv_header_matches_the_spec():
-    assert CSV_COLUMNS == [
+    assert CSV_COLUMNS == (
         "player_id", "nick", "discord_nick", "tier", "tier_channel", "tier_updated_at",
         "matches", "wins", "losses", "draws", "win_rate", "expected_wins", "actual_wins",
         "delta", "per_100", "luck_1_in", "label", "recommendation", "decided",
@@ -153,7 +157,7 @@ def test_csv_header_matches_the_spec():
         "stack_losses", "underdog_wins", "underdog_losses",
         "upset_wins", "upset_losses", "utro", "utro_percentile", "kdr",
         "exact_tiers", "crosschannel_tiers", "imputed_tiers", "override_tiers",
-    ]
+    )
 
 
 def test_markdown_splits_results_into_favoured_and_underdog():

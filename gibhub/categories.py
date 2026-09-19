@@ -5,7 +5,7 @@ The API carries no single field for this, so it is read off three signals: the
 a real Discord one or a synthetic tournament one.
 """
 
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 LEGACY = "legacy"
 POLAND = "poland"
@@ -58,7 +58,7 @@ def categorise(match: Dict[str, Any]) -> str:
     return CUP
 
 
-def parse_selection(values) -> List[str]:
+def parse_selection(values: Optional[Iterable[str]]) -> List[str]:
     """Turn --only values into category keys, accepting friendly spellings."""
     if not values:
         return []
@@ -90,14 +90,16 @@ def parse_selection(values) -> List[str]:
     return chosen
 
 
-def allowed(selection, default: Tuple[str, ...] = REPORT_DEFAULT) -> Tuple[str, ...]:
+def allowed(
+    selection: Optional[Iterable[str]], default: Tuple[str, ...] = REPORT_DEFAULT
+) -> Tuple[str, ...]:
     """Which categories to count: an explicit selection, else `default`."""
     if selection:
         return tuple(selection)
     return default
 
 
-def split(rows) -> List[Tuple[str, List[Any]]]:
+def split(rows: Iterable[Any]) -> List[Tuple[str, List[Any]]]:
     """Group rows by category, in a stable order, skipping empty categories."""
     buckets: Dict[str, List[Any]] = {key: [] for key in ORDER}
     for row in rows:

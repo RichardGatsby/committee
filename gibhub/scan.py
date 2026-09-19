@@ -7,13 +7,13 @@ report per player. Pure: takes already-fetched matches and returns rows.
 import collections
 import dataclasses
 import math
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, Sequence
 
 from .categories import allowed, categorise
 from .dataset import TEAM_SIZE, roster_ids, winner_of
 from .model import feature_vector, predict
 from .report import classify, luck_probability, recommend
-from .tiers import IMPUTED
+from .tiers import IMPUTED, TierIndex
 
 # Above this the odds stop measuring evidence and start measuring broken
 # assumptions — chiefly that games are independent, which they are not when a
@@ -68,9 +68,10 @@ def _logit(p: float) -> float:
 
 def scan(
     matches: Iterable[Dict[str, Any]],
-    index,
-    coefficients,
+    index: TierIndex,
+    coefficients: Sequence[float],
     scale: float,
+    *,
     min_games: int = 50,
     only: Optional[List[str]] = None,
     nicks: Optional[Dict[str, str]] = None,
