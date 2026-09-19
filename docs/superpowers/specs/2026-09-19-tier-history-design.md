@@ -6,7 +6,7 @@
 ## The problem
 
 Tiers have no history, so every past match is scored against today's tiers. When
-the committee changes a tier, the whole record is retroactively rewritten.
+a tier changes, the whole record is retroactively rewritten.
 
 Measured by **simulation**: a scratch copy of `coefficients.json` with hevimies
 (`jussi8030`) moved from E to S, and the 4-month scan re-run against it. No tier
@@ -42,7 +42,7 @@ date.
 
 **Not git.** All six commits touching `data/tierlist-events-3v3.txt` are pure
 additions. There is not one promotion or demotion in the history. Seeding from
-git would record bulk name resolution as committee decisions.
+git would record bulk name resolution as tier decisions.
 
 **An append-only change log**, written when a decision is made.
 
@@ -57,11 +57,11 @@ Tab-separated, one decision per line, append-only, sorted by date.
 
 - `player` is the same token the tier list uses (a nick or a UUID), resolved by
   `tools/resolve_tierlist.py` exactly as the tier list is.
-- `from` is `-` when the player held no committee tier before.
+- `from` is `-` when the player held no assigned tier before.
 - `note` is free text and carries why.
 
 Rejected: dates inline in the tier list. That file is hand-edited by the
-committee and already carries alias syntax (`hevimies -> jussi8030`); adding
+tier list and already carries alias syntax (`hevimies -> jussi8030`); adding
 date syntax puts two things to get wrong on one line. The cost of two files is
 drift, closed by a validation check (decision 6).
 
@@ -141,15 +141,15 @@ Run in CI alongside `tools/check_fit.py`.
 
 ### 7. History starts at the first logged decision
 
-No bootstrap, and the log ships empty. It means exactly one thing: the committee
+No bootstrap, and the log ships empty. It means exactly one thing: the tier list
 changed its mind on this date. Nothing is written to it as part of building the
-feature — the first entry is whatever the committee actually decides, whenever
+feature — the first entry is whatever is actually decided, whenever
 that happens. The cost is thin data at the start, and that cost only grows if we
 wait.
 
 ## Out of scope
 
-- Per-channel history. The log covers the committee tier, which is what `scan`
+- Per-channel history. The log covers the assigned tier, which is what `scan`
   uses and what dominates reports. API holdings stay current-only.
 - As-of `bands` and `utro`. Imputation keeps using current values; making those
   historical is a much larger change for a much smaller gain.

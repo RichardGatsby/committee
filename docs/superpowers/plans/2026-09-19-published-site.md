@@ -47,7 +47,7 @@ together: adding a column to the index table means adding a field to
 
 # Phase 1 — the scan index, the about page, the JSON API
 
-At the end of phase 1 the committee has a working public site with one table on
+At the end of phase 1 there is a working public site with one table on
 it. No player pages.
 
 ## Task 1: Slugs
@@ -339,7 +339,7 @@ def caveat_block(
     parts = ['<section class="caveats">']
     if coverage.warning:
         parts.append("<p><strong>%s</strong> %d of the %d players in this window "
-                     "had no committee tier.</p>"
+                     "had no assigned tier.</p>"
                      % (escape(coverage.warning), coverage.players_guessed,
                         coverage.players_seen))
     parts.append(
@@ -348,7 +348,7 @@ def caveat_block(
         "<code>KEEP</code> because the evidence is thin, not because the tier "
         "is right.</p>")
     parts.append(
-        "<p>Some committee names still have no account mapped, mostly C and D, "
+        "<p>Some names on the tier list still have no account mapped, mostly C and D, "
         "so a player missing from this table has not been cleared - they have "
         "not been checked.</p>")
     parts.append(
@@ -589,7 +589,7 @@ LIMITATIONS = (
     "Tiers have no history, so past matches are scored against today's tiers. "
     "A recently promoted player looks like they were overperforming all year.",
     "The alpha side wins 52.5% of matches and the model cannot express that.",
-    "A player with no committee tier gets one imputed from their shrunken "
+    "A player with no assigned tier gets one imputed from their shrunken "
     "UTRO, capped at A. Imputation error, not luck, is the largest source of "
     "false signal here.",
 )
@@ -612,7 +612,7 @@ def about_page(
         for tier in TIER_ORDER)
     body = [
         "<h1>How this works</h1>",
-        "<p>Each tier is worth fixed points set by the committee. A team's "
+        "<p>Each tier is worth a fixed number of points. A team's "
         "strength is the sum of its three players' points, and the only fitted "
         "parameter is what one point of advantage is worth:</p>",
         "<p><code>P(win) = sigmoid(%.2f &times; (my team's points &minus; "
@@ -1032,14 +1032,14 @@ def test_site_command_writes_the_files(monkeypatch, tmp_path, capsys,
     assert "Me" in (out / "index.html").read_text(encoding="utf-8")
 
 
-def test_site_command_refuses_a_bundle_with_no_committee_tiers(
+def test_site_command_refuses_a_bundle_with_no_tier_list(
     monkeypatch, tmp_path, capsys, fake_bundle_path
 ):
     monkeypatch.setattr("gibhub.cli.make_client", lambda args: FAKE_CLIENT)
     code = main(["--bundle", fake_bundle_path, "site",
                  "--out", str(tmp_path / "_site")])
     assert code == 1
-    assert "no committee tier list" in capsys.readouterr().err
+    assert "no tier list" in capsys.readouterr().err
 
 
 def test_site_command_clears_stale_files_from_a_previous_build(
@@ -1098,7 +1098,7 @@ def cmd_site(args) -> int:
     bundle = load(args.bundle)
     if not bundle.overrides:
         sys.stderr.write(
-            "this bundle carries no committee tier list, so the site would have "
+            "this bundle carries no tier list, so the site would have "
             "nobody to score.\nRefit with --overrides first.\n")
         return 1
 
@@ -1256,7 +1256,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy _site --project-name=committee
+          command: pages deploy _site --project-name=truetier
 ```
 
 - [ ] **Step 2: Check no secret was inlined**
@@ -1286,7 +1286,7 @@ git commit -m "ci: build and deploy the site daily"
 
 In the repo settings, add `CLOUDFLARE_API_TOKEN` (a token scoped to
 **Cloudflare Pages: Edit** and nothing else) and `CLOUDFLARE_ACCOUNT_ID`.
-Create the Pages project named `committee` first, from the Cloudflare
+Create the Pages project named `truetier` first, from the Cloudflare
 dashboard, choosing direct upload rather than a Git connection.
 
 These are repo secrets, not committed files. Nothing here goes in git.
@@ -1295,7 +1295,7 @@ These are repo secrets, not committed files. Nothing here goes in git.
 
 Run the workflow from the Actions tab. Expect the first run to be slow: the
 cache is empty, so it reads every match in the window. Confirm the site loads
-and that `curl -sI https://committee.pages.dev/api/scan.json` shows
+and that `curl -sI https://truetier.pages.dev/api/scan.json` shows
 `access-control-allow-origin: *`.
 
 ---
@@ -1310,7 +1310,7 @@ and that `curl -sI https://committee.pages.dev/api/scan.json` shows
 ```markdown
 ## The published site
 
-The scan is published at <https://committee.pages.dev>, rebuilt daily at 05:00
+The scan is published at <https://truetier.pages.dev>, rebuilt daily at 05:00
 UTC and on demand from the Actions tab. The same build writes a JSON API:
 
 | path | holds |
@@ -1449,7 +1449,7 @@ def player_page(
     if warning:
         body.append(
             '<p class="caveats"><strong>%s</strong> %d of the %d players in '
-            "this window had no committee tier.</p>"
+            "this window had no assigned tier.</p>"
             % (escape(warning), report.players_guessed, report.players_seen))
 
     body.append(

@@ -1,4 +1,4 @@
-# 3v3 Committee Tiering Tool — Design
+# 3v3 Tiering Tool — Design
 
 Date: 2026-09-18
 Status: Implemented. See "Changes during implementation" for where the
@@ -6,7 +6,7 @@ built tool diverges from the design as approved.
 
 ## Purpose
 
-The tiering committee assigns gather tiers (S/A/B/C/D/E) to 3v3 players. Today that
+Gather tiers (S/A/B/C/D/E) are assigned to 3v3 players. Today that
 judgement rests on memory and vibes. This tool produces a reproducible, paste-ready
 evidence block per player, built entirely from the gibhub.gg API, answering one
 question: **does this player's record match the tier they hold?**
@@ -61,7 +61,7 @@ Logistic regression with **no intercept** — the sides are symmetric, so a mirr
 roster must yield exactly 0.5.
 
 Fitted coefficients `beta_t` are the empirical value of each tier on a log-odds
-scale. This is a deliberate secondary output: it shows the committee what each tier
+scale. This is a deliberate secondary output: it shows readers what each tier
 is actually worth and whether adjacent tiers are statistically distinguishable.
 
 Fitting is plain batch gradient descent over ~6 parameters with a fixed learning
@@ -237,14 +237,14 @@ One integration test hits the live API as a contract check, skipped unless
   recently promoted A→S appears to have been overperforming as an A for their whole
   history. Mitigated by defaulting to `--range 6m` and printing each tier's
   `updated_at`; not solvable from the API as it stands.
-- **Tier-based strength is partly circular** — the committee is being shown
+- **Tier-based strength is partly circular** — readers are being shown
   evidence derived from the tiers it assigns. This is deliberate: the question asked
   is "is this player's record consistent with their current tier", not "what tier
   should this player have in the absolute".
 - **Imputed tiers carry model error into the result.** Flagged per input and
-  counted per report so the committee can discount accordingly.
+  counted per report so a reader can discount accordingly.
 - **Per-channel tiers** mean a player active across channels may be scored against
-  a tier assigned by a different channel's committee.
+  a tier assigned by a different channel.
 - **The tier letters are not an alphabetical ladder.** Measured after
   implementation: the strength order is S > E > A > B > C > D. Tier E holders have
   a 51.5% 3v3 win rate over 5,413 matches and a median UTRO of 1.104, second only
@@ -297,7 +297,7 @@ covers every 3v3 player without per-player fetches. `utro_shrunken` rather than 
 ## Features added beyond the approved design
 
 **`--tier-channel`** restricts the tier index to one channel's assignments, so the
-coefficients and UTRO bands come from a single committee. On the ET:Legacy Events
+coefficients and UTRO bands come from a single tier list. On the ET:Legacy Events
 tiers alone the model fits slightly better than on the mixed set (62.8% vs 62.4%
 accuracy), so the two channels' scales are not interchangeable.
 
@@ -313,7 +313,7 @@ applied by measured strength so it also excludes E. A genuinely elite player wou
 already have been tiered. This is a conservative assumption that materially moves
 individual verdicts — see below.
 
-**`--overrides FILE`** takes committee-supplied tiers the API does not carry, as
+**`--overrides FILE`** takes tier-list tiers the API does not carry, as
 `player_id = TIER` lines. Overrides beat every other source and are exempt from the
 imputation cap. `tools/resolve_tierlist.py` turns a Discord tier list into that
 file and refuses to guess: a fuzzy hit is accepted only when the found nick shares
@@ -346,8 +346,8 @@ each report now states the move: `MOVE DOWN: A -> B`, `CONSIDER MOVING UP: B -> 
 `KEEP at E`. The target tier is taken from the points scale rather than the
 alphabet, so "up" from A is E.
 
-**A committee tier list.** The API's tiers are incomplete, so
-`data/tierlist-events-3v3.txt` holds the committee's own list and
+**A tier list.** The API's tiers are incomplete, so
+`data/tierlist-events-3v3.txt` holds the tier list and
 `tools/resolve_tierlist.py` resolves it into `overrides.txt`. The resolver refuses
 to guess: a fuzzy hit is accepted only when the found nick shares a substring with
 the search term (search returns `Gilbey` for `maNic` and `juissi` for `poshtat`),
@@ -370,7 +370,7 @@ syntax pins entries whose Discord name is not searchable.
   pipes: the output is read in a terminal and screenshotted, and Discord does not
   render markdown tables at all.
 - The header lists only tiers from the channel the model is scoring with, and
-  falls back to the committee list where the API has no tier — it previously read
+  falls back to the tier list where the API has no tier — it previously read
   "no 3v3 tier held" for a player whose lineups below showed their tier.
 - Three modules exist that the component table does not list — `bundle.py`,
   `build.py`, `fetch.py` — to keep `model.py`, `tiers.py` and `report.py` free of
@@ -390,7 +390,7 @@ four ways:
 | free six-coefficient fit | +24.7 | 0.0006 |
 | fixed points, uncapped imputation | +20.2 | 0.004 |
 | fixed points, imputation capped at A | +15.3 | 0.023 |
-| the above plus the committee tier list | +10.3 | 0.095 |
+| the above plus the tier list | +10.3 | 0.095 |
 
 The apparent overperformance was substantially an artefact of guessed tiers: with
 79% of inputs coming from the real tier list, it falls below significance. **Any
@@ -399,11 +399,11 @@ footer counts the four input sources for exactly this reason.
 
 ## Known gaps
 
-- Around 90 players appearing in recent 3v3 hold no tier. Loading the committee
+- Around 90 players appearing in recent 3v3 hold no tier. Loading the tier list
   list and tiering the five highest-volume regulars cut guessed roster slots from
   1,945 to 1,056 over three months; what remains is spread thinly enough that no
   one player distorts much.
-- 22 of 154 names on the committee tier list resolve to no account or to an
+- 22 of 154 names on the tier list resolve to no account or to an
   ambiguous one, and are listed for a human rather than guessed.
 - Tier history still does not exist, so long windows score old matches against
   today's tiers.

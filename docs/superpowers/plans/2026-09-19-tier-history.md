@@ -102,7 +102,7 @@ Expected: FAIL, `ModuleNotFoundError: No module named 'gibhub.history'`
 
 ```python
 # gibhub/history.py
-"""The committee's tier change log. Pure: parsing and lookup, no I/O."""
+"""The tier change log. Pure: parsing and lookup, no I/O."""
 
 import bisect
 import dataclasses
@@ -116,11 +116,11 @@ UNTIERED = "-"
 
 @dataclasses.dataclass(frozen=True)
 class TierChange:
-    """One committee decision, on one date, about one player."""
+    """One tier decision, on one date, about one player."""
 
     date: str
     player: str
-    previous: Optional[str]   # None when the player held no committee tier
+    previous: Optional[str]   # None when the player held no assigned tier
     tier: str
     note: str = ""
 
@@ -167,7 +167,7 @@ Expected: 8 passed
 
 ```bash
 git add gibhub/history.py tests/test_history.py
-git commit -m "feat(history): parse the committee tier change log"
+git commit -m "feat(history): parse the assigned tier change log"
 ```
 
 ---
@@ -268,7 +268,7 @@ class TierHistory:
     def tier_at(
         self, player: str, on_date: Optional[str], *, current: Optional[str]
     ) -> Optional[str]:
-        """The committee tier in force for `player` on `on_date`.
+        """The assigned tier in force for `player` on `on_date`.
 
         The tier that day is the `from` of the earliest change dated after it;
         with no later change, the current tier stands. A change dated exactly
@@ -344,7 +344,7 @@ def test_a_match_on_the_change_date_sees_the_new_tier():
     assert _dated_index().resolve("p1", "c1", on_date="2026-09-19").tier == "S"
 
 
-def test_a_historical_tier_is_still_a_committee_decision():
+def test_a_historical_tier_is_still_a_real_decision():
     assert _dated_index().resolve("p1", "c1", on_date="2026-05-01").source == OVERRIDE
 
 
@@ -385,7 +385,7 @@ from .history import TierHistory
 
 ```python
     overrides: Mapping[str, str] = dataclasses.field(default_factory=dict)
-    # Dated committee decisions. Empty means every lookup is as it is today.
+    # Dated tier decisions. Empty means every lookup is as it is today.
     history: TierHistory = dataclasses.field(
         default_factory=lambda: TierHistory.build([])
     )
@@ -493,7 +493,7 @@ from .history import TierChange, TierHistory
 ```
 
 ```python
-    # Dated committee decisions, oldest first.
+    # Dated tier decisions, oldest first.
     history: List[TierChange] = dataclasses.field(default_factory=list)
 ```
 
@@ -540,7 +540,7 @@ git commit -m "feat(bundle): persist the tier change log"
 - [ ] **Step 1: Create the empty log**
 
 ```bash
-printf '# Committee tier decisions. Append-only, one per line.\n# date\\tplayer\\tfrom\\tto\\tnote   ("-" in from = previously untiered)\n' > data/tier-changes.tsv
+printf '# Tier decisions. Append-only, one per line.\n# date\\tplayer\\tfrom\\tto\\tnote   ("-" in from = previously untiered)\n' > data/tier-changes.tsv
 ```
 
 - [ ] **Step 2: Write the failing test**
@@ -1144,8 +1144,8 @@ Nothing to commit. `data/tier-changes.tsv` stays empty.
 
 ## Task 11b: Runbook for a real decision
 
-Not part of this build. This is the procedure to follow **when the committee
-actually decides something**, recorded here so it is not reinvented.
+Not part of this build. This is the procedure to follow **when a tier actually changes**,
+recorded here so it is not reinvented.
 
 1. Edit `data/tierlist-events-3v3.txt` to the new tier.
 2. Append one line to `data/tier-changes.tsv` with the decision date, the player

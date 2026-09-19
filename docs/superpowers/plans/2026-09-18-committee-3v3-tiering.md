@@ -1,8 +1,8 @@
-# 3v3 Committee Tiering Tool Implementation Plan
+# 3v3 Tiering Tool Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a `committee` CLI that produces reproducible, paste-ready evidence for the 3v3 tiering committee: per player, the win probability their tier composition implied for each match versus what actually happened, alongside their own in-match performance.
+**Goal:** Build a `committee` CLI that produces reproducible, paste-ready evidence for 3v3 tiering: per player, the win probability their tier composition implied for each match versus what actually happened, alongside their own in-match performance.
 
 **Architecture:** A logistic regression over per-tier headcount differences predicts P(alpha wins) for a 3v3 match. Coefficients, the per-channel tier index, and per-player UTRO are fitted once and frozen into a committed model bundle (`coefficients.json`), so reports are reproducible without re-deriving anything. Only `gibhub/api.py` touches the network; `model.py`, `report.py`, and `render.py` are pure functions over plain data.
 
@@ -24,9 +24,9 @@ You have no context on this domain. Here is what you need.
 
 **The game and the data.** gibhub.gg tracks Wolfenstein: Enemy Territory matches. A *3v3 match* has two sides named `alpha` and `beta`, three players each. A match is played over several *rounds*, each on a *map*. Every player in every round has a **UTRO** score — the site's per-round performance rating, roughly 0.5–1.5, where higher is better. The API describes itself in `openapi.yaml` at the repo root.
 
-**Tiers.** A committee assigns players a *gather tier* from `S, A, B, C, D, E`. **These are not an alphabetical ladder:** measured after implementation, the strength order is S > E > A > B > C > D, so E is the second strongest tier (see README). Nothing in this plan assumes an order. Tiers are assigned **per Discord channel**, so one player can be `A` in one channel and untiered in another. Only 134 players hold a 3v3 tier; most players in any given match do not.
+**Tiers.** Players are given a *gather tier* from `S, A, B, C, D, E`. **These are not an alphabetical ladder:** measured after implementation, the strength order is S > E > A > B > C > D, so E is the second strongest tier (see README). Nothing in this plan assumes an order. Tiers are assigned **per Discord channel**, so one player can be `A` in one channel and untiered in another. Only 134 players hold a 3v3 tier; most players in any given match do not.
 
-**What we are computing.** If we know each of the six players' tiers, we can predict which side should have won. Comparing that prediction to the actual result over a player's last N matches tells the committee whether that player's record is consistent with the tier they hold. That's the whole product.
+**What we are computing.** If we know each of the six players' tiers, we can predict which side should have won. Comparing that prediction to the actual result over a player's last N matches tells readers whether that player's record is consistent with the tier they hold. That's the whole product.
 
 **The full design rationale** — including why the API's own `betting.odds` field is unusable — is in `docs/superpowers/specs/2026-09-18-committee-3v3-tiering-design.md`. Read it before starting.
 
@@ -119,7 +119,7 @@ Expected: PASS, 1 test.
 ```markdown
 # committee
 
-Evidence generator for the ET:Legacy 3v3 tiering committee.
+Evidence generator for ET:Legacy 3v3 tiering.
 
 Requires Python 3.9+. No runtime dependencies.
 
@@ -3667,7 +3667,7 @@ walks every finished 3v3 match and fetches ~134 profiles, so allow several minut
 
 The tier coefficients must be **monotonically decreasing** from S to E. If they are
 not, the model has learned something implausible and the cause must be found before
-the committee sees any number from it.
+anyone sees any number from it.
 
 Run:
 
@@ -3724,10 +3724,10 @@ Replace `README.md` with:
 ```markdown
 # committee
 
-Evidence generator for the ET:Legacy 3v3 tiering committee. For each player it
+Evidence generator for ET:Legacy 3v3 tiering. For each player it
 shows the win probability their team's tier composition implied for every recent
-match, what actually happened, and how the player themself performed — so the
-committee can see whether a record matches the tier held.
+match, what actually happened, and how the player themself performed — so a
+reader can see whether a record matches the tier held.
 
 Python 3.9+, no runtime dependencies.
 

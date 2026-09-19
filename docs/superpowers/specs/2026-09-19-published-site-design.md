@@ -1,11 +1,11 @@
-# Publishing the committee's verdicts — Design
+# Publishing the verdicts — Design
 
 Date: 2026-09-19
 Status: Approved, not implemented.
 
 ## Purpose
 
-Put the scan and the model where the committee and the wider ET:Legacy 3v3 crowd
+Put the scan and the model where readers and the wider ET:Legacy 3v3 crowd
 can read them without installing anything, at no cost, and publish the same
 numbers as machine-readable JSON so anyone can argue with them using their own
 tools.
@@ -20,7 +20,7 @@ them:
 
 - **Pre-generated, not live.** A visitor reads what the last build produced.
   A live "type a name, get a report" service would need a warm 262 MB cache and
-  would hit gibhub.gg once per visitor; it buys freshness the committee does not
+  would hit gibhub.gg once per visitor; it buys freshness a reader does not
   need.
 - **Fully public.** Indexed, linkable, part of the community record. This raises
   the bar on caveats — see "What every verdict page must carry".
@@ -98,7 +98,7 @@ This keeps the one-direction dependency rule: `site.py` imports from `model`,
 `report`, `scan` and `bundle`, and nothing imports `site.py` except `cli.py`.
 
 Rejected: markdown dumped into a static site generator. It drags a second
-language's toolchain into a stdlib-only repo and hands committee-facing prose to
+language's toolchain into a stdlib-only repo and hands published prose to
 a theme nobody chose. Rejected too: a JavaScript app fetching the JSON
 client-side. The pages would stop working with JavaScript off, and the HTML
 would become a second implementation of the same rendering.
@@ -175,7 +175,7 @@ page:
   particular verdict trips the 20% or 40% threshold
 - `KEEP` means "too few games to call", not "correctly tiered" — a stranger
   reading the table has no way to know that
-- 15 of 155 committee names have no account mapped, mostly C and D, so absence
+- 15 of 155 names on the tier list have no account mapped, mostly C and D, so absence
   from the table is not a clean bill
 
 Every generated page also carries the fit date, the window and the sample size,
@@ -200,7 +200,7 @@ clock. Beyond the golden files, four assertions earn their place:
 
 **Phase 1** — the scan index, the about page, `_headers`, `scan.json`,
 `model.json`, `index.json`, and the workflow. No player pages. This is the
-smallest thing that is useful to the committee and to anyone arguing with it.
+smallest thing that is useful to a reader and to anyone arguing with it.
 
 **Phase 2** — per-player pages, their JSON, and `_redirects` for retired slugs,
 once the build cost and the URL scheme have been watched working for a while.
