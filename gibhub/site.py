@@ -9,6 +9,7 @@ import json
 import re
 from typing import Dict, Sequence
 
+from .report import PlayerReport, guess_warning
 from .scan import Coverage, ScanRow
 
 _UNSAFE = re.compile(r"[^a-z0-9]+")
@@ -354,3 +355,44 @@ def build_site(
         "api/index.json": index_json(rows, slugs, **stamp),
     }
     return {path: text.encode("utf-8") for path, text in files.items()}
+
+
+def player_page(
+    report: PlayerReport,
+    *,
+    window: str,
+    built_at: str,
+    fitted_at: str,
+    sample_size: int,
+) -> str:
+    body = ["<h1>%s</h1>" % escape(report.nick)]
+
+    # Above the headline, where a cropped screenshot still catches it.
+    warning = guess_warning(report.source_counts)
+    if warning:
+        body.append(
+            '<p class="caveats"><strong>%s</strong> %d of the %d players in '
+            "this window had no committee tier.</p>"
+            % (escape(warning), report.players_guessed, report.players_seen))
+
+    body.append(
+        "<p><strong>Expected %.2f wins, actual %d &mdash; %+.2f &rarr; %s"
+        "</strong></p>" % (report.expected_wins, report.actual_wins,
+                           report.delta, escape(report.label)))
+    body.append("<h2>%s</h2>" % escape(report.recommendation))
+    body.append(
+        "<p>Tier %s over %d decided matches. Won %d while favoured, lost %d as "
+        "the underdog: a record built entirely on stacked teams reads the same "
+        "as one built against the odds unless you look here.</p>"
+        % (escape(report.current_tier or "none"), report.decided,
+           report.stack_wins, report.underdog_losses))
+    body.append(
+        "<p>Won %d as the underdog, lost %d while favoured.</p>"
+        % (report.upset_wins, report.upset_losses))
+    body.append(caveat_block(
+        Coverage(report.players_seen, report.players_guessed,
+                 (report.players_guessed / report.players_seen)
+                 if report.players_seen else 0.0),
+        window=window, built_at=built_at, fitted_at=fitted_at,
+        sample_size=sample_size))
+    return page("%s - 3v3 tiering evidence" % report.nick, "\n".join(body))

@@ -2,9 +2,10 @@ import json
 import re
 
 from gibhub.scan import Coverage, ScanRow
+from gibhub.report import PlayerReport
 from gibhub.site import (about_page, assign_slugs, build_site, caveat_block,
-                         index_json, index_page, model_json, page, scan_json,
-                         slugify)
+                         index_json, index_page, model_json, page, player_page,
+                         scan_json, slugify)
 
 CLEAN = Coverage(players_seen=100, players_guessed=2, guessed_share=0.02)
 HEAVY = Coverage(players_seen=100, players_guessed=46, guessed_share=0.46)
@@ -275,3 +276,45 @@ def test_every_published_json_file_parses():
     for path, blob in site.items():
         if path.endswith(".json"):
             json.loads(blob.decode("utf-8"))
+
+
+def _report(**kwargs):
+    fields = dict(
+        player_id="p1", nick="Lepari", discord_nick="lepari", tiers=[],
+        lifetime={}, percentiles=[], rows=[], expected_wins=13.33, actual_wins=7,
+        delta=-6.33, label="CLEARLY UNDER", luck=0.004, per_100=-31.7, decided=20,
+        current_tier="A", recommendation="MOVE DOWN: A → B", upset_wins=1,
+        upset_losses=2, stack_wins=5, underdog_losses=4, even_matches=0, draws=0,
+        skipped=0, source_counts={"override": 80, "imputed": 40},
+        provenance={}, categories=[], players_seen=39, players_guessed=18,
+    )
+    fields.update(kwargs)
+    return PlayerReport(**fields)
+
+
+def test_player_page_leads_with_the_verdict():
+    html = player_page(_report(), **STAMP)
+    assert "Lepari" in html
+    assert "CLEARLY UNDER" in html
+    assert "MOVE DOWN: A → B" in html
+    assert "13.33" in html
+
+
+def test_player_page_raises_the_guessed_tier_alarm_above_the_headline():
+    html = player_page(_report(), **STAMP)
+    assert html.index("guessed") < html.index("CLEARLY UNDER"), \
+        "the alarm must survive a cropped screenshot"
+
+
+def test_player_page_carries_the_caveats():
+    assert "too few games to call" in player_page(_report(), **STAMP)
+
+
+def test_player_page_escapes_the_nick():
+    html = player_page(_report(nick="<b>x</b>"), **STAMP)
+    assert "<b>x</b>" not in html and "&lt;b&gt;" in html
+
+
+def test_player_page_shows_the_stacked_and_underdog_split():
+    html = player_page(_report(), **STAMP)
+    assert "favoured" in html.lower() and "underdog" in html.lower()
