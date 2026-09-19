@@ -488,6 +488,9 @@ def cmd_fit(args) -> int:
             impute_max=parse_impute_max(args.impute_max),
             overrides=load_overrides(make_client(args), args.overrides),
             history=load_history(args.tier_history),
+            # Finished matches are immutable, so a refit reads each detail
+            # once and every later refit is cheap.
+            cache=MatchCache(args.cache),
         )
         save(bundle, args.bundle)
         print("wrote %s" % args.bundle)

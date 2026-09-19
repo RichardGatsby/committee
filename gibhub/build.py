@@ -98,7 +98,8 @@ def filter_holdings(holdings, channel_names, tokens):
 
 
 def build_bundle(client, to=None, limit=None, tier_channels=None, points=None,
-                 impute_max=None, overrides=None, history=None) -> Bundle:
+                 impute_max=None, overrides=None, history=None,
+                 cache=None) -> Bundle:
     """Fetch everything, fit, and return a bundle ready to save."""
     utro = fetch_utro(client)
     holdings, channel_names = fetch_tier_holdings(client)
@@ -114,7 +115,8 @@ def build_bundle(client, to=None, limit=None, tier_channels=None, points=None,
     index = TierIndex(holdings=holdings, bands=bands, utro=utro,
                       impute_max=impute_max, overrides=overrides or {},
                       history=TierHistory.build(changes))
-    samples = list(iter_samples(client, index, to=to, limit=limit))
+    samples = list(iter_samples(client, index, to=to, limit=limit,
+                                cache=cache))
     if not samples:
         raise ValueError("no usable 3v3 matches found; cannot fit")
 

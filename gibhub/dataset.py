@@ -110,11 +110,23 @@ def match_to_sample(
 
 def iter_samples(
     client, index: TierIndex, to: Optional[str] = None, limit: Optional[int] = None,
-    categories=None,
+    categories=None, cache=None,
 ) -> Iterator[Sample]:
-    """Walk every finished 3v3 match and yield the usable ones as samples."""
+    """Walk every finished 3v3 match and yield the usable ones as samples.
+
+    Each match is read as a detail payload, not as its listing entry. The two
+    carry different rosters: the listing's `teams` block is the drafted lineup
+    and the rounds are who turned up, and they disagree on roughly 4% of sides
+    where a no-show was replaced. The scan and the player reports score the
+    rounds, so the fit has to learn from the rounds or the model is trained on
+    one definition of a roster and applied to another.
+    """
     params = {"size": "3v3", "state": "finished", "to": to}
-    for match in client.paginate("/matches", params, page_size=PAGE_SIZE, limit=limit):
-        sample = match_to_sample(match, index, categories)
+    for listed in client.paginate("/matches", params, page_size=PAGE_SIZE,
+                                  limit=limit):
+        match_id = listed["match_id"]
+        detail = (cache.fetch(match_id, lambda mid: client.get("/matches/" + mid))
+                  if cache else client.get("/matches/" + match_id))
+        sample = match_to_sample(detail, index, categories)
         if sample is not None:
             yield sample

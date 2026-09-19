@@ -213,9 +213,7 @@ def test_fit_with_refit_writes_a_bundle(monkeypatch, tmp_path, capsys):
     )
     monkeypatch.setattr("gibhub.cli.make_client", lambda args: FAKE_CLIENT)
     monkeypatch.setattr("gibhub.cli.build_bundle",
-                        lambda client, to=None, limit=None, tier_channels=None,
-                               points=None, impute_max=None,
-                               overrides=None, history=None: fake)
+                        lambda client, **kwargs: fake)
 
     path = tmp_path / "coefficients.json"
     code = main(["--bundle", str(path), "fit", "--refit"])

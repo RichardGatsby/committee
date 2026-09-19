@@ -214,3 +214,54 @@ def test_a_sample_records_the_date_its_match_was_played():
     from gibhub.dataset import Sample
 
     assert "date" in Sample.__dataclass_fields__
+
+
+class _DetailClient:
+    """Listing names a no-show; the rounds name the substitute who played."""
+
+    def __init__(self):
+        self.details = 0
+
+    def paginate(self, path, params=None, page_size=100, limit=None):
+        return iter([{
+            "match_id": "m1", "state": "finished", "winner": "alpha",
+            "tags": ["gather"], "channel_id": "c1",
+            "channel_name": "ET:Legacy Events: #3vs3",
+            "start_time": "2026-09-01T20:00:00+02:00",
+            "teams": {
+                "alpha": [{"player_id": p} for p in ("noshow", "a2", "a3")],
+                "beta": [{"player_id": p} for p in ("b1", "b2", "b3")],
+            },
+        }])
+
+    def get(self, path, params=None):
+        self.details += 1
+        return {
+            "match_id": "m1", "state": "finished", "winner": "alpha",
+            "tags": ["gather"], "channel_id": "c1",
+            "channel_name": "ET:Legacy Events: #3vs3",
+            "start_time": "2026-09-01T20:00:00+02:00",
+            "rounds": [{
+                "alpha": [{"player_id": p, "playtime_percent": 100}
+                          for p in ("sub", "a2", "a3")],
+                "beta": [{"player_id": p, "playtime_percent": 100}
+                         for p in ("b1", "b2", "b3")],
+            }],
+        }
+
+
+def test_the_fit_trains_on_who_played_not_who_was_drafted():
+    """The scan and the reports read the rounds; the fit must agree."""
+    from gibhub.dataset import iter_samples
+    from gibhub.tiers import TierIndex
+
+    client = _DetailClient()
+    index = TierIndex(holdings={}, bands={"A": 1.0}, utro={},
+                      overrides={"sub": "S", "noshow": "D", "a2": "A",
+                                 "a3": "A", "b1": "A", "b2": "A", "b3": "A"})
+    samples = list(iter_samples(client, index))
+
+    assert client.details == 1, "the fit must read the match detail"
+    # sub is S (5 points) where noshow is D (0): the alpha side must come out
+    # stronger than the beta side, which it cannot if the no-show was counted.
+    assert samples[0].features[0] > 0
