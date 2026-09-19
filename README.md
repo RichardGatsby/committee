@@ -147,9 +147,9 @@ truth. It lives in `data/tierlist-events-3v3.txt`, one name per line under its
 tier heading:
 
     [A]
-    chuCk
     Jassi
-    hevimies -> jussi8030      # Discord name differs from the in-game one
+    chuCk -> czkk_             # Discord name differs from the in-game one
+    hevimies -> jussi8030
 
 `Name -> lookup` pins an entry whose Discord name is not searchable to the account
 to use (a nick or a UUID). Resolve it into an overrides file, then refit:
@@ -170,11 +170,11 @@ Each tier is worth fixed points — **S 5, E 4, A 3, B 2, C 1, D 0** — and a t
 strength is the sum of its three players' points. The only fitted parameter is how
 much one point of advantage is worth:
 
-    P(win) = sigmoid(0.35 × (my team's points − their points))
+    P(win) = sigmoid(0.44 × (my team's points − their points))
 
-So a +2 point edge is a 67% favourite, +4 is 83%. There is no intercept, so two
-equal rosters always score exactly 50%. Fitted on 6,377 decided 3v3 matches:
-63.0% accuracy, 0.225 Brier, 0.640 log loss.
+So a +2 point edge is a 71% favourite, +4 is 85%. There is no intercept, so two
+equal rosters always score exactly 50%. Fitted on 6,382 decided 3v3 matches:
+63.9% accuracy, 0.220 Brier, 0.630 log loss.
 
 Fitting all six tier values freely instead scores marginally better but is harder
 to check by hand, and it valued S well below what the 5-point scale implies — so
@@ -193,11 +193,11 @@ independently computed UTRO bands on all 15 tier pairs — but every place that
 needs "the next tier up" reads it off the points scale, never the alphabet.
 
     tier   points   log-odds   median UTRO
-    S         5      +1.76        1.250
-    E         4      +1.41        1.099
-    A         3      +1.06        1.042
-    B         2      +0.70        0.976
-    C         1      +0.35        0.752
+    S         5      +2.19        1.250
+    E         4      +1.75        1.099
+    A         3      +1.32        1.042
+    B         2      +0.88        0.976
+    C         1      +0.44        0.748
     D         0       0.00        0.603
 
 ### Players with no tier
