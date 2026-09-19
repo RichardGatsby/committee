@@ -46,6 +46,10 @@ Review a whole tier as a spreadsheet:
     python3 -m gibhub.cli bulk --tier A --tier B --out tier-ab.csv
     python3 -m gibhub.cli bulk --players shortlist.txt --out shortlist.csv
 
+Render the published site:
+
+    python3 -m gibhub.cli site --out _site
+
 Inspect or refit the model:
 
     python3 -m gibhub.cli fit            # show the committed model
@@ -128,6 +132,24 @@ their baseline for the window in brackets.
 
 The per-match table is not printed — it runs to hundreds of rows — but the verdict
 is computed from every match in the window. `--format json` has them all.
+
+## The published site
+
+The scan is published at <https://committee.pages.dev>, rebuilt daily at 05:00
+UTC and on demand from the Actions tab. Every page stamps the build time, the
+window and the model it was fitted from, so a screenshot can be dated.
+
+The same build writes a JSON API, CORS-open so anything can read it from a
+browser:
+
+| path | holds |
+| --- | --- |
+| `/api/scan.json` | every scanned player, including the ones reading `ON TIER` |
+| `/api/model.json` | tier points, the fitted scale, the fit metrics |
+| `/api/index.json` | the build stamp and the slug-to-UUID map |
+
+It is only as fresh as the last build. Nothing a visitor does triggers a fetch
+against gibhub.gg.
 
 ## Types of game
 
